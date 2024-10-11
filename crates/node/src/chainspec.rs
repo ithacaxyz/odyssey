@@ -43,7 +43,7 @@ pub static ODYSSEY_FORKS: Lazy<ChainHardforks> = Lazy::new(|| {
 /// Odyssey dev testnet specification.
 pub static ODYSSEY_DEV: Lazy<Arc<OpChainSpec>> = Lazy::new(|| {
     OpChainSpec::new(ChainSpec {
-        chain: Chain::from_named(NamedChain::Alphanet),
+        chain: Chain::from_named(NamedChain::Odyssey),
         genesis: serde_json::from_str(include_str!("../../../etc/dev-genesis.json"))
             .expect("Can't deserialize odyssey genesis json"),
         paris_block_and_final_difficulty: Some((0, U256::from(0))),
@@ -58,7 +58,7 @@ pub static ODYSSEY_DEV: Lazy<Arc<OpChainSpec>> = Lazy::new(|| {
 /// Odyssey main chain specification.
 pub static ODYSSEY_MAINNET: Lazy<Arc<OpChainSpec>> = Lazy::new(|| {
     OpChainSpec::new(ChainSpec {
-        chain: Chain::from_named(NamedChain::Alphanet),
+        chain: Chain::from_named(NamedChain::Odyssey),
         // genesis contains empty alloc field because state at first bedrock block is imported
         // manually from trusted source
         genesis: serde_json::from_str(include_str!("../../../etc/odyssey-genesis.json"))

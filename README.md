@@ -27,9 +27,14 @@ Odyssey has 2 goals:
 Odyssey's node extensions were chosen for their ability to enable applications that enhance the onchain user experience, and
 drastically reduce cost for existing applications that improve UX.
 
+### Odyssey Testnet
+
+> [!TIP]
+> [The Odyssey Testnet](https://www.ithaca.xyz/updates/odyssey#odyssey-chapter-1-is-live-on-testnet) is now live on Sepolia and is built with Reth, the OP Stack, and [deployed on Conduit](https://app.conduit.xyz/published/view/odyssey).
+
 ### Odyssey Local Development
 
-Odyssey does not yet have a running testnet, but can be run locally for development and testing purposes. To do this, the binary can be run with the `--dev` flag, which will start the node with a development configuration.
+Odyssey can be run locally for development and testing purposes. To do this, the binary can be run with the `--dev` flag, which will start the node with a development configuration.
 
 First, odyssey should be built locally:
 ```bash
@@ -47,10 +52,6 @@ This will start the node with a development configuration, and expose the HTTP A
 To use EOF-enabled foundry, use [forge-eof](https://github.com/paradigmxyz/forge-eof) and follow installation instructions.
 
 ### Running Odyssey
-
-> [!WARNING]
->
-> Odyssey does not yet have a running testnet, please use the local development instructions above!
 
 Running Odyssey will require running additional infrastructure for the archival L1 node. These instructions are a guide for
 running the Odyssey OP-stack node only.

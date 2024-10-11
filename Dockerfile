@@ -1,7 +1,7 @@
 FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 WORKDIR /app
 
-LABEL org.opencontainers.image.source=https://github.com/paradigmxyz/alphanet
+LABEL org.opencontainers.image.source=https://github.com/ithacaxyz/odyssey
 LABEL org.opencontainers.image.licenses="MIT OR Apache-2.0"
 
 # Builds a cargo-chef plan
@@ -28,25 +28,25 @@ RUN cargo chef cook --profile $BUILD_PROFILE --recipe-path recipe.json
 
 # Build application
 COPY . .
-RUN cargo build --profile $BUILD_PROFILE --features "$FEATURES" --locked --bin alphanet
+RUN cargo build --profile $BUILD_PROFILE --features "$FEATURES" --locked --bin odyssey
 
 # ARG is not resolved in COPY so we have to hack around it by copying the
 # binary to a temporary location
-RUN cp /app/target/$BUILD_PROFILE/alphanet /app/alphanet
+RUN cp /app/target/$BUILD_PROFILE/odyssey /app/odyssey
 
 # Use Ubuntu as the release image
 FROM ubuntu AS runtime
 WORKDIR /app
 
-# Copy alphanet over from the build stage
-COPY --from=builder /app/alphanet /usr/local/bin
+# Copy odyssey over from the build stage
+COPY --from=builder /app/odyssey /usr/local/bin
 
 # Copy licenses
 COPY LICENSE-* ./
 
 # Copy the genesis files
 ADD etc/dev-genesis.json ./etc/dev-genesis.json
-ADD etc/alphanet-genesis.json ./etc/alphanet-genesis.json
+ADD etc/odyssey-genesis.json ./etc/odyssey-genesis.json
 
 EXPOSE 30303 30303/udp 9001 8545 9000 8546
-ENTRYPOINT ["/usr/local/bin/alphanet"]
+ENTRYPOINT ["/usr/local/bin/odyssey"]

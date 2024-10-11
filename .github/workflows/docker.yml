@@ -9,10 +9,10 @@ on:
       - v*
 
 env:
-  REPO_NAME: ${{ github.repository_owner }}/alphanet
-  IMAGE_NAME: ${{ github.repository_owner }}/alphanet
+  REPO_NAME: ${{ github.repository_owner }}/odyssey
+  IMAGE_NAME: ${{ github.repository_owner }}/odyssey
   CARGO_TERM_COLOR: always
-  DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/alphanet
+  DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/odyssey
   DOCKER_USERNAME: ${{ github.actor }}
 
 jobs:

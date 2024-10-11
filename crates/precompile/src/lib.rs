@@ -1,8 +1,8 @@
-//! # AlphaNet precompiles.
+//! # Odyssey precompiles.
 //!
-//! Implementations of EVM precompiled contracts for AlphaNet.
+//! Implementations of EVM precompiled contracts for Odyssey.
 //!
-//! Alphanet currently implements the following EIPs, which define precompiles:
+//! Odyssey currently implements the following EIPs, which define precompiles:
 //! - [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212): Precompile for secp256r1 Curve Support.
 //!   The precompile implementation is located in the [secp256r1] module.
 

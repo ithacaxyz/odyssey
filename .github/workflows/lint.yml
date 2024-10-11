@@ -20,7 +20,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-      - run: cargo clippy --bin alphanet --workspace --features "asm-keccak jemalloc jemalloc-prof min-error-logs min-warn-logs min-info-logs min-debug-logs min-trace-logs"
+      - run: cargo clippy --bin odyssey --workspace --features "asm-keccak jemalloc jemalloc-prof min-error-logs min-warn-logs min-info-logs min-debug-logs min-trace-logs"
         env:
           RUSTFLAGS: -D warnings
 
@@ -62,7 +62,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-      - run: cargo build --bin alphanet --workspace
+      - run: cargo build --bin odyssey --workspace
         env:
           RUSTFLAGS: -D warnings
 

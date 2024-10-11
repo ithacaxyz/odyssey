@@ -20,7 +20,7 @@
 !/dist
 
 # include L2 genesis files
-!/etc/alphanet-genesis.json
+!/etc/odyssey-genesis.json
 !/etc/dev-genesis.json
 
 # include example files

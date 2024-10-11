@@ -1,12 +1,12 @@
 [workspace]
 members = [
-    "bin/alphanet/",
+    "bin/odyssey/",
     "crates/node",
     "crates/precompile",
     "crates/testing",
     "crates/wallet",
 ]
-default-members = ["bin/alphanet/"]
+default-members = ["bin/odyssey/"]
 resolver = "2"
 
 [workspace.package]
@@ -15,7 +15,7 @@ edition = "2021"
 rust-version = "1.81"
 authors = []
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/paradigmxyz/alphanet"
+repository = "https://github.com/ithacaxyz/odyssey"
 keywords = ["ethereum", "crypto"]
 categories = ["cryptography", "cryptography::cryptocurrencies"]
 
@@ -54,10 +54,10 @@ debug = 2
 strip = false
 
 [workspace.dependencies]
-# alphanet
-alphanet-node = { path = "crates/node" }
-alphanet-precompile = { path = "crates/precompile" }
-alphanet-wallet = { path = "crates/wallet" }
+# odyssey
+odyssey-node = { path = "crates/node" }
+odyssey-precompile = { path = "crates/precompile" }
+odyssey-wallet = { path = "crates/wallet" }
 
 alloy = { version = "0.4", features = [
     "contract",

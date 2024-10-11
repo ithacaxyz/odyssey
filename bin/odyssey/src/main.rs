@@ -1,6 +1,6 @@
-//! # Reth AlphaNet
+//! # Odyssey
 //!
-//! Reth AlphaNet is a testnet OP Stack rollup aimed at enabling experimentation of bleeding edge
+//! Odyssey is a testnet OP Stack rollup aimed at enabling experimentation of bleeding edge
 //! Ethereum Research. It aims to showcase how Reth's pluggable and modularized architecture can
 //! serve as a distribution channel for research ideas.
 //!
@@ -26,10 +26,10 @@
 use alloy_network::EthereumWallet;
 use alloy_primitives::Address;
 use alloy_signer_local::PrivateKeySigner;
-use alphanet_node::{chainspec::AlphanetChainSpecParser, node::AlphaNetNode};
-use alphanet_wallet::{AlphaNetWallet, AlphaNetWalletApiServer};
 use clap::Parser;
 use eyre::Context;
+use odyssey_node::{chainspec::OdysseyChainSpecParser, node::OdysseyNode};
+use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher};
 use reth_optimism_cli::Cli;
 use reth_optimism_node::{args::RollupArgs, node::OptimismAddOns};
@@ -50,10 +50,10 @@ fn main() {
     }
 
     if let Err(err) =
-        Cli::<AlphanetChainSpecParser, RollupArgs>::parse().run(|builder, rollup_args| async move {
+        Cli::<OdysseyChainSpecParser, RollupArgs>::parse().run(|builder, rollup_args| async move {
             let node = builder
-                .with_types_and_provider::<AlphaNetNode, BlockchainProvider2<_>>()
-                .with_components(AlphaNetNode::components(rollup_args.clone()))
+                .with_types_and_provider::<OdysseyNode, BlockchainProvider2<_>>()
+                .with_components(OdysseyNode::components(rollup_args.clone()))
                 .with_add_ons(OptimismAddOns::new(rollup_args.sequencer_http.clone()))
                 .extend_rpc_modules(move |ctx| {
                     // register sequencer tx forwarder
@@ -63,7 +63,7 @@ fn main() {
                             .set_sequencer_client(SequencerClient::new(sequencer_http))?;
                     }
 
-                    // register alphanet wallet namespace
+                    // register odyssey wallet namespace
                     if let Ok(sk) = std::env::var("EXP1_SK") {
                         let signer: PrivateKeySigner =
                             sk.parse().wrap_err("Invalid EXP0001 secret key.")?;
@@ -78,7 +78,7 @@ fn main() {
                             .wrap_err("No valid EXP0001 delegations specified")?;
 
                         ctx.modules.merge_configured(
-                            AlphaNetWallet::new(
+                            OdysseyWallet::new(
                                 ctx.provider().clone(),
                                 wallet,
                                 ctx.registry.eth_api().clone(),

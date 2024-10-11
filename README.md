@@ -34,7 +34,7 @@ drastically reduce cost for existing applications that improve UX.
 
 ### Odyssey Local Development
 
- Can be run locally for development and testing purposes. To do this, the binary can be run with the `--dev` flag, which will start the node with a development configuration.
+Odyssey can be run locally for development and testing purposes. To do this, the binary can be run with the `--dev` flag, which will start the node with a development configuration.
 
 First, odyssey should be built locally:
 ```bash

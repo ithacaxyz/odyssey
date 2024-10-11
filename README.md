@@ -27,10 +27,10 @@ Odyssey has 2 goals:
 Odyssey's node extensions were chosen for their ability to enable applications that enhance the onchain user experience, and
 drastically reduce cost for existing applications that improve UX.
 
-### Odyssey Test Net
+### Odyssey Testnet
 
 > [!TIP]
-> [Testnet](https://www.ithaca.xyz/updates/odyssey#odyssey-chapter-1-is-live-on-testnet) is now live Sepolia and is built with Reth, the OP Stack, and [deployed on Conduit](https://app.conduit.xyz/published/view/odyssey).
+> [The Odyssey Testnet](https://www.ithaca.xyz/updates/odyssey#odyssey-chapter-1-is-live-on-testnet) is now live on Sepolia and is built with Reth, the OP Stack, and [deployed on Conduit](https://app.conduit.xyz/published/view/odyssey).
 
 ### Odyssey Local Development
 

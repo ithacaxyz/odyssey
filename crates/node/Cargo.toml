@@ -1,5 +1,5 @@
 [package]
-name = "alphanet-node"
+name = "odyssey-node"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-alphanet-precompile.workspace = true
+odyssey-precompile.workspace = true
 once_cell.workspace = true
 reth-cli.workspace = true
 reth-node-api.workspace = true

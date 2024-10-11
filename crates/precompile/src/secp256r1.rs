@@ -10,7 +10,7 @@
 //! The precompile can be inserted in a custom EVM like this:
 //! ```
 //! use alloy_primitives::U256;
-//! use alphanet_precompile::secp256r1;
+//! use odyssey_precompile::secp256r1;
 //! use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
 //! use reth_primitives::{Header, TransactionSigned};
 //! use reth_revm::{
@@ -22,9 +22,9 @@
 //!
 //! #[derive(Debug, Clone, Copy, Default)]
 //! #[non_exhaustive]
-//! struct AlphaNetEvmConfig;
+//! struct OdysseyEvmConfig;
 //!
-//! impl ConfigureEvm for AlphaNetEvmConfig {
+//! impl ConfigureEvm for OdysseyEvmConfig {
 //!     type DefaultExternalContext<'a> = ();
 //!
 //!     fn evm<DB: Database>(&self, db: DB) -> Evm<'_, (), DB> {
@@ -46,7 +46,7 @@
 //!     fn default_external_context<'a>(&self) -> Self::DefaultExternalContext<'a> {}
 //! }
 //!
-//! impl ConfigureEvmEnv for AlphaNetEvmConfig {
+//! impl ConfigureEvmEnv for OdysseyEvmConfig {
 //!     type Header = Header;
 //!
 //!     fn fill_tx_env(

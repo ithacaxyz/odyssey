@@ -3,14 +3,14 @@
 # locatable in `./dist/bin/$TARGETARCH`
 FROM --platform=$TARGETPLATFORM ubuntu:22.04
 
-LABEL org.opencontainers.image.source=https://github.com/paradigmxyz/alphanet
+LABEL org.opencontainers.image.source=https://github.com/ithacaxyz/odyssey
 LABEL org.opencontainers.image.licenses="MIT OR Apache-2.0"
 
 # Filled by docker buildx
 ARG TARGETARCH
 
-COPY ./dist/bin/$TARGETARCH/alphanet /usr/local/bin/alphanet
-ADD ./etc/alphanet-genesis.json /etc/alphanet-genesis.json
+COPY ./dist/bin/$TARGETARCH/odyssey /usr/local/bin/odyssey
+ADD ./etc/odyssey-genesis.json /etc/odyssey-genesis.json
 
 EXPOSE 30303 30303/udp 9001 8545 8546 9000
-ENTRYPOINT ["/usr/local/bin/alphanet", "--chain", "/etc/alphanet-genesis.json"]
+ENTRYPOINT ["/usr/local/bin/odyssey", "--chain", "/etc/odyssey-genesis.json"]

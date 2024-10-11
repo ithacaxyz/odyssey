@@ -1,17 +1,17 @@
-//! # AlphaNet EVM configuration
+//! # Odyssey EVM configuration
 //!
-//! The [AlphaNetEvmConfig] type implements the [ConfigureEvm] and [ConfigureEvmEnv] traits,
-//! configuring the custom AlphaNet precompiles and instructions.
+//! The [OdysseyEvmConfig] type implements the [ConfigureEvm] and [ConfigureEvmEnv] traits,
+//! configuring the custom Odyssey precompiles and instructions.
 //!
 //! These trait implementations allow for custom precompiles and instructions to be implemented and
 //! integrated in a reth node only with importing, without the need to fork the node or EVM
 //! implementation.
 //!
 //! This currently configures the instructions defined in [EIP3074-instructions](https://github.com/paradigmxyz/eip3074-instructions), and the
-//! precompiles defined by [`alphanet_precompile`].
+//! precompiles defined by [`odyssey_precompile`].
 
 use alloy_primitives::{Address, Bytes, TxKind, U256};
-use alphanet_precompile::secp256r1;
+use odyssey_precompile::secp256r1;
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
 use reth_optimism_chainspec::OpChainSpec;
@@ -35,12 +35,12 @@ use std::sync::Arc;
 
 /// Custom EVM configuration
 #[derive(Debug, Clone)]
-pub struct AlphaNetEvmConfig {
+pub struct OdysseyEvmConfig {
     chain_spec: Arc<OpChainSpec>,
 }
 
-impl AlphaNetEvmConfig {
-    /// Creates a new AlphaNet EVM configuration with the given chain spec.
+impl OdysseyEvmConfig {
+    /// Creates a new Odyssey EVM configuration with the given chain spec.
     pub const fn new(chain_spec: Arc<OpChainSpec>) -> Self {
         Self { chain_spec }
     }
@@ -70,7 +70,7 @@ impl AlphaNetEvmConfig {
     }
 }
 
-impl ConfigureEvmEnv for AlphaNetEvmConfig {
+impl ConfigureEvmEnv for OdysseyEvmConfig {
     type Header = Header;
 
     fn fill_tx_env(&self, tx_env: &mut TxEnv, transaction: &TransactionSigned, sender: Address) {
@@ -229,7 +229,7 @@ impl ConfigureEvmEnv for AlphaNetEvmConfig {
     }
 }
 
-impl ConfigureEvm for AlphaNetEvmConfig {
+impl ConfigureEvm for OdysseyEvmConfig {
     type DefaultExternalContext<'a> = ();
 
     fn evm<DB: Database>(&self, db: DB) -> Evm<'_, Self::DefaultExternalContext<'_>, DB> {
@@ -332,7 +332,7 @@ mod tests {
         ));
         let total_difficulty = U256::ZERO;
 
-        AlphaNetEvmConfig::new(chain_spec.clone()).fill_cfg_and_block_env(
+        OdysseyEvmConfig::new(chain_spec.clone()).fill_cfg_and_block_env(
             &mut cfg_env,
             &mut block_env,
             &header,

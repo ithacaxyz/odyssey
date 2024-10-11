@@ -10,7 +10,7 @@ BIN_DIR = "dist/bin"
 PROFILE ?= release
 
 # The docker image name
-DOCKER_IMAGE_NAME ?= ghcr.io/paradigmxyz/alphanet
+DOCKER_IMAGE_NAME ?= ghcr.io/ithacaxyz/odyssey
 
 BUILD_PATH = "target"
 
@@ -90,7 +90,7 @@ build-x86_64-pc-windows-gnu: FEATURES := $(filter-out jemalloc jemalloc-prof,$(F
 # See: https://github.com/cross-rs/cross/wiki/FAQ#undefined-reference-with-build-std
 build-%:
 	RUSTFLAGS="-C link-arg=-lgcc -Clink-arg=-static-libgcc" \
-		cross build --bin alphanet --target $* --features "$(FEATURES)" --profile "$(PROFILE)"
+		cross build --bin odyssey --target $* --features "$(FEATURES)" --profile "$(PROFILE)"
 
 # Unfortunately we can't easily use cross to build for Darwin because of licensing issues.
 # If we wanted to, we would need to build a custom Docker image with the SDK available.
@@ -133,11 +133,11 @@ docker-build-push-nightly: ## Build and push cross-arch Docker image tagged with
 define docker_build_push
 	$(MAKE) build-x86_64-unknown-linux-gnu
 	mkdir -p $(BIN_DIR)/amd64
-	cp $(BUILD_PATH)/x86_64-unknown-linux-gnu/$(PROFILE)/alphanet $(BIN_DIR)/amd64/alphanet
+	cp $(BUILD_PATH)/x86_64-unknown-linux-gnu/$(PROFILE)/odyssey $(BIN_DIR)/amd64/odyssey
 
 	$(MAKE) build-aarch64-unknown-linux-gnu
 	mkdir -p $(BIN_DIR)/arm64
-	cp $(BUILD_PATH)/aarch64-unknown-linux-gnu/$(PROFILE)/alphanet $(BIN_DIR)/arm64/alphanet
+	cp $(BUILD_PATH)/aarch64-unknown-linux-gnu/$(PROFILE)/odyssey $(BIN_DIR)/arm64/odyssey
 
 	docker buildx build --file ./Dockerfile.cross . \
 		--platform linux/amd64,linux/arm64 \

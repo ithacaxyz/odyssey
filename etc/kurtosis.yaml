@@ -5,7 +5,7 @@ ethereum_package:
 optimism_package:
   participants:
     - el_type: op-reth
-      el_image: ghcr.io/paradigmxyz/alphanet:latest
+      el_image: ghcr.io/ithacaxyz/odyssey:latest
       count: 2
   network_params:
     network_id: "41144114"

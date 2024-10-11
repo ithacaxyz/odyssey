@@ -1,6 +1,6 @@
-//! # AlphaNet wallet.
+//! # Odyssey wallet.
 //!
-//! Implementations of a custom `wallet_` namespace for AlphaNet experiment 1.
+//! Implementations of a custom `wallet_` namespace for Odyssey experiment 1.
 //!
 //! - `wallet_getCapabilities` based on [EIP-5792][eip-5792], with the only capability being
 //!   `delegation`.
@@ -66,10 +66,10 @@ impl WalletCapabilities {
     }
 }
 
-/// AlphaNet `wallet_` RPC namespace.
+/// Odyssey `wallet_` RPC namespace.
 #[cfg_attr(not(test), rpc(server, namespace = "wallet"))]
 #[cfg_attr(test, rpc(server, client, namespace = "wallet"))]
-pub trait AlphaNetWalletApi {
+pub trait OdysseyWalletApi {
     /// Get the capabilities of the wallet.
     ///
     /// Currently the only capability is [`DelegationCapability`].
@@ -101,7 +101,7 @@ pub trait AlphaNetWalletApi {
 
 /// Errors returned by the wallet API.
 #[derive(Debug, thiserror::Error)]
-pub enum AlphaNetWalletError {
+pub enum OdysseyWalletError {
     /// The transaction value is not 0.
     ///
     /// The value should be 0 to prevent draining the sequencer.
@@ -143,8 +143,8 @@ pub enum AlphaNetWalletError {
     InternalError,
 }
 
-impl From<AlphaNetWalletError> for jsonrpsee::types::error::ErrorObject<'static> {
-    fn from(error: AlphaNetWalletError) -> Self {
+impl From<OdysseyWalletError> for jsonrpsee::types::error::ErrorObject<'static> {
+    fn from(error: OdysseyWalletError) -> Self {
         jsonrpsee::types::error::ErrorObject::owned::<()>(
             jsonrpsee::types::error::INVALID_PARAMS_CODE,
             error.to_string(),
@@ -153,13 +153,13 @@ impl From<AlphaNetWalletError> for jsonrpsee::types::error::ErrorObject<'static>
     }
 }
 
-/// Implementation of the AlphaNet `wallet_` namespace.
-pub struct AlphaNetWallet<Provider, Eth> {
-    inner: Arc<AlphaNetWalletInner<Provider, Eth>>,
+/// Implementation of the Odyssey `wallet_` namespace.
+pub struct OdysseyWallet<Provider, Eth> {
+    inner: Arc<OdysseyWalletInner<Provider, Eth>>,
 }
 
-impl<Provider, Eth> AlphaNetWallet<Provider, Eth> {
-    /// Create a new AlphaNet wallet module.
+impl<Provider, Eth> OdysseyWallet<Provider, Eth> {
+    /// Create a new Odyssey wallet module.
     pub fn new(
         provider: Provider,
         wallet: EthereumWallet,
@@ -167,7 +167,7 @@ impl<Provider, Eth> AlphaNetWallet<Provider, Eth> {
         chain_id: ChainId,
         valid_designations: Vec<Address>,
     ) -> Self {
-        let inner = AlphaNetWalletInner {
+        let inner = OdysseyWalletInner {
             provider,
             wallet,
             eth_api,
@@ -187,7 +187,7 @@ impl<Provider, Eth> AlphaNetWallet<Provider, Eth> {
 }
 
 #[async_trait]
-impl<Provider, Eth> AlphaNetWalletApiServer for AlphaNetWallet<Provider, Eth>
+impl<Provider, Eth> OdysseyWalletApiServer for OdysseyWallet<Provider, Eth>
 where
     Provider: StateProviderFactory + Send + Sync + 'static,
     Eth: FullEthApi + Send + Sync + 'static,
@@ -212,7 +212,7 @@ where
         if let Some(authorizations) = &request.authorization_list {
             // check that all auth items delegate to a valid address
             if authorizations.iter().any(|auth| !valid_delegations.contains(&auth.address)) {
-                return Err(AlphaNetWalletError::InvalidAuthorization.into());
+                return Err(OdysseyWalletError::InvalidAuthorization.into());
             }
         }
 
@@ -222,7 +222,7 @@ where
             // whitelisted address
             (false, Some(TxKind::Call(addr))) => {
                 let state =
-                    self.inner.provider.latest().map_err(|_| AlphaNetWalletError::InternalError)?;
+                    self.inner.provider.latest().map_err(|_| OdysseyWalletError::InternalError)?;
                 let delegated_address = state
                     .account_code(addr)
                     .ok()
@@ -237,13 +237,13 @@ where
                 if delegated_address == Address::ZERO
                     || !valid_delegations.contains(&delegated_address)
                 {
-                    return Err(AlphaNetWalletError::IllegalDestination.into());
+                    return Err(OdysseyWalletError::IllegalDestination.into());
                 }
             }
             // if it's an eip-7702 tx, let it through
             (true, _) => (),
             // create tx's disallowed
-            _ => return Err(AlphaNetWalletError::IllegalDestination.into()),
+            _ => return Err(OdysseyWalletError::IllegalDestination.into()),
         }
 
         // we acquire the permit here so that all following operations are performed exclusively
@@ -273,7 +273,7 @@ where
         let (base_fee, max_priority_fee_per_gas) =
             LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
                 .await
-                .map_err(|_| AlphaNetWalletError::InvalidTransactionRequest)?;
+                .map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
         request.max_fee_per_gas = Some((base_fee + max_priority_fee_per_gas).to::<u128>() * 2u128);
         request.max_priority_fee_per_gas = Some((max_priority_fee_per_gas * U256::from(2)).to());
         request.gas_price = None;
@@ -285,7 +285,7 @@ where
                 &self.inner.wallet,
             )
             .await
-            .map_err(|_| AlphaNetWalletError::InvalidTransactionRequest)?;
+            .map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
 
         // this uses the internal `OpEthApi` to either forward the tx to the sequencer, or add it to
         // the txpool
@@ -298,8 +298,8 @@ where
     }
 }
 
-/// Implementation of the AlphaNet `wallet_` namespace.
-struct AlphaNetWalletInner<Provider, Eth> {
+/// Implementation of the Odyssey `wallet_` namespace.
+struct OdysseyWalletInner<Provider, Eth> {
     provider: Provider,
     eth_api: Eth,
     wallet: EthereumWallet,
@@ -309,20 +309,20 @@ struct AlphaNetWalletInner<Provider, Eth> {
     permit: Mutex<()>,
 }
 
-fn validate_tx_request(request: &TransactionRequest) -> Result<(), AlphaNetWalletError> {
+fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWalletError> {
     // reject transactions that have a non-zero value to prevent draining the sequencer.
     if request.value.is_some_and(|val| val > U256::ZERO) {
-        return Err(AlphaNetWalletError::ValueNotZero);
+        return Err(OdysseyWalletError::ValueNotZero);
     }
 
     // reject transactions that have from set, as this will be the sequencer.
     if request.from.is_some() {
-        return Err(AlphaNetWalletError::FromSet);
+        return Err(OdysseyWalletError::FromSet);
     }
 
     // reject transaction requests that have nonce set, as this is managed by the sequencer.
     if request.nonce.is_some() {
-        return Err(AlphaNetWalletError::NonceSet);
+        return Err(OdysseyWalletError::NonceSet);
     }
 
     Ok(())

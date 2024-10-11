@@ -1,9 +1,9 @@
-//! # AlphaNet Node types configuration
+//! # Odyssey Node types configuration
 //!
-//! The [AlphaNetNode] type implements the [NodeTypes] trait, and configures the engine types
+//! The [OdysseyNode] type implements the [NodeTypes] trait, and configures the engine types
 //! required for the optimism engine API.
 
-use crate::evm::AlphaNetEvmConfig;
+use crate::evm::OdysseyEvmConfig;
 use reth_network::{
     transactions::{TransactionPropagationMode, TransactionsManagerConfig},
     NetworkHandle, NetworkManager,
@@ -29,14 +29,14 @@ use reth_optimism_node::{
 use reth_payload_builder::PayloadBuilderHandle;
 use reth_transaction_pool::{SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER};
 
-/// Type configuration for a regular AlphaNet node.
+/// Type configuration for a regular Odyssey node.
 #[derive(Debug, Clone, Default)]
-pub struct AlphaNetNode {
+pub struct OdysseyNode {
     /// Additional Optimism args
     pub args: RollupArgs,
 }
 
-impl AlphaNetNode {
+impl OdysseyNode {
     /// Creates a new instance of the Optimism node type.
     pub const fn new(args: RollupArgs) -> Self {
         Self { args }
@@ -48,9 +48,9 @@ impl AlphaNetNode {
     ) -> ComponentsBuilder<
         Node,
         OptimismPoolBuilder,
-        AlphaNetPayloadBuilder,
-        AlphanetNetworkBuilder,
-        AlphaNetExecutorBuilder,
+        OdysseyPayloadBuilder,
+        OdysseyNetworkBuilder,
+        OdysseyExecutorBuilder,
         OptimismConsensusBuilder,
         OptimismEngineValidatorBuilder,
     >
@@ -71,28 +71,28 @@ impl AlphaNetNode {
                     ..Default::default()
                 },
             })
-            .payload(AlphaNetPayloadBuilder::new(compute_pending_block))
-            .network(AlphanetNetworkBuilder::new(OptimismNetworkBuilder {
+            .payload(OdysseyPayloadBuilder::new(compute_pending_block))
+            .network(OdysseyNetworkBuilder::new(OptimismNetworkBuilder {
                 disable_txpool_gossip,
                 disable_discovery_v4: !discovery_v4,
             }))
-            .executor(AlphaNetExecutorBuilder::default())
+            .executor(OdysseyExecutorBuilder::default())
             .consensus(OptimismConsensusBuilder::default())
             .engine_validator(OptimismEngineValidatorBuilder::default())
     }
 }
 
 /// Configure the node types
-impl NodeTypes for AlphaNetNode {
+impl NodeTypes for OdysseyNode {
     type Primitives = ();
     type ChainSpec = OpChainSpec;
 }
 
-impl NodeTypesWithEngine for AlphaNetNode {
+impl NodeTypesWithEngine for OdysseyNode {
     type Engine = OptimismEngineTypes;
 }
 
-impl<N> Node<N> for AlphaNetNode
+impl<N> Node<N> for OdysseyNode
 where
     N: FullNodeTypes<
         Types: NodeTypesWithEngine<Engine = OptimismEngineTypes, ChainSpec = OpChainSpec>,
@@ -101,9 +101,9 @@ where
     type ComponentsBuilder = ComponentsBuilder<
         N,
         OptimismPoolBuilder,
-        AlphaNetPayloadBuilder,
-        AlphanetNetworkBuilder,
-        AlphaNetExecutorBuilder,
+        OdysseyPayloadBuilder,
+        OdysseyNetworkBuilder,
+        OdysseyExecutorBuilder,
         OptimismConsensusBuilder,
         OptimismEngineValidatorBuilder,
     >;
@@ -120,16 +120,16 @@ where
     }
 }
 
-/// The AlphaNet evm and executor builder.
+/// The Odyssey evm and executor builder.
 #[derive(Debug, Default, Clone, Copy)]
 #[non_exhaustive]
-pub struct AlphaNetExecutorBuilder;
+pub struct OdysseyExecutorBuilder;
 
-impl<Node> ExecutorBuilder<Node> for AlphaNetExecutorBuilder
+impl<Node> ExecutorBuilder<Node> for OdysseyExecutorBuilder
 where
     Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec>>,
 {
-    type EVM = AlphaNetEvmConfig;
+    type EVM = OdysseyEvmConfig;
     type Executor = OpExecutorProvider<Self::EVM>;
 
     async fn build_evm(
@@ -137,31 +137,31 @@ where
         ctx: &BuilderContext<Node>,
     ) -> eyre::Result<(Self::EVM, Self::Executor)> {
         let chain_spec = ctx.chain_spec();
-        let evm_config = AlphaNetEvmConfig::new(chain_spec.clone());
+        let evm_config = OdysseyEvmConfig::new(chain_spec.clone());
         let executor = OpExecutorProvider::new(chain_spec, evm_config.clone());
 
         Ok((evm_config, executor))
     }
 }
 
-/// The AlphaNet payload service builder.
+/// The Odyssey payload service builder.
 ///
 /// This service wraps the default Optimism payload builder, but replaces the default evm config
-/// with AlphaNet's own.
+/// with Odyssey's own.
 #[derive(Debug, Default, Clone)]
-pub struct AlphaNetPayloadBuilder {
+pub struct OdysseyPayloadBuilder {
     /// Inner Optimism payload builder service.
     inner: OptimismPayloadBuilder,
 }
 
-impl AlphaNetPayloadBuilder {
+impl OdysseyPayloadBuilder {
     /// Create a new instance with the given `compute_pending_block` flag.
     pub const fn new(compute_pending_block: bool) -> Self {
         Self { inner: OptimismPayloadBuilder::new(compute_pending_block) }
     }
 }
 
-impl<Node, Pool> PayloadServiceBuilder<Node, Pool> for AlphaNetPayloadBuilder
+impl<Node, Pool> PayloadServiceBuilder<Node, Pool> for OdysseyPayloadBuilder
 where
     Node: FullNodeTypes<
         Types: NodeTypesWithEngine<Engine = OptimismEngineTypes, ChainSpec = OpChainSpec>,
@@ -173,24 +173,24 @@ where
         ctx: &BuilderContext<Node>,
         pool: Pool,
     ) -> eyre::Result<PayloadBuilderHandle<OptimismEngineTypes>> {
-        self.inner.spawn(AlphaNetEvmConfig::new(ctx.chain_spec().clone()), ctx, pool)
+        self.inner.spawn(OdysseyEvmConfig::new(ctx.chain_spec().clone()), ctx, pool)
     }
 }
 
-/// The default alphanet network builder.
+/// The default odyssey network builder.
 #[derive(Debug, Default, Clone)]
-pub struct AlphanetNetworkBuilder {
+pub struct OdysseyNetworkBuilder {
     inner: OptimismNetworkBuilder,
 }
 
-impl AlphanetNetworkBuilder {
+impl OdysseyNetworkBuilder {
     /// Create a new instance based on the given op builder
     pub const fn new(network: OptimismNetworkBuilder) -> Self {
         Self { inner: network }
     }
 }
 
-impl<Node, Pool> NetworkBuilder<Node, Pool> for AlphanetNetworkBuilder
+impl<Node, Pool> NetworkBuilder<Node, Pool> for OdysseyNetworkBuilder
 where
     Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec>>,
     Pool: TransactionPool + Unpin + 'static,

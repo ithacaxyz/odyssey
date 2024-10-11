@@ -29,7 +29,8 @@ drastically reduce cost for existing applications that improve UX.
 
 ### Odyssey Test Net
 
-[Testnet](https://www.ithaca.xyz/updates/odyssey#odyssey-chapter-1-is-live-on-testnet) is now live Sepolia and is built with Reth, the OP Stack, and [deployed on Conduit](https://app.conduit.xyz/published/view/odyssey).
+> [!TIP]
+> [Testnet](https://www.ithaca.xyz/updates/odyssey#odyssey-chapter-1-is-live-on-testnet) is now live Sepolia and is built with Reth, the OP Stack, and [deployed on Conduit](https://app.conduit.xyz/published/view/odyssey).
 
 ### Odyssey Local Development
 
@@ -51,10 +52,6 @@ This will start the node with a development configuration, and expose the HTTP A
 To use EOF-enabled foundry, use [forge-eof](https://github.com/paradigmxyz/forge-eof) and follow installation instructions.
 
 ### Running Odyssey
-
-> [!WARNING]
->
-> Odyssey does not yet have a running testnet, please use the local development instructions above!
 
 Running Odyssey will require running additional infrastructure for the archival L1 node. These instructions are a guide for
 running the Odyssey OP-stack node only.

@@ -278,12 +278,12 @@ where
         request = request.gas_limit(estimate.to());
 
         // set gas fees
-        let (base_fee, max_priority_fee_per_gas) =
-            LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
-                .await
-                .map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
-        request.max_fee_per_gas = Some((base_fee + max_priority_fee_per_gas).to());
-        request.max_priority_fee_per_gas = Some(max_priority_fee_per_gas.to());
+        let (base_fee, _) = LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
+            .await
+            .map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
+        let max_priority_fee_per_gas = 1_000_000_000; // 1 gwei
+        request.max_fee_per_gas = Some(base_fee.to::<u128>() + max_priority_fee_per_gas);
+        request.max_priority_fee_per_gas = Some(max_priority_fee_per_gas);
         request.gas_price = None;
 
         // build and sign

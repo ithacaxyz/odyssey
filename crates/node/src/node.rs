@@ -1,6 +1,6 @@
 //! # Odyssey Node types configuration
 //!
-//! The [OdysseyNode] type implements the [NodeTypes] trait, and configures the engine types
+//! The [`OdysseyNode`] type implements the [`NodeTypes`] trait, and configures the engine types
 //! required for the optimism engine API.
 
 use crate::evm::OdysseyEvmConfig;
@@ -43,7 +43,7 @@ impl OdysseyNode {
         Self { args }
     }
 
-    /// Returns the components for the given [RollupArgs].
+    /// Returns the components for the given [`RollupArgs`].
     pub fn components<Node>(
         args: &RollupArgs,
     ) -> ComponentsBuilder<
@@ -173,7 +173,7 @@ where
         ctx: &BuilderContext<Node>,
         pool: Pool,
     ) -> eyre::Result<PayloadBuilderHandle<OptimismEngineTypes>> {
-        self.inner.spawn(OdysseyEvmConfig::new(ctx.chain_spec().clone()), ctx, pool)
+        self.inner.spawn(OdysseyEvmConfig::new(ctx.chain_spec()), ctx, pool)
     }
 }
 

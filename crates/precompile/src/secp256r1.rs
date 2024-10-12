@@ -110,9 +110,9 @@ fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if P256VERIFY_BASE > gas_limit {
         return Err(PrecompileErrors::Error(PrecompileError::OutOfGas));
     }
-    let result = verify_impl(input).is_some();
-    let out = PrecompileOutput::new(P256VERIFY_BASE, B256::with_last_byte(result as u8).into());
-    Ok(out)
+    let mut result = B256::default();
+    result.0[31] = (verify_impl(input).is_some()) as u8;
+    Ok(PrecompileOutput::new(P256VERIFY_BASE, result.into()))
 }
 
 /// Returns `Some(())` if the signature included in the input byte slice is

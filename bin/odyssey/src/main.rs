@@ -53,7 +53,7 @@ fn main() {
         Cli::<OdysseyChainSpecParser, RollupArgs>::parse().run(|builder, rollup_args| async move {
             let node = builder
                 .with_types_and_provider::<OdysseyNode, BlockchainProvider2<_>>()
-                .with_components(OdysseyNode::components(rollup_args.clone()))
+                .with_components(OdysseyNode::components(&rollup_args))
                 .with_add_ons(OptimismAddOns::new(rollup_args.sequencer_http.clone()))
                 .extend_rpc_modules(move |ctx| {
                     // register sequencer tx forwarder

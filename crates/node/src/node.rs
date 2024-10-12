@@ -60,7 +60,6 @@ impl OdysseyNode {
             Types: NodeTypesWithEngine<Engine = OptimismEngineTypes, ChainSpec = OpChainSpec>,
         >,
     {
-       
         ComponentsBuilder::default()
             .node_types::<Node>()
             .pool(OptimismPoolBuilder {
@@ -113,7 +112,7 @@ where
 
     fn components_builder(&self) -> Self::ComponentsBuilder {
         let Self { args } = self;
-        Self::components(&args)
+        Self::components(args)
     }
 
     fn add_ons(&self) -> Self::AddOns {

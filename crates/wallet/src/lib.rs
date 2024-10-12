@@ -279,7 +279,7 @@ where
         if estimate >= U256::from(350_000) {
             return Err(OdysseyWalletError::GasEstimateTooHigh { estimate: estimate.to() }.into());
         }
-        request = request.gas_limit(estimate.to());
+        request.gas = Some(estimate.to());
 
         // set gas fees
         let (base_fee, _) = LoadFee::eip1559_fees(&self.inner.eth_api, None, None)

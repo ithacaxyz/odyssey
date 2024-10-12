@@ -172,7 +172,7 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
         attributes: NextBlockEnvAttributes,
     ) -> (CfgEnvWithHandlerCfg, BlockEnv) {
         // configure evm env based on parent block
-        let cfg = CfgEnv::default().with_chain_id(self.chain_spec.chain().id());
+        let cfg_env = CfgEnv::default().with_chain_id(self.chain_spec.chain().id());
 
         // ensure we're not missing any timestamp based hardforks
         let spec_id = revm_spec(
@@ -188,14 +188,7 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
         // cancun now, we need to set the excess blob gas to the default value
         let blob_excess_gas_and_price = parent
             .next_block_excess_blob_gas()
-            .or_else(|| {
-                if spec_id.is_enabled_in(SpecId::CANCUN) {
-                    // default excess blob gas is zero
-                    Some(0)
-                } else {
-                    None
-                }
-            })
+            .or_else(|| spec_id.is_enabled_in(SpecId::CANCUN).then_some(0)) // default excess blob gas is zero
             .map(BlobExcessGasAndPrice::new);
 
         let block_env = BlockEnv {
@@ -217,15 +210,13 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
             blob_excess_gas_and_price,
         };
 
-        let cfg_with_handler_cfg;
-        {
-            cfg_with_handler_cfg = CfgEnvWithHandlerCfg {
-                cfg_env: cfg,
+        (
+            CfgEnvWithHandlerCfg {
+                cfg_env,
                 handler_cfg: HandlerCfg { spec_id, is_optimism: true },
-            };
-        }
-
-        (cfg_with_handler_cfg, block_env)
+            },
+            block_env,
+        )
     }
 }
 

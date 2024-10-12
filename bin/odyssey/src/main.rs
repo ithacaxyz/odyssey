@@ -57,7 +57,7 @@ fn main() {
                 .with_add_ons(OptimismAddOns::new(rollup_args.sequencer_http.clone()))
                 .extend_rpc_modules(move |ctx| {
                     // register sequencer tx forwarder
-                    if let Some(sequencer_http) = rollup_args.sequencer_http.clone() {
+                    if let Some(sequencer_http) = rollup_args.sequencer_http {
                         ctx.registry
                             .eth_api()
                             .set_sequencer_client(SequencerClient::new(sequencer_http))?;

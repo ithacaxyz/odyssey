@@ -162,6 +162,7 @@ impl From<OdysseyWalletError> for jsonrpsee::types::error::ErrorObject<'static> 
 }
 
 /// Implementation of the Odyssey `wallet_` namespace.
+#[derive(Debug)]
 pub struct OdysseyWallet<Provider, Eth> {
     inner: Arc<OdysseyWalletInner<Provider, Eth>>,
 }
@@ -310,6 +311,7 @@ where
 }
 
 /// Implementation of the Odyssey `wallet_` namespace.
+#[derive(Debug)]
 struct OdysseyWalletInner<Provider, Eth> {
     provider: Provider,
     eth_api: Eth,

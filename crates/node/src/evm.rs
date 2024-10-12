@@ -1,6 +1,6 @@
 //! # Odyssey EVM configuration
 //!
-//! The [OdysseyEvmConfig] type implements the [ConfigureEvm] and [ConfigureEvmEnv] traits,
+//! The [`OdysseyEvmConfig`] type implements the [`ConfigureEvm`] and [`ConfigureEvmEnv`] traits,
 //! configuring the custom Odyssey precompiles and instructions.
 //!
 //! These trait implementations allow for custom precompiles and instructions to be implemented and
@@ -47,8 +47,8 @@ impl OdysseyEvmConfig {
 
     /// Sets the precompiles to the EVM handler
     ///
-    /// This will be invoked when the EVM is created via [ConfigureEvm::evm] or
-    /// [ConfigureEvm::evm_with_inspector]
+    /// This will be invoked when the EVM is created via [`ConfigureEvm::evm`] or
+    /// [`ConfigureEvm::evm_with_inspector`]
     ///
     /// This will use the default mainnet precompiles and add additional precompiles.
     fn set_precompiles<EXT, DB>(handler: &mut EvmHandler<'_, EXT, DB>)

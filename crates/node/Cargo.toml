@@ -11,7 +11,6 @@ categories.workspace = true
 
 [dependencies]
 odyssey-precompile.workspace = true
-once_cell.workspace = true
 reth-cli.workspace = true
 reth-node-api.workspace = true
 reth-node-builder.workspace = true

@@ -282,8 +282,8 @@ where
             LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
                 .await
                 .map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
-        request.max_fee_per_gas = Some((base_fee + max_priority_fee_per_gas).to::<u128>() * 2u128);
-        request.max_priority_fee_per_gas = Some((max_priority_fee_per_gas * U256::from(2)).to());
+        request.max_fee_per_gas = Some((base_fee + max_priority_fee_per_gas).to());
+        request.max_priority_fee_per_gas = Some(max_priority_fee_per_gas.to());
         request.gas_price = None;
 
         // build and sign

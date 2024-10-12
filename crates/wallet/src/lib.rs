@@ -100,7 +100,7 @@ pub trait OdysseyWalletApi {
 }
 
 /// Errors returned by the wallet API.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Eq, PartialEq, thiserror::Error)]
 pub enum OdysseyWalletError {
     /// The transaction value is not 0.
     ///
@@ -343,47 +343,84 @@ fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWallet
 
 #[cfg(test)]
 mod tests {
-    mod types {
-        use crate::{Capabilities, DelegationCapability, WalletCapabilities};
-        use alloy_primitives::{address, map::HashMap};
+    use crate::{Capabilities, DelegationCapability, WalletCapabilities};
+    use alloy_primitives::{address, map::HashMap};
 
-        #[test]
-        fn ser() {
-            let caps = WalletCapabilities(HashMap::from_iter([(
-                0x69420,
-                Capabilities {
-                    delegation: DelegationCapability {
-                        addresses: vec![address!("90f79bf6eb2c4f870365e785982e1f101e93b906")],
-                    },
+    #[test]
+    fn ser() {
+        let caps = WalletCapabilities(HashMap::from_iter([(
+            0x69420,
+            Capabilities {
+                delegation: DelegationCapability {
+                    addresses: vec![address!("90f79bf6eb2c4f870365e785982e1f101e93b906")],
                 },
-            )]));
-            assert_eq!(serde_json::to_string(&caps).unwrap(), "{\"431136\":{\"delegation\":{\"addresses\":[\"0x90f79bf6eb2c4f870365e785982e1f101e93b906\"]}}}");
-        }
+            },
+        )]));
+        assert_eq!(serde_json::to_string(&caps).unwrap(), "{\"431136\":{\"delegation\":{\"addresses\":[\"0x90f79bf6eb2c4f870365e785982e1f101e93b906\"]}}}");
+    }
 
-        #[test]
-        fn de() {
-            let caps: WalletCapabilities = serde_json::from_str(
-                r#"{
+    #[test]
+    fn de() {
+        let caps: WalletCapabilities = serde_json::from_str(
+            r#"{
                     "431136": {
                         "delegation": {
                             "addresses": ["0x90f79bf6eb2c4f870365e785982e1f101e93b906"]
                         }
                     }
                 }"#,
-            )
-            .expect("could not deser");
+        )
+        .expect("could not deser");
 
-            assert_eq!(
-                caps,
-                WalletCapabilities(HashMap::from_iter([(
-                    0x69420,
-                    Capabilities {
-                        delegation: DelegationCapability {
-                            addresses: vec![address!("90f79bf6eb2c4f870365e785982e1f101e93b906")],
-                        },
+        assert_eq!(
+            caps,
+            WalletCapabilities(HashMap::from_iter([(
+                0x69420,
+                Capabilities {
+                    delegation: DelegationCapability {
+                        addresses: vec![address!("90f79bf6eb2c4f870365e785982e1f101e93b906")],
                     },
-                )]))
-            );
-        }
+                },
+            )]))
+        );
+    }
+
+    use alloy_network::TransactionBuilder;
+    use alloy_primitives::{Address, U256};
+    use alloy_rpc_types::TransactionRequest;
+
+    use crate::{validate_tx_request, OdysseyWalletError};
+
+    #[test]
+    fn no_value_allowed() {
+        assert_eq!(
+            validate_tx_request(&TransactionRequest::default().with_value(U256::from(1))),
+            Err(OdysseyWalletError::ValueNotZero)
+        );
+
+        assert_eq!(
+            validate_tx_request(&TransactionRequest::default().with_value(U256::from(0))),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn no_from_allowed() {
+        assert_eq!(
+            validate_tx_request(&TransactionRequest::default().with_from(Address::ZERO)),
+            Err(OdysseyWalletError::FromSet)
+        );
+
+        assert_eq!(validate_tx_request(&TransactionRequest::default()), Ok(()));
+    }
+
+    #[test]
+    fn no_nonce_allowed() {
+        assert_eq!(
+            validate_tx_request(&TransactionRequest::default().with_nonce(1)),
+            Err(OdysseyWalletError::NonceSet)
+        );
+
+        assert_eq!(validate_tx_request(&TransactionRequest::default()), Ok(()));
     }
 }

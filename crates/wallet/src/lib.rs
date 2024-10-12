@@ -141,8 +141,11 @@ pub enum OdysseyWalletError {
     /// The request was estimated to consume too much gas.
     ///
     /// The gas usage by each request is limited to counteract draining the sequencers funds.
-    #[error("request would use too much gas")]
-    GasEstimateTooHigh,
+    #[error("request would use too much gas: estimated {estimate}")]
+    GasEstimateTooHigh {
+        /// The amount of gas the request was estimated to consume.
+        estimate: u64,
+    },
     /// An internal error occurred.
     #[error("internal error")]
     InternalError,
@@ -272,8 +275,8 @@ where
             EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None)
                 .await
                 .map_err(Into::into)?;
-        if estimate >= U256::from(150_000) {
-            return Err(OdysseyWalletError::GasEstimateTooHigh.into());
+        if estimate >= U256::from(350_000) {
+            return Err(OdysseyWalletError::GasEstimateTooHigh { estimate: estimate.to() }.into());
         }
         request = request.gas_limit(estimate.to());
 

@@ -66,9 +66,9 @@ To run Odyssey from source, clone the repository and run the following commands:
 git clone https://github.com/ithacaxyz/odyssey.git
 cd odyssey
 cargo install --path bin/odyssey
-odyssey node
+odyssey node \
     --chain etc/odyssey-genesis.json \
-    --rollup.sequencer-http <TODO> \
+    --rollup.sequencer-http <rollup-sequencer-http> \
     --http \
     --ws \
     --authrpc.port 9551 \

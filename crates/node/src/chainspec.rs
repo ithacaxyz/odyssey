@@ -66,7 +66,7 @@ pub static ODYSSEY_MAINNET: Lazy<Arc<OpChainSpec>> = Lazy::new(|| {
         genesis_hash: once_cell_set(b256!(
             "2f980576711e3617a5e4d83dd539548ec0f7792007d505a3d2e9674833af2d7c"
         )),
-        paris_block_and_final_difficulty: Some((0, U256::from(0))),
+        paris_block_and_final_difficulty: Some((0, U256::ZERO)),
         hardforks: ODYSSEY_FORKS.clone(),
         base_fee_params: BaseFeeParamsKind::Variable(
             vec![

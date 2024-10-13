@@ -68,8 +68,11 @@ cd odyssey
 cargo install --path bin/odyssey
 odyssey node \
     --chain etc/odyssey-genesis.json \
+    --rollup.sequencer-http <rollup-sequencer-http> \
     --http \
-    --ws
+    --ws \
+    --authrpc.port 9551 \
+    --authrpc.jwtsecret /path/to/jwt.hex
 ```
 
 #### Running op-node with the Odyssey configuration

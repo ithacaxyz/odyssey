@@ -31,6 +31,11 @@ alloy-primitives.workspace = true
 serde_json.workspace = true
 
 eyre.workspace = true
+criterion = "0.5.1"
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "revm_spec"
+harness = false

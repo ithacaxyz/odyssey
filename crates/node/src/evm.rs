@@ -31,7 +31,7 @@ use reth_revm::{
     },
     ContextPrecompiles, Database, Evm, EvmBuilder, GetInspector,
 };
-use std::sync::Arc;
+use std::{cmp::Ordering, sync::Arc};
 
 /// Custom EVM configuration
 #[derive(Debug, Clone)]
@@ -289,17 +289,29 @@ fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> SpecId {
         (Hardfork::Ethereum(EthereumHardfork::Frontier), SpecId::FRONTIER),
     ];
 
-    HARDFORKS
-        .iter()
-        .find(|(fork, _)| match fork {
+    let mut left = 0;
+    let mut right = HARDFORKS.len() - 1;
+
+    while left <= right {
+        let mid = left + (right - left) / 2;
+        let (ref fork, spec_id) = HARDFORKS[mid];
+
+        let is_active = match fork {
             Hardfork::Ethereum(f) => chain_spec.fork(*f).active_at_head(block),
             Hardfork::Optimism(f) => chain_spec.fork(*f).active_at_head(block),
-        })
-        .map(|(_, spec_id)| *spec_id)
-        .unwrap_or_else(|| panic!(
-            "invalid hardfork chainspec: expected at least one hardfork, got {:?}",
-            chain_spec.hardforks
-        ))
+        };
+
+        match is_active.cmp(&true) {
+            Ordering::Equal => return spec_id,
+            Ordering::Greater => right = mid - 1,
+            Ordering::Less => left = mid + 1,
+        }
+    }
+
+    panic!(
+        "invalid hardfork chainspec: expected at least one hardfork, got {:?}",
+        chain_spec.hardforks
+    )
 }
 
 #[cfg(test)]

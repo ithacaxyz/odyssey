@@ -272,19 +272,18 @@ where
         request.chain_id = Some(self.chain_id());
 
         // set gas limit
-        let estimate =
-            EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None)
-                .await
-                .map_err(Into::into)?;
+        let (estimate, base_fee) = tokio::join!(
+            EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None),
+            LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
+        );
+
+        let estimate = estimate.map_err(Into::into)?;
         if estimate >= U256::from(350_000) {
             return Err(OdysseyWalletError::GasEstimateTooHigh { estimate: estimate.to() }.into());
         }
         request.gas = Some(estimate.to());
 
-        // set gas fees
-        let (base_fee, _) = LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
-            .await
-            .map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
+        let (base_fee, _) = base_fee.map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
         let max_priority_fee_per_gas = 1_000_000_000; // 1 gwei
         request.max_fee_per_gas = Some(base_fee.to::<u128>() + max_priority_fee_per_gas);
         request.max_priority_fee_per_gas = Some(max_priority_fee_per_gas);

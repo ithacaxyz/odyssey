@@ -258,32 +258,27 @@ where
         // we acquire the permit here so that all following operations are performed exclusively
         let _permit = self.inner.permit.lock().await;
 
-        // set nonce
-        let tx_count = EthState::transaction_count(
-            &self.inner.eth_api,
-            NetworkWallet::<Ethereum>::default_signer_address(&self.inner.wallet),
-            Some(BlockId::pending()),
+        // Fetch nonce, estimate gas, and get base fee simultaneously
+        let (tx_count, estimate, (base_fee, _)) = tokio::try_join!(
+            EthState::transaction_count(
+                &self.inner.eth_api,
+                NetworkWallet::<Ethereum>::default_signer_address(&self.inner.wallet),
+                Some(BlockId::pending()),
+            ),
+            EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None),
+            LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
         )
-        .await
-        .map_err(Into::into)?;
+        .map_err(|_| OdysseyWalletError::InternalError)?;
         request.nonce = Some(tx_count.to());
 
         // set chain id
         request.chain_id = Some(self.chain_id());
 
-        // set gas limit
-        let (estimate, base_fee) = tokio::join!(
-            EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None),
-            LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
-        );
-
-        let estimate = estimate.map_err(Into::into)?;
         if estimate >= U256::from(350_000) {
             return Err(OdysseyWalletError::GasEstimateTooHigh { estimate: estimate.to() }.into());
         }
         request.gas = Some(estimate.to());
 
-        let (base_fee, _) = base_fee.map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
         let max_priority_fee_per_gas = 1_000_000_000; // 1 gwei
         request.max_fee_per_gas = Some(base_fee.to::<u128>() + max_priority_fee_per_gas);
         request.max_priority_fee_per_gas = Some(max_priority_fee_per_gas);

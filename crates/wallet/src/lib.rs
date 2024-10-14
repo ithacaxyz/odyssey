@@ -337,8 +337,13 @@ fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWallet
 
 #[cfg(test)]
 mod tests {
-    use crate::{Capabilities, DelegationCapability, WalletCapabilities};
-    use alloy_primitives::{address, map::HashMap};
+    use crate::{
+        validate_tx_request, Capabilities, DelegationCapability, OdysseyWalletError,
+        WalletCapabilities,
+    };
+    use alloy_network::TransactionBuilder;
+    use alloy_primitives::{address, map::HashMap, Address, U256};
+    use alloy_rpc_types::TransactionRequest;
 
     #[test]
     fn ser() {
@@ -378,12 +383,6 @@ mod tests {
             )]))
         );
     }
-
-    use alloy_network::TransactionBuilder;
-    use alloy_primitives::{Address, U256};
-    use alloy_rpc_types::TransactionRequest;
-
-    use crate::{validate_tx_request, OdysseyWalletError};
 
     #[test]
     fn no_value_allowed() {

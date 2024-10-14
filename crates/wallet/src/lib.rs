@@ -274,11 +274,24 @@ where
         // set chain id
         request.chain_id = Some(self.chain_id());
 
-        if estimate >= U256::from(350_000) {
-            return Err(OdysseyWalletError::GasEstimateTooHigh { estimate: estimate.to() }.into());
-        }
-        request.gas = Some(estimate.to());
+        // Fetch nonce, estimate gas, and get base fee simultaneously
+        let (tx_count, estimate, (base_fee, _)) = tokio::try_join!(
+           EthState::transaction_count(
+              &self.inner.eth_api,
+              NetworkWallet::<Ethereum>::default_signer_address(&self.inner.wallet),
+              Some(BlockId::pending()),
+           ),
+           EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None),
+           LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
+           )
+           .map_err(|_| OdysseyWalletError::InternalError)?;
+           request.nonce = Some(tx_count.to());
 
+           if estimate >= U256::from(350_000) {
+              return Err(OdysseyWalletError::GasEstimateTooHigh { estimate: estimate.to() }.into());
+           }
+           request.gas = Some(estimate.to());  
+      
         let max_priority_fee_per_gas = 1_000_000_000; // 1 gwei
         request.max_fee_per_gas = Some(base_fee.to::<u128>() + max_priority_fee_per_gas);
         request.max_priority_fee_per_gas = Some(max_priority_fee_per_gas);
@@ -337,8 +350,13 @@ fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWallet
 
 #[cfg(test)]
 mod tests {
-    use crate::{Capabilities, DelegationCapability, WalletCapabilities};
-    use alloy_primitives::{address, map::HashMap};
+    use crate::{
+        validate_tx_request, Capabilities, DelegationCapability, OdysseyWalletError,
+        WalletCapabilities,
+    };
+    use alloy_network::TransactionBuilder;
+    use alloy_primitives::{address, map::HashMap, Address, U256};
+    use alloy_rpc_types::TransactionRequest;
 
     #[test]
     fn ser() {
@@ -378,12 +396,6 @@ mod tests {
             )]))
         );
     }
-
-    use alloy_network::TransactionBuilder;
-    use alloy_primitives::{Address, U256};
-    use alloy_rpc_types::TransactionRequest;
-
-    use crate::{validate_tx_request, OdysseyWalletError};
 
     #[test]
     fn no_value_allowed() {

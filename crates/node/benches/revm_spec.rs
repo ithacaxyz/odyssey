@@ -5,7 +5,7 @@ use alloy_primitives:: U256;
 use reth_chainspec::{ ChainSpec, EthereumHardfork, ForkCondition, Head};
 use reth_optimism_forks::OptimismHardfork;
 use reth_revm::primitives::SpecId;
-use std::{cmp::Ordering, time::Duration};
+use std::time::Duration;
 
 
 fn revm_spec_one(chain_spec: &ChainSpec, block: &Head) -> SpecId {
@@ -87,26 +87,19 @@ fn revm_spec_two(chain_spec: &ChainSpec, block: &Head) -> SpecId {
         (Hardfork::Ethereum(EthereumHardfork::Frontier), SpecId::FRONTIER),
     ];
 
+    let hardforks = HARDFORKS.iter().rev();
 
-    let mut left = 0;
-    let mut right = HARDFORKS.len() - 1;
-
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        let (ref fork, spec_id) = HARDFORKS[mid];
-
+    for (fork, spec_id) in hardforks {
         let is_active = match fork {
-            Hardfork::Ethereum(f) => chain_spec.fork(*f).active_at_head(block),
-            Hardfork::Optimism(f) => chain_spec.fork(*f).active_at_head(block),
+            Hardfork::Ethereum(f) => chain_spec.is_fork_active_at_block(f, block.number),
+            Hardfork::Optimism(f) => chain_spec.is_fork_active_at_block(f, block.number),
         };
 
-        match is_active.cmp(&true) {
-            Ordering::Equal => return spec_id,
-            Ordering::Greater => right = mid - 1,
-            Ordering::Less => left = mid + 1,
+        if is_active {
+            return *spec_id;
         }
     }
-
+  
     panic!(
         "invalid hardfork chainspec: expected at least one hardfork, got {:?}",
         chain_spec.hardforks

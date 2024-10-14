@@ -31,7 +31,7 @@ use reth_revm::{
     },
     ContextPrecompiles, Database, Evm, EvmBuilder, GetInspector,
 };
-use std::{cmp::Ordering, sync::Arc};
+use std:: sync::Arc;
 
 /// Custom EVM configuration
 #[derive(Debug, Clone)]
@@ -266,7 +266,7 @@ fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> SpecId {
         Optimism(OptimismHardfork),
     }
 
-    const HARDFORKS: &[(Hardfork, SpecId)] = &[
+    static HARDFORKS: [(Hardfork, SpecId); 20] =  [
         (Hardfork::Ethereum(EthereumHardfork::Prague), SpecId::PRAGUE_EOF),
         (Hardfork::Optimism(OptimismHardfork::Granite), SpecId::GRANITE),
         (Hardfork::Optimism(OptimismHardfork::Fjord), SpecId::FJORD),
@@ -289,25 +289,19 @@ fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> SpecId {
         (Hardfork::Ethereum(EthereumHardfork::Frontier), SpecId::FRONTIER),
     ];
 
-    let mut left = 0;
-    let mut right = HARDFORKS.len() - 1;
+    let hardforks = HARDFORKS.iter().rev();
 
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        let (ref fork, spec_id) = HARDFORKS[mid];
-
+    for (fork, spec_id) in hardforks {
         let is_active = match fork {
-            Hardfork::Ethereum(f) => chain_spec.fork(*f).active_at_head(block),
-            Hardfork::Optimism(f) => chain_spec.fork(*f).active_at_head(block),
+            Hardfork::Ethereum(f) => chain_spec.is_fork_active_at_block(f, block.number),
+            Hardfork::Optimism(f) => chain_spec.is_fork_active_at_block(f, block.number),
         };
 
-        match is_active.cmp(&true) {
-            Ordering::Equal => return spec_id,
-            Ordering::Greater => right = mid - 1,
-            Ordering::Less => left = mid + 1,
+        if is_active {
+            return *spec_id;
         }
     }
-
+  
     panic!(
         "invalid hardfork chainspec: expected at least one hardfork, got {:?}",
         chain_spec.hardforks

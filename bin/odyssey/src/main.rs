@@ -34,7 +34,6 @@ use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher};
 use reth_optimism_cli::Cli;
 use reth_optimism_node::{args::RollupArgs, node::OptimismAddOns};
-use reth_optimism_rpc::sequencer::SequencerClient;
 use reth_provider::{providers::BlockchainProvider2, CanonStateSubscriptions};
 use tracing::{info, warn};
 
@@ -57,13 +56,6 @@ fn main() {
                 .with_components(OdysseyNode::components(&rollup_args))
                 .with_add_ons(OptimismAddOns::new(rollup_args.sequencer_http.clone()))
                 .extend_rpc_modules(move |ctx| {
-                    // register sequencer tx forwarder
-                    if let Some(sequencer_http) = rollup_args.sequencer_http {
-                        ctx.registry
-                            .eth_api()
-                            .set_sequencer_client(SequencerClient::new(sequencer_http))?;
-                    }
-
                     // register odyssey wallet namespace
                     if let Ok(sk) = std::env::var("EXP1_SK") {
                         let signer: PrivateKeySigner =

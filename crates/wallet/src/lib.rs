@@ -26,6 +26,8 @@ use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
 };
+use metrics::Counter;
+use metrics_derive::Metrics;
 use reth_primitives::{revm_primitives::Bytecode, BlockId};
 use reth_rpc_eth_api::helpers::{EthCall, EthState, EthTransactions, FullEthApi, LoadFee};
 use reth_storage_api::{StateProvider, StateProviderFactory};
@@ -186,6 +188,7 @@ impl<Provider, Eth> OdysseyWallet<Provider, Eth> {
                 Capabilities { delegation: DelegationCapability { addresses: valid_designations } },
             )])),
             permit: Default::default(),
+            metrics: WalletMetrics::default(),
         };
         Self { inner: Arc::new(inner) }
     }
@@ -210,7 +213,15 @@ where
         trace!(target: "rpc::wallet", ?request, "Serving wallet_sendTransaction");
 
         // validate fields common to eip-7702 and eip-1559
-        validate_tx_request(&request)?;
+        match validate_tx_request(&request) {
+            Ok(_) => {
+                self.inner.metrics.valid_send_transaction_calls.increment(1);
+            }
+            Err(err) => {
+                self.inner.metrics.invalid_send_transaction_calls.increment(1);
+                return Err(err.into());
+            }
+        }
 
         let valid_delegations: &[Address] = self
             .inner
@@ -322,6 +333,8 @@ struct OdysseyWalletInner<Provider, Eth> {
     capabilities: WalletCapabilities,
     /// Used to guard tx signing
     permit: Mutex<()>,
+    /// Metrics for a `wallet`.
+    metrics: WalletMetrics,
 }
 
 fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWalletError> {
@@ -341,6 +354,16 @@ fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWallet
     }
 
     Ok(())
+}
+
+/// Metrics for a `wallet`.
+#[derive(Metrics)]
+#[metrics(scope = "wallet")]
+struct WalletMetrics {
+    /// Number of invalid calls to `wallet_sendTransaction`
+    invalid_send_transaction_calls: Counter,
+    /// Number of valid calls to `wallet_sendTransaction`
+    valid_send_transaction_calls: Counter,
 }
 
 #[cfg(test)]

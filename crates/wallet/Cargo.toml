@@ -25,6 +25,9 @@ thiserror.workspace = true
 tracing.workspace = true
 tokio = { workspace = true, features = ["sync"] }
 
+metrics.workspace = true
+metrics-derive.workspace = true
+
 [dev-dependencies]
 serde_json.workspace = true
 jsonrpsee = { workspace = true, features = ["server", "client", "macros"] }

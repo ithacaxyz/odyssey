@@ -4432,24 +4432,17 @@ dependencies = [
  "alloy-network",
  "alloy-primitives",
  "alloy-signer-local",
- "async-trait",
  "clap",
  "eyre",
- "futures",
- "jsonrpsee",
  "odyssey-node",
  "odyssey-wallet",
+ "odyssey-walltime",
  "reth-cli-util",
- "reth-exex",
  "reth-node-builder",
  "reth-optimism-cli",
  "reth-optimism-node",
  "reth-optimism-rpc",
  "reth-provider",
- "serde",
- "serde_json",
- "tokio",
- "tokio-stream",
  "tracing",
 ]
 
@@ -4524,6 +4517,17 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "odyssey-walltime"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "jsonrpsee",
+ "reth-chain-state",
+ "serde",
+ "tokio",
 ]
 
 [[package]]

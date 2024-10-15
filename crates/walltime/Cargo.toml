@@ -1,0 +1,27 @@
+[package]
+name = "odyssey-walltime"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+reth-chain-state.workspace = true
+
+jsonrpsee = { workspace = true, features = ["server", "macros"] }
+serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["sync"] }
+futures.workspace = true
+
+
+[dev-dependencies]
+jsonrpsee = { workspace = true, features = ["server", "client", "macros"] }
+
+

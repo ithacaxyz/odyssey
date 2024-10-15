@@ -5,6 +5,7 @@ members = [
     "crates/precompile",
     "crates/testing",
     "crates/wallet",
+    "crates/walltime",
 ]
 default-members = ["bin/odyssey/"]
 resolver = "2"
@@ -137,6 +138,7 @@ strip = false
 odyssey-node = { path = "crates/node" }
 odyssey-precompile = { path = "crates/precompile" }
 odyssey-wallet = { path = "crates/wallet" }
+odyssey-walltime = { path = "crates/walltime" }
 
 alloy = { version = "0.4", features = [
     "contract",
@@ -191,7 +193,7 @@ reth-tracing = { git = "https://github.com/paradigmxyz/reth.git", rev = "75dda1c
 reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", rev = "75dda1c" }
 reth-network = { git = "https://github.com/paradigmxyz/reth.git", rev = "75dda1c" }
 reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "75dda1c" }
-reth-exex = { git = "https://github.com/paradigmxyz/reth.git", rev = "75dda1c" }
+reth-chain-state = { git = "https://github.com/paradigmxyz/reth.git", rev = "75dda1c" }
 
 # rpc
 jsonrpsee = "0.24"
@@ -203,6 +205,7 @@ tracing = "0.1.0"
 serde = "1"
 serde_json = "1"
 thiserror = "1"
+futures = "0.3"
 
 # misc-testing
 rstest = "0.18.2"

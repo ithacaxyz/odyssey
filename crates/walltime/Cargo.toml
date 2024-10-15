@@ -23,5 +23,3 @@ futures.workspace = true
 
 [dev-dependencies]
 jsonrpsee = { workspace = true, features = ["server", "client", "macros"] }
-
-

@@ -259,16 +259,22 @@ where
         let _permit = self.inner.permit.lock().await;
 
         // Fetch nonce, estimate gas, and get base fee simultaneously
-        let (tx_count, estimate, (base_fee, _)) = tokio::try_join!(
-            EthState::transaction_count(
-                &self.inner.eth_api,
-                NetworkWallet::<Ethereum>::default_signer_address(&self.inner.wallet),
-                Some(BlockId::pending()),
-            ),
-            EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None),
-            LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
-        )
-        .map_err(|_| OdysseyWalletError::InternalError)?;
+        let tx_count = EthState::transaction_count(
+            &self.inner.eth_api,
+            NetworkWallet::<Ethereum>::default_signer_address(&self.inner.wallet),
+            Some(BlockId::pending()),
+        );
+        
+        let estimate_future =
+            EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None);
+
+        let fee_future = LoadFee::eip1559_fees(&self.inner.eth_api, None, None);
+
+        // Join the futures
+        let (tx_count, estimate, (base_fee, _)) =
+            tokio::try_join!(tx_count, estimate_future, fee_future)
+                .map_err(|_| OdysseyWalletError::InternalError)?;
+
         request.nonce = Some(tx_count.to());
 
         // set chain id

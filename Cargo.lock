@@ -4436,6 +4436,7 @@ dependencies = [
  "eyre",
  "odyssey-node",
  "odyssey-wallet",
+ "odyssey-walltime",
  "reth-cli-util",
  "reth-node-builder",
  "reth-optimism-cli",
@@ -4516,6 +4517,17 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "odyssey-walltime"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "jsonrpsee",
+ "reth-chain-state",
+ "serde",
+ "tokio",
 ]
 
 [[package]]

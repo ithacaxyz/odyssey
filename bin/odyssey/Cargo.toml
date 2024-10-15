@@ -17,6 +17,7 @@ alloy-network.workspace = true
 alloy-primitives.workspace = true
 odyssey-node.workspace = true
 odyssey-wallet.workspace = true
+odyssey-walltime.workspace = true
 eyre.workspace = true
 tracing.workspace = true
 reth-cli-util.workspace = true

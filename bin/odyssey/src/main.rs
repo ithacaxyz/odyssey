@@ -30,11 +30,12 @@ use clap::Parser;
 use eyre::Context;
 use odyssey_node::{chainspec::OdysseyChainSpecParser, node::OdysseyNode};
 use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer};
+use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher};
 use reth_optimism_cli::Cli;
 use reth_optimism_node::{args::RollupArgs, node::OptimismAddOns};
 use reth_optimism_rpc::sequencer::SequencerClient;
-use reth_provider::providers::BlockchainProvider2;
+use reth_provider::{providers::BlockchainProvider2, CanonStateSubscriptions};
 use tracing::{info, warn};
 
 #[global_allocator]
@@ -92,6 +93,10 @@ fn main() {
                     } else {
                         warn!(target: "reth::cli", "EXP0001 wallet not configured");
                     }
+
+                    let walltime = OdysseyWallTime::spawn(ctx.provider().canonical_state_stream());
+                    ctx.modules.merge_configured(walltime.into_rpc())?;
+                    info!(target: "reth::cli", "Walltime configured");
 
                     Ok(())
                 })

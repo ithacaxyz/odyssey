@@ -1,0 +1,60 @@
+# Runs E2E tests against Kurtosis.
+
+name: e2e
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main]
+  
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - uses: taiki-e/install-action@nextest
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Install Kurtosis
+        run: | 
+            echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+            sudo apt update
+            sudo apt install kurtosis-cli
+      - name: Build optimism-contract-deployer
+        run: |
+            git clone https://github.com/klkvr/optimism-package
+            cd optimism-package
+            git switch odyssey
+            docker buildx build . --load -t ethpandaops/optimism-contract-deployer:latest
+      - name: Build Odyssey
+        run: docker buildx build . --load -t ghcr.io/ithacaxyz/odyssey:latest
+      - name: Run enclave
+        id: kurtosis
+        run: |
+            kurtosis engine start
+            kurtosis run --enclave op-devnet ./optimism-package --args-file ./etc/kurtosis.yaml
+            ENCLAVE_ID=$(curl http://127.0.0.1:9779/api/enclaves | jq --raw-output 'keys[0]')
+            SEQUENCER_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-1-op-reth-op-node".public_ports.rpc.number')
+            REPLICA_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-2-op-reth-op-node".public_ports.rpc.number')
+            echo "SEQUENCER_RPC=http://127.0.0.1:$SEQUENCER_EL_PORT" >> $GITHUB_ENV
+            echo "REPLICA_RPC=http://127.0.0.1:$REPLICA_EL_PORT" >> $GITHUB_ENV
+      - name: Run E2E tests
+        run: |
+            cargo nextest run \
+            --locked \
+            --workspace \
+            -E "package(odyssey-testing)"

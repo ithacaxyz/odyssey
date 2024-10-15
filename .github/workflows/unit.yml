@@ -34,7 +34,7 @@ jobs:
           cargo nextest run \
             --locked \
             --workspace \
-            -E "kind(lib) | kind(bin) | kind(proc-macro)"
+            -E "(kind(lib) | kind(bin) | kind(proc-macro)) & !package(odyssey-testing)"
 
   doc:
     name: doc tests

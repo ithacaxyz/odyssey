@@ -47,14 +47,14 @@ impl OdysseyWallTime {
     }
 }
 
-/// Implementation of the Odyssey `wallet_` namespace.
+/// Implementation of the Odyssey `odyssey_getWallTimeData` endpoint.
 #[derive(Debug, Default)]
 struct OdysseyWallTimeInner {
     /// Tracks the recent blocktime data
     block_time_data: RwLock<Option<BlockTimeData>>,
 }
 
-/// Data about the current time and the last block for `WallTimeExEx`.
+/// Data about the current time and the last block's.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct WallTimeData {
     /// Wall time right now
@@ -88,8 +88,8 @@ impl OdysseyWallTimeRpcApiServer for OdysseyWallTime {
     }
 }
 
+/// Time data about the last block.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
-/// Data about the last block for `WallTimeExEx`.
 pub struct BlockTimeData {
     /// Wall time of last block
     wall_time_ms: u64,

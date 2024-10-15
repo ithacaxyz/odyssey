@@ -15,7 +15,7 @@ use reth_node_builder::{
         ComponentsBuilder, ExecutorBuilder, NetworkBuilder, PayloadServiceBuilder,
         PoolBuilderConfigOverrides,
     },
-    BuilderContext, Node, NodeTypes,
+    BuilderContext, Node, NodeAdapter, NodeComponentsBuilder, NodeTypes,
 };
 use reth_optimism_chainspec::OpChainSpec;
 use reth_optimism_node::{
@@ -108,7 +108,9 @@ where
         OptimismEngineValidatorBuilder,
     >;
 
-    type AddOns = OptimismAddOns;
+    type AddOns = OptimismAddOns<
+        NodeAdapter<N, <Self::ComponentsBuilder as NodeComponentsBuilder<N>>::Components>,
+    >;
 
     fn components_builder(&self) -> Self::ComponentsBuilder {
         let Self { args } = self;

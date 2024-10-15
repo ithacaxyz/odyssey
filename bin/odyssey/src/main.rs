@@ -29,14 +29,14 @@ use alloy_signer_local::PrivateKeySigner;
 use async_trait::async_trait;
 use clap::Parser;
 use eyre::Context;
-use odyssey_node::{chainspec::OdysseyChainSpecParser, node::OdysseyNode};
-use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer};
 use futures::StreamExt;
 use jsonrpsee::{
     core::RpcResult,
     proc_macros::rpc,
     types::{error::INTERNAL_ERROR_CODE, ErrorObject, ErrorObjectOwned},
 };
+use odyssey_node::{chainspec::OdysseyChainSpecParser, node::OdysseyNode};
+use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer};
 use reth_exex::{ExExContext, ExExNotification};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher, FullNodeComponents};
 use reth_optimism_cli::Cli;
@@ -253,4 +253,3 @@ impl WallTimeRpcExtApiServer for WallTimeRpcExt {
 fn rpc_internal_error() -> ErrorObjectOwned {
     ErrorObject::owned(INTERNAL_ERROR_CODE, "internal error", Some(""))
 }
-

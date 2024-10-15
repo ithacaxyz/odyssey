@@ -25,7 +25,20 @@ reth-optimism-node.workspace = true
 reth-optimism-cli.workspace = true
 reth-optimism-rpc.workspace = true
 reth-provider.workspace = true
+reth-exex.workspace = true
+futures = "0.3"
 clap = { workspace = true, features = ["derive"] }
+async-trait = "0.1"
+jsonrpsee = { version = "0.24", features = ["server", "macros"] }
+tokio-stream = "0.1"
+tokio = { workspace = true, features = [
+    "sync",
+    "macros",
+    "time",
+    "rt-multi-thread",
+] }
+serde.workspace = true
+serde_json.workspace = true
 
 [features]
 default = ["jemalloc"]

@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{trace, warn};
 
-use reth_revm as _;
+use reth_optimism_rpc as _;
 use tokio::sync::Mutex;
 
 /// The capability to perform [EIP-7702][eip-7702] delegations, sponsored by the sequencer.

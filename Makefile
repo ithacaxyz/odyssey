@@ -146,3 +146,67 @@ define docker_build_push
 		--provenance=false \
 		--push
 endef
+
+##@ Other
+
+.PHONY: clean
+clean: ## Perform a `cargo` clean and remove the binary directory.
+	cargo clean
+	rm -rf $(BIN_DIR)
+
+fmt:
+	cargo +nightly fmt
+
+lint-odyssey:
+	cargo +nightly clippy \
+    	--workspace \
+    	--bin "odyssey" \
+    	--lib \
+    	--tests \
+    	--benches \
+    	--features "$(FEATURES)" \
+    	-- -D warnings
+
+lint-other-targets:
+	cargo +nightly clippy \
+    	--workspace \
+    	--lib \
+    	--tests \
+    	--benches \
+    	--all-features \
+    	-- -D warnings
+
+lint:
+	make fmt && \
+	make lint-odyssey && \
+	make lint-other-targets
+
+fix-lint-odyssey:
+	cargo +nightly clippy \
+    	--workspace \
+    	--bin "odyssey" \
+    	--lib \
+    	--tests \
+    	--benches \
+    	--features "$(FEATURES)" \
+    	--fix \
+    	--allow-staged \
+    	--allow-dirty \
+    	-- -D warnings
+
+fix-lint-other-targets:
+	cargo +nightly clippy \
+    	--workspace \
+    	--lib \
+    	--tests \
+    	--benches \
+    	--all-features \
+    	--fix \
+    	--allow-staged \
+    	--allow-dirty \
+    	-- -D warnings
+
+fix-lint:
+	make fix-lint-odyssey && \
+	make fix-lint-other-targets && \
+	make fmt

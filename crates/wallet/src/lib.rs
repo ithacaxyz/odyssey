@@ -352,7 +352,7 @@ struct OdysseyWalletInner<Provider, Eth> {
     capabilities: WalletCapabilities,
     /// Used to guard tx signing
     permit: Mutex<()>,
-    /// Metrics for a `wallet`.
+    /// Metrics for the `wallet_` RPC namespace.
     metrics: WalletMetrics,
 }
 

@@ -101,7 +101,7 @@ To get started, follow [these instructions](https://docs.kurtosis.com/install/) 
 Next, clone and build the modified `optimism-contract-deployer` image:
 
 ```bash
-git clone git@github.com:paradigmxyz/optimism-package.git
+git clone git@github.com:klkvr/optimism-package.git
 cd optimism-package
 git switch odyssey
 docker build . -t ethpandaops/optimism-contract-deployer:latest --progress plain
@@ -114,7 +114,7 @@ docker build . -t ethpandaops/optimism-contract-deployer:latest --progress plain
 Finally, run start a Kurtosis enclave (ensure you are still in `optimism-package`):
 
 ```bash
-kurtosis run --enclave op-devnet github.com/paradigmxyz/optimism-package@odyssey \
+kurtosis run --enclave op-devnet github.com/klkvr/optimism-package@odyssey \
   --args-file https://raw.githubusercontent.com/ithacaxyz/odyssey/main/etc/kurtosis.yaml
 ```
 

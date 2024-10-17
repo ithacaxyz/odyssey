@@ -6,8 +6,8 @@ use alloy::{
     providers::{PendingTransactionBuilder, Provider, ProviderBuilder},
     signers::SignerSync,
 };
-use alloy_rpc_types::TransactionRequest;
 use alloy_network::{TransactionBuilder, TransactionBuilder7702};
+use alloy_rpc_types::TransactionRequest;
 use alloy_signer_local::PrivateKeySigner;
 use url::Url;
 

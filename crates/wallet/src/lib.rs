@@ -26,6 +26,8 @@ use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
 };
+use metrics::Counter;
+use metrics_derive::Metrics;
 use reth_primitives::{revm_primitives::Bytecode, BlockId};
 use reth_rpc_eth_api::helpers::{EthCall, EthState, EthTransactions, FullEthApi, LoadFee};
 use reth_storage_api::{StateProvider, StateProviderFactory};
@@ -186,6 +188,7 @@ impl<Provider, Eth> OdysseyWallet<Provider, Eth> {
                 Capabilities { delegation: DelegationCapability { addresses: valid_designations } },
             )])),
             permit: Default::default(),
+            metrics: WalletMetrics::default(),
         };
         Self { inner: Arc::new(inner) }
     }
@@ -210,7 +213,10 @@ where
         trace!(target: "rpc::wallet", ?request, "Serving wallet_sendTransaction");
 
         // validate fields common to eip-7702 and eip-1559
-        validate_tx_request(&request)?;
+        if let Err(err) = validate_tx_request(&request) {
+            self.inner.metrics.invalid_send_transaction_calls.increment(1);
+            return Err(err.into());
+        }
 
         let valid_delegations: &[Address] = self
             .inner
@@ -221,6 +227,7 @@ where
         if let Some(authorizations) = &request.authorization_list {
             // check that all auth items delegate to a valid address
             if authorizations.iter().any(|auth| !valid_delegations.contains(&auth.address)) {
+                self.inner.metrics.invalid_send_transaction_calls.increment(1);
                 return Err(OdysseyWalletError::InvalidAuthorization.into());
             }
         }
@@ -230,8 +237,10 @@ where
             // if this is an eip-1559 tx, ensure that it is an account that delegates to a
             // whitelisted address
             (false, Some(TxKind::Call(addr))) => {
-                let state =
-                    self.inner.provider.latest().map_err(|_| OdysseyWalletError::InternalError)?;
+                let state = self.inner.provider.latest().map_err(|_| {
+                    self.inner.metrics.invalid_send_transaction_calls.increment(1);
+                    OdysseyWalletError::InternalError
+                })?;
                 let delegated_address = state
                     .account_code(addr)
                     .ok()
@@ -246,13 +255,17 @@ where
                 if delegated_address == Address::ZERO
                     || !valid_delegations.contains(&delegated_address)
                 {
+                    self.inner.metrics.invalid_send_transaction_calls.increment(1);
                     return Err(OdysseyWalletError::IllegalDestination.into());
                 }
             }
             // if it's an eip-7702 tx, let it through
             (true, _) => (),
             // create tx's disallowed
-            _ => return Err(OdysseyWalletError::IllegalDestination.into()),
+            _ => {
+                self.inner.metrics.invalid_send_transaction_calls.increment(1);
+                return Err(OdysseyWalletError::IllegalDestination.into());
+            }
         }
 
         // we acquire the permit here so that all following operations are performed exclusively
@@ -265,7 +278,10 @@ where
             Some(BlockId::pending()),
         )
         .await
-        .map_err(Into::into)?;
+        .map_err(|err| {
+            self.inner.metrics.invalid_send_transaction_calls.increment(1);
+            err.into()
+        })?;
         request.nonce = Some(tx_count.to());
 
         // set chain id
@@ -279,14 +295,22 @@ where
             EthCall::estimate_gas_at(&self.inner.eth_api, request.clone(), BlockId::latest(), None),
             LoadFee::eip1559_fees(&self.inner.eth_api, None, None)
         );
-        let estimate = estimate.map_err(Into::into)?;
+        let estimate = estimate.map_err(|err| {
+            self.inner.metrics.invalid_send_transaction_calls.increment(1);
+            err.into()
+        })?;
+
         if estimate >= U256::from(350_000) {
+            self.inner.metrics.invalid_send_transaction_calls.increment(1);
             return Err(OdysseyWalletError::GasEstimateTooHigh { estimate: estimate.to() }.into());
         }
         request.gas = Some(estimate.to());
 
         // set gas price
-        let (base_fee, _) = base_fee.map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
+        let (base_fee, _) = base_fee.map_err(|_| {
+            self.inner.metrics.invalid_send_transaction_calls.increment(1);
+            OdysseyWalletError::InvalidTransactionRequest
+        })?;
         let max_priority_fee_per_gas = 1_000_000_000; // 1 gwei
         request.max_fee_per_gas = Some(base_fee.to::<u128>() + max_priority_fee_per_gas);
         request.max_priority_fee_per_gas = Some(max_priority_fee_per_gas);
@@ -299,7 +323,13 @@ where
                 &self.inner.wallet,
             )
             .await
-            .map_err(|_| OdysseyWalletError::InvalidTransactionRequest)?;
+            .map_err(|_| {
+                self.inner.metrics.invalid_send_transaction_calls.increment(1);
+                OdysseyWalletError::InvalidTransactionRequest
+            })?;
+
+        // all checks passed, increment the valid calls counter
+        self.inner.metrics.valid_send_transaction_calls.increment(1);
 
         // this uses the internal `OpEthApi` to either forward the tx to the sequencer, or add it to
         // the txpool
@@ -322,6 +352,8 @@ struct OdysseyWalletInner<Provider, Eth> {
     capabilities: WalletCapabilities,
     /// Used to guard tx signing
     permit: Mutex<()>,
+    /// Metrics for the `wallet_` RPC namespace.
+    metrics: WalletMetrics,
 }
 
 fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWalletError> {
@@ -341,6 +373,16 @@ fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWallet
     }
 
     Ok(())
+}
+
+/// Metrics for the `wallet_` RPC namespace.
+#[derive(Metrics)]
+#[metrics(scope = "wallet")]
+struct WalletMetrics {
+    /// Number of invalid calls to `wallet_sendTransaction`
+    invalid_send_transaction_calls: Counter,
+    /// Number of valid calls to `wallet_sendTransaction`
+    valid_send_transaction_calls: Counter,
 }
 
 #[cfg(test)]

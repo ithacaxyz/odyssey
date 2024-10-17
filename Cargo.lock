@@ -4523,6 +4523,8 @@ dependencies = [
  "alloy-rpc-types",
  "jsonrpsee",
  "reth-optimism-rpc",
+ "metrics",
+ "metrics-derive",
  "reth-primitives",
  "reth-rpc-eth-api",
  "reth-storage-api",

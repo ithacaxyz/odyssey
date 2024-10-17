@@ -17,7 +17,7 @@ alloy-rpc-types.workspace = true
 reth-primitives.workspace = true
 reth-storage-api.workspace = true
 reth-rpc-eth-api.workspace = true
-reth-revm.workspace = true
+reth-optimism-rpc.workspace = true
 
 jsonrpsee = { workspace = true, features = ["server", "macros"] }
 serde = { workspace = true, features = ["derive"] }

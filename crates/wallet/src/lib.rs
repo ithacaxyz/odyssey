@@ -35,7 +35,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{trace, warn};
 
-use reth_revm as _;
+use reth_optimism_rpc as _;
 use tokio::sync::Mutex;
 
 /// The capability to perform [EIP-7702][eip-7702] delegations, sponsored by the sequencer.
@@ -391,7 +391,6 @@ mod tests {
         validate_tx_request, Capabilities, DelegationCapability, OdysseyWalletError,
         WalletCapabilities,
     };
-    use alloy_network::TransactionBuilder;
     use alloy_primitives::{address, map::HashMap, Address, U256};
     use alloy_rpc_types::TransactionRequest;
 
@@ -437,12 +436,12 @@ mod tests {
     #[test]
     fn no_value_allowed() {
         assert_eq!(
-            validate_tx_request(&TransactionRequest::default().with_value(U256::from(1))),
+            validate_tx_request(&TransactionRequest::default().value(U256::from(1))),
             Err(OdysseyWalletError::ValueNotZero)
         );
 
         assert_eq!(
-            validate_tx_request(&TransactionRequest::default().with_value(U256::from(0))),
+            validate_tx_request(&TransactionRequest::default().value(U256::from(0))),
             Ok(())
         );
     }
@@ -450,7 +449,7 @@ mod tests {
     #[test]
     fn no_from_allowed() {
         assert_eq!(
-            validate_tx_request(&TransactionRequest::default().with_from(Address::ZERO)),
+            validate_tx_request(&TransactionRequest::default().from(Address::ZERO)),
             Err(OdysseyWalletError::FromSet)
         );
 
@@ -460,7 +459,7 @@ mod tests {
     #[test]
     fn no_nonce_allowed() {
         assert_eq!(
-            validate_tx_request(&TransactionRequest::default().with_nonce(1)),
+            validate_tx_request(&TransactionRequest::default().nonce(1)),
             Err(OdysseyWalletError::NonceSet)
         );
 

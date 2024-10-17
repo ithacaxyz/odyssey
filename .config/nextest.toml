@@ -2,5 +2,5 @@
 serial-integration = { max-threads = 1 }
 
 [[profile.default.overrides]]
-filter = 'package(odyssey-testing)'
+filter = 'package(odyssey-e2e-tests)'
 test-group = 'serial-integration'

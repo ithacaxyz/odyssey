@@ -1,5 +1,5 @@
 [package]
-name = "odyssey-testing"
+name = "odyssey-e2e-tests"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,21 +10,14 @@ keywords.workspace = true
 categories.workspace = true
 
 [dev-dependencies]
-odyssey-node.workspace = true
-
 alloy.workspace = true
 alloy-network.workspace = true
-alloy-signer-local = { workspace = true, features = ["mnemonic"] }
+alloy-rpc-types.workspace = true
+alloy-signer-local.workspace = true
 
-reth = { workspace = true }
-reth-node-core = { workspace = true }
-reth-node-builder = { workspace = true, features = ["test-utils"] }
-reth-primitives.workspace = true
-reth-tracing.workspace = true
-
-once_cell = "1.19.0"
 tokio.workspace = true
 url = "2.5.0"
+ci_info = "0.14.14"
 
 [lints]
 workspace = true

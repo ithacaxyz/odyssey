@@ -193,6 +193,10 @@ reth-network = { git = "https://github.com/paradigmxyz/reth.git", rev = "7b1b1fc
 reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "7b1b1fc" }
 reth-chain-state = { git = "https://github.com/paradigmxyz/reth.git", rev = "7b1b1fc" }
 
+# metrics
+metrics = "0.23.0"
+metrics-derive = "0.1.0"
+
 # rpc
 jsonrpsee = "0.24"
 

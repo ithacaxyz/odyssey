@@ -6,9 +6,9 @@ use alloy::{
     providers::{PendingTransactionBuilder, Provider, ProviderBuilder},
     signers::SignerSync,
 };
+use alloy_rpc_types::TransactionRequest;
 use alloy_network::{TransactionBuilder, TransactionBuilder7702};
 use alloy_signer_local::PrivateKeySigner;
-use reth::rpc::types::TransactionRequest;
 use url::Url;
 
 static REPLICA_RPC: LazyLock<Url> = LazyLock::new(|| {
@@ -27,6 +27,10 @@ static SEQUENCER_RPC: LazyLock<Url> = LazyLock::new(|| {
 
 #[tokio::test]
 async fn assert_chain_advances() -> Result<(), Box<dyn std::error::Error>> {
+    if !ci_info::is_ci() {
+        return Ok(());
+    }
+
     let block = ProviderBuilder::new().on_http(SEQUENCER_RPC.clone()).get_block_number().await?;
     tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     let new_block =
@@ -39,6 +43,10 @@ async fn assert_chain_advances() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::test]
 async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
+    if !ci_info::is_ci() {
+        return Ok(());
+    }
+
     let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
     let signer = PrivateKeySigner::from_bytes(&b256!(
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"

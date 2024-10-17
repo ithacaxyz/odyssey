@@ -3,7 +3,7 @@ members = [
     "bin/odyssey/",
     "crates/node",
     "crates/precompile",
-    "crates/testing",
+    "crates/e2e-tests",
     "crates/wallet",
     "crates/walltime",
 ]

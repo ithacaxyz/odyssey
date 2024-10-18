@@ -4,13 +4,15 @@
 //!
 //! - `wallet_getCapabilities` based on [EIP-5792][eip-5792], with the only capability being
 //!   `delegation`.
-//! - `wallet_odyssey_sendTransaction` that can perform sequencer-sponsored [EIP-7702][eip-7702] delegations
-//!   and send other sequencer-sponsored transactions on behalf of EOAs with delegated code.
+//! - `wallet_odyssey_sendTransaction` that can perform sequencer-sponsored [EIP-7702][eip-7702]
+//!   delegations and send other sequencer-sponsored transactions on behalf of EOAs with delegated
+//!   code.
 //!
 //! # Restrictions
 //!
-//! `wallet_odyssey_sendTransaction` has additional verifications in place to prevent some rudimentary abuse
-//! of the sequencer's funds. For example, transactions cannot contain any `value`.
+//! `wallet_odyssey_sendTransaction` has additional verifications in place to prevent some
+//! rudimentary abuse of the sequencer's funds. For example, transactions cannot contain any
+//! `value`.
 //!
 //! [eip-5792]: https://eips.ethereum.org/EIPS/eip-5792
 //! [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702

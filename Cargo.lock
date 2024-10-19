@@ -4460,7 +4460,6 @@ dependencies = [
  "reth-node-builder",
  "reth-optimism-cli",
  "reth-optimism-node",
- "reth-optimism-rpc",
  "reth-provider",
  "tracing",
 ]
@@ -4506,7 +4505,6 @@ name = "odyssey-precompile"
 version = "0.0.0"
 dependencies = [
  "alloy-primitives",
- "eyre",
  "p256",
  "reth-node-api",
  "reth-primitives",

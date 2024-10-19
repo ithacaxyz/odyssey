@@ -24,7 +24,6 @@ reth-cli-util.workspace = true
 reth-node-builder.workspace = true
 reth-optimism-node.workspace = true
 reth-optimism-cli.workspace = true
-reth-optimism-rpc.workspace = true
 reth-provider.workspace = true
 clap = { workspace = true, features = ["derive"] }
 

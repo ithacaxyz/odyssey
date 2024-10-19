@@ -73,8 +73,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     let tx =
         TransactionRequest::default().with_authorization_list(vec![auth]).with_to(signer.address());
 
-    let tx_hash: B256 =
-        provider.client().request("wallet_odyssey_sendTransaction", vec![tx]).await?;
+    let tx_hash: B256 = provider.client().request("odyssey_sendTransaction", vec![tx]).await?;
 
     let receipt = PendingTransactionBuilder::new(&provider, tx_hash).get_receipt().await?;
 

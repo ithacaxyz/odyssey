@@ -17,8 +17,8 @@ optimism_package:
         el_image: ghcr.io/ithacaxyz/odyssey:latest
         cl_image: ghcr.io/paradigmxyz/op-node:latest
         el_extra_env_vars:
-          "EXP1_SK": "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba"
-          "EXP1_WHITELIST": "0x0116686E2291dbd5e317F47faDBFb43B599786Ef"
+          EXP1_SK: "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba"
+          EXP1_WHITELIST: "0x0116686E2291dbd5e317F47faDBFb43B599786Ef"
         el_extra_params:
           - "--rollup.discovery.v4"
       network_params:

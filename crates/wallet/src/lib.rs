@@ -29,7 +29,7 @@ use jsonrpsee::{
 use metrics::Counter;
 use metrics_derive::Metrics;
 use reth_primitives::{revm_primitives::Bytecode, BlockId};
-use reth_rpc_eth_api::helpers::{EthCall, EthState, EthTransactions, FullEthApi, LoadFee};
+use reth_rpc_eth_api::helpers::{EthCall, EthTransactions, FullEthApi, LoadFee, LoadState};
 use reth_storage_api::{StateProvider, StateProviderFactory};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -273,17 +273,16 @@ where
         let _permit = self.inner.permit.lock().await;
 
         // set nonce
-        let tx_count = EthState::transaction_count(
+        let next_nonce = LoadState::next_available_nonce(
             &self.inner.eth_api,
             NetworkWallet::<Ethereum>::default_signer_address(&self.inner.wallet),
-            Some(BlockId::pending()),
         )
         .await
         .map_err(|err| {
             self.inner.metrics.invalid_send_transaction_calls.increment(1);
             err.into()
         })?;
-        request.nonce = Some(tx_count.to());
+        request.nonce = Some(next_nonce);
 
         // set chain id
         request.chain_id = Some(self.chain_id());

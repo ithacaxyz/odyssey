@@ -253,7 +253,7 @@ impl ConfigureEvm for OdysseyEvmConfig {
 /// Determine the revm spec ID from the current block and reth chainspec.
 fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> reth_revm::primitives::SpecId {
     if chain_spec.fork(EthereumHardfork::Prague).active_at_head(block) {
-        reth_revm::primitives::PRAGUE_EOF
+        reth_revm::primitives::OSAKA
     } else if chain_spec.fork(OptimismHardfork::Granite).active_at_head(block) {
         reth_revm::primitives::GRANITE
     } else if chain_spec.fork(OptimismHardfork::Fjord).active_at_head(block) {

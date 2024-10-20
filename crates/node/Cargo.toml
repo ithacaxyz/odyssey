@@ -20,6 +20,7 @@ reth-optimism-chainspec.workspace = true
 reth-chainspec.workspace = true
 reth-payload-builder.workspace = true
 reth-primitives.workspace = true
+reth-evm.workspace = true
 reth-revm.workspace = true
 reth-transaction-pool.workspace = true
 reth-network.workspace = true

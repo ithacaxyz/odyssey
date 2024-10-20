@@ -4,6 +4,7 @@
 //! required for the optimism engine API.
 
 use crate::evm::OdysseyEvmConfig;
+use reth_evm::execute::BasicBlockExecutorProvider;
 use reth_network::{
     transactions::{TransactionPropagationMode, TransactionsManagerConfig},
     NetworkHandle, NetworkManager,
@@ -21,10 +22,10 @@ use reth_optimism_chainspec::OpChainSpec;
 use reth_optimism_node::{
     args::RollupArgs,
     node::{
-        OptimismAddOns, OptimismConsensusBuilder, OptimismEngineValidatorBuilder,
-        OptimismNetworkBuilder, OptimismPayloadBuilder, OptimismPoolBuilder,
+        OptimismAddOns, OptimismConsensusBuilder, OptimismNetworkBuilder, OptimismPayloadBuilder,
+        OptimismPoolBuilder,
     },
-    OpExecutorProvider, OptimismEngineTypes,
+    OpExecutionStrategyFactory, OptimismEngineTypes,
 };
 use reth_payload_builder::PayloadBuilderHandle;
 use reth_transaction_pool::{SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER};
@@ -53,7 +54,6 @@ impl OdysseyNode {
         OdysseyNetworkBuilder,
         OdysseyExecutorBuilder,
         OptimismConsensusBuilder,
-        OptimismEngineValidatorBuilder,
     >
     where
         Node: FullNodeTypes<
@@ -78,7 +78,6 @@ impl OdysseyNode {
             }))
             .executor(OdysseyExecutorBuilder::default())
             .consensus(OptimismConsensusBuilder::default())
-            .engine_validator(OptimismEngineValidatorBuilder::default())
     }
 }
 
@@ -105,7 +104,6 @@ where
         OdysseyNetworkBuilder,
         OdysseyExecutorBuilder,
         OptimismConsensusBuilder,
-        OptimismEngineValidatorBuilder,
     >;
 
     type AddOns = OptimismAddOns<
@@ -132,15 +130,17 @@ where
     Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec>>,
 {
     type EVM = OdysseyEvmConfig;
-    type Executor = OpExecutorProvider<Self::EVM>;
+    type Executor = BasicBlockExecutorProvider<OpExecutionStrategyFactory<Self::EVM>>;
 
     async fn build_evm(
         self,
         ctx: &BuilderContext<Node>,
     ) -> eyre::Result<(Self::EVM, Self::Executor)> {
         let chain_spec = ctx.chain_spec();
-        let evm_config = OdysseyEvmConfig::new(chain_spec.clone());
-        let executor = OpExecutorProvider::new(chain_spec, evm_config.clone());
+        let evm_config = OdysseyEvmConfig::new(chain_spec);
+        let strategy_factory =
+            OpExecutionStrategyFactory::new(ctx.chain_spec(), evm_config.clone());
+        let executor = BasicBlockExecutorProvider::new(strategy_factory);
 
         Ok((evm_config, executor))
     }

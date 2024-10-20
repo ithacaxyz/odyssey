@@ -62,7 +62,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
             [0];
 
     let auth = Authorization {
-        chain_id: U256::from(provider.get_chain_id().await?),
+        chain_id: provider.get_chain_id().await?,
         address: delegation_address,
         nonce: provider.get_transaction_count(signer.address()).await?,
     };
@@ -75,7 +75,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
 
     let tx_hash: B256 = provider.client().request("wallet_sendTransaction", vec![tx]).await?;
 
-    let receipt = PendingTransactionBuilder::new(&provider, tx_hash).get_receipt().await?;
+    let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash).get_receipt().await?;
 
     assert!(receipt.status());
 

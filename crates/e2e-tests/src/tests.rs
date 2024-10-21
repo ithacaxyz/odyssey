@@ -73,10 +73,9 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     let tx =
         TransactionRequest::default().with_authorization_list(vec![auth]).with_to(signer.address());
 
-    let tx_hash: B256 =
-        provider.client().request("odyssey_sendTransaction", vec![tx.clone()]).await?;
+    let tx_hash: B256 = provider.client().request("odyssey_sendTransaction", vec![tx]).await?;
 
-    let receipt = PendingTransactionBuilder::new(&provider, tx_hash).get_receipt().await?;
+    let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash).get_receipt().await?;
 
     assert!(receipt.status());
 
@@ -85,7 +84,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Test the legacy wallet API, will be removed in the future
+// Test legacy wallet API works
 #[tokio::test]
 async fn test_legacy_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
@@ -107,7 +106,7 @@ async fn test_legacy_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
             [0];
 
     let auth = Authorization {
-        chain_id: U256::from(provider.get_chain_id().await?),
+        chain_id: provider.get_chain_id().await?,
         address: delegation_address,
         nonce: provider.get_transaction_count(signer.address()).await?,
     };
@@ -118,8 +117,7 @@ async fn test_legacy_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     let tx =
         TransactionRequest::default().with_authorization_list(vec![auth]).with_to(signer.address());
 
-    let tx_hash: B256 =
-        provider.client().request("wallet_sendTransaction", vec![tx.clone()]).await?;
+    let tx_hash: B256 = provider.client().request("wallet_sendTransaction", vec![tx]).await?;
 
     let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash).get_receipt().await?;
 

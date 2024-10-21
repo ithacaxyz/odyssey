@@ -219,20 +219,6 @@ where
             return Err(err.into());
         }
 
-        let valid_delegations: &[Address] = self
-            .inner
-            .capabilities
-            .get(self.chain_id())
-            .map(|caps| caps.delegation.addresses.as_ref())
-            .unwrap_or_default();
-        if let Some(authorizations) = &request.authorization_list {
-            // check that all auth items delegate to a valid address
-            if authorizations.iter().any(|auth| !valid_delegations.contains(&auth.address)) {
-                self.inner.metrics.invalid_send_transaction_calls.increment(1);
-                return Err(OdysseyWalletError::InvalidAuthorization.into());
-            }
-        }
-
         // validate destination
         match (request.authorization_list.is_some(), request.to) {
             // if this is an eip-1559 tx, ensure that it is an account that delegates to a
@@ -252,10 +238,8 @@ where
                     })
                     .unwrap_or_default();
 
-                // not a whitelisted address, or not an eip-7702 bytecode
-                if delegated_address == Address::ZERO
-                    || !valid_delegations.contains(&delegated_address)
-                {
+                // not eip-7702 bytecode
+                if delegated_address == Address::ZERO {
                     self.inner.metrics.invalid_send_transaction_calls.increment(1);
                     return Err(OdysseyWalletError::IllegalDestination.into());
                 }

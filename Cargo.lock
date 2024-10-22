@@ -4554,6 +4554,7 @@ dependencies = [
  "reth-revm",
  "reth-transaction-pool",
  "serde_json",
+ "tracing",
 ]
 
 [[package]]

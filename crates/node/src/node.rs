@@ -7,7 +7,7 @@ use crate::evm::OdysseyEvmConfig;
 use reth_evm::execute::BasicBlockExecutorProvider;
 use reth_network::{
     transactions::{TransactionPropagationMode, TransactionsManagerConfig},
-    NetworkHandle, NetworkManager,
+    NetworkHandle, NetworkManager, PeersInfo,
 };
 use reth_network_types::ReputationChangeWeights;
 use reth_node_api::{FullNodeTypes, NodeTypesWithEngine};
@@ -30,6 +30,7 @@ use reth_optimism_node::{
 use reth_payload_builder::PayloadBuilderHandle;
 use reth_transaction_pool::{SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER};
 use std::time::Duration;
+use tracing::info;
 
 /// Type configuration for a regular Odyssey node.
 #[derive(Debug, Clone, Default)]
@@ -217,7 +218,7 @@ where
         };
         let network = NetworkManager::builder(network_config).await?;
         let handle = ctx.start_network_with(network, pool, txconfig);
-
+        info!(target: "reth::cli", enode=%handle.local_node_record(), "P2P networking initialized");
         Ok(handle)
     }
 }

@@ -208,6 +208,7 @@ where
         network_config.peers_config.reputation_weights = ReputationChangeWeights::zero();
         network_config.peers_config.backoff_durations.low = Duration::from_secs(5);
         network_config.peers_config.backoff_durations.medium = Duration::from_secs(5);
+        network_config.peers_config.backoff_durations.high = Duration::from_secs(5);
         network_config.peers_config.max_backoff_count = u8::MAX;
         network_config.sessions_config.session_command_buffer = 500;
         network_config.sessions_config.session_event_buffer = 500;

@@ -40,6 +40,9 @@ jobs:
         id: kurtosis
         run: |
             git clone https://github.com/klkvr/optimism-package
+            cd optimism-package
+            git checkout e5a9dc4
+            cd ..
             kurtosis engine start
             kurtosis run --enclave op-devnet ./optimism-package --args-file ./etc/kurtosis.yaml
             ENCLAVE_ID=$(curl http://127.0.0.1:9779/api/enclaves | jq --raw-output 'keys[0]')

@@ -48,7 +48,6 @@ jobs:
             echo "REPLICA_RPC=http://127.0.0.1:$REPLICA_EL_PORT" >> $GITHUB_ENV
       - name: Run E2E tests
         run: |
-            cast send $(cast az) --private-key "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" --rpc-url $REPLICA_RPC
             cargo nextest run \
               --locked \
               --workspace \

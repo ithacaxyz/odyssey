@@ -4,13 +4,15 @@
 //!
 //! - `wallet_getCapabilities` based on [EIP-5792][eip-5792], with the only capability being
 //!   `delegation`.
-//! - `wallet_sendTransaction` that can perform sequencer-sponsored [EIP-7702][eip-7702] delegations
-//!   and send other sequencer-sponsored transactions on behalf of EOAs with delegated code.
+//! - `odyssey_sendTransaction` that can perform sequencer-sponsored [EIP-7702][eip-7702]
+//!   delegations and send other sequencer-sponsored transactions on behalf of EOAs with delegated
+//!   code.
 //!
 //! # Restrictions
 //!
-//! `wallet_sendTransaction` has additional verifications in place to prevent some rudimentary abuse
-//! of the sequencer's funds. For example, transactions cannot contain any `value`.
+//! `odyssey_sendTransaction` has additional verifications in place to prevent some
+//! rudimentary abuse of the sequencer's funds. For example, transactions cannot contain any
+//! `value`.
 //!
 //! [eip-5792]: https://eips.ethereum.org/EIPS/eip-5792
 //! [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
@@ -98,7 +100,7 @@ pub trait OdysseyWalletApi {
     ///
     /// [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
     /// [eip-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    #[method(name = "sendTransaction")]
+    #[method(name = "sendTransaction", aliases = ["odyssey_sendTransaction"])]
     async fn send_transaction(&self, request: TransactionRequest) -> RpcResult<TxHash>;
 }
 
@@ -211,7 +213,7 @@ where
     }
 
     async fn send_transaction(&self, mut request: TransactionRequest) -> RpcResult<TxHash> {
-        trace!(target: "rpc::wallet", ?request, "Serving wallet_sendTransaction");
+        trace!(target: "rpc::wallet", ?request, "Serving odyssey_sendTransaction");
 
         // validate fields common to eip-7702 and eip-1559
         if let Err(err) = validate_tx_request(&request) {
@@ -379,9 +381,9 @@ fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWallet
 #[derive(Metrics)]
 #[metrics(scope = "wallet")]
 struct WalletMetrics {
-    /// Number of invalid calls to `wallet_sendTransaction`
+    /// Number of invalid calls to `odyssey_sendTransaction`
     invalid_send_transaction_calls: Counter,
-    /// Number of valid calls to `wallet_sendTransaction`
+    /// Number of valid calls to `odyssey_sendTransaction`
     valid_send_transaction_calls: Counter,
 }
 

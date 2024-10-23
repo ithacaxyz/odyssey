@@ -32,7 +32,9 @@ Odyssey has 2 goals:
 
 ### Odyssey Testnet
 
-> [!TIP] > [The Odyssey Testnet](https://www.ithaca.xyz/updates/odyssey#odyssey-chapter-1-is-live-on-testnet) is now live on Sepolia and is built with Reth, the OP Stack, and [deployed on Conduit](https://app.conduit.xyz/published/view/odyssey).
+> [!TIP]
+>
+> [The Odyssey Testnet](https://www.ithaca.xyz/updates/odyssey#odyssey-chapter-1-is-live-on-testnet) is now live on Sepolia and is built with Reth, the OP Stack, and [deployed on Conduit](https://app.conduit.xyz/published/view/odyssey).
 
 ### Odyssey Local Development
 

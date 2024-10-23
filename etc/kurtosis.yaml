@@ -21,7 +21,8 @@ optimism_package:
           EXP1_WHITELIST: "0x0116686E2291dbd5e317F47faDBFb43B599786Ef"
         el_extra_params:
           - "--rollup.discovery.v4"
+      batcher_params:
+        image: ghcr.io/paradigmxyz/op-batcher:latest
       network_params:
         network_id: "41144114"
         seconds_per_slot: 1
-        batcher_image: ghcr.io/paradigmxyz/op-batcher:latest

@@ -101,23 +101,10 @@ Running a local network with a full Odyssey OP stack with Kurtosis requires some
 
 To get started, follow [these instructions](https://docs.kurtosis.com/install/) to install Kurtosis.
 
-Next, clone and build the modified `optimism-contract-deployer` image:
+Next, start a Kurtosis enclave:
 
 ```bash
-git clone git@github.com:klkvr/optimism-package.git
-cd optimism-package
-git switch odyssey
-docker build . -t ethpandaops/optimism-contract-deployer:latest --progress plain
-```
-
-> [!NOTE]
->
-> The image may fail to build if you have not allocated enough memory for Docker.
-
-Finally, run start a Kurtosis enclave (ensure you are still in `optimism-package`):
-
-```bash
-kurtosis run --enclave op-devnet github.com/klkvr/optimism-package@odyssey \
+kurtosis run --enclave op-devnet github.com/ethpandaops/optimism-package \
   --args-file https://raw.githubusercontent.com/ithacaxyz/odyssey/main/etc/kurtosis.yaml
 ```
 
@@ -127,7 +114,7 @@ This will start an enclave named `op-devnet`. You can tear down the enclave with
 >
 > If you want to use a custom build of Odyssey, simply build an Odyssey image with `docker build . -t ghcr.io/ithacaxyz/odyssey:latest`.
 
-Consult the [Kurtosis OP package](https://github.com/ethpandaops/optimism-package) repository for instructions on how to adjust the args file to spin up additional services, like a block exporer.
+Consult the [Kurtosis OP package](https://github.com/ethpandaops/optimism-package) repository for instructions on how to adjust the args file to spin up additional services, like a block explorer.
 
 ### Wallet extension
 

@@ -77,70 +77,15 @@
 //!     }
 //! }
 //! ```
-use crate::addresses::P256VERIFY_ADDRESS;
+//use crate::addresses::P256VERIFY_ADDRESS;
 use alloy_primitives::{Bytes, B256};
 use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
 use reth_revm::{
     precompile::{u64_to_address, Precompile, PrecompileWithAddress},
     primitives::{PrecompileError, PrecompileErrors, PrecompileOutput, PrecompileResult},
 };
+use revm_precompile::secp256r1::{P256VERIFY, p256_verify, verify_impl, precompiles};
 
-/// Base gas fee for secp256r1 p256verify operation.
-const P256VERIFY_BASE: u64 = 3_450;
-
-/// Returns the secp256r1 precompile with its address.
-pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
-    [P256VERIFY].into_iter()
-}
-
-/// [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212#specification) secp256r1 precompile.
-pub const P256VERIFY: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), Precompile::Standard(p256_verify));
-
-/// secp256r1 precompile logic. It takes the input bytes sent to the precompile
-/// and the gas limit. The output represents the result of verifying the
-/// secp256r1 signature of the input.
-///
-/// The input is encoded as follows:
-///
-/// | signed message hash |  r  |  s  | public key x | public key y |
-/// | :-----------------: | :-: | :-: | :----------: | :----------: |
-/// |          32         | 32  | 32  |     32       |      32      |
-fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
-    if P256VERIFY_BASE > gas_limit {
-        return Err(PrecompileErrors::Error(PrecompileError::OutOfGas));
-    }
-    let result = verify_impl(input).is_some();
-    let out = PrecompileOutput::new(P256VERIFY_BASE, B256::with_last_byte(result as u8).into());
-    Ok(out)
-}
-
-/// Returns `Some(())` if the signature included in the input byte slice is
-/// valid, `None` otherwise.
-fn verify_impl(input: &[u8]) -> Option<()> {
-    if input.len() < 160 {
-        return None;
-    }
-
-    // msg signed (msg is already the hash of the original message)
-    let msg: &[u8; 32] = input[..32].try_into().unwrap();
-    // r, s: signature
-    let sig: &[u8; 64] = input[32..96].try_into().unwrap();
-    // x, y: public key
-    let pk: &[u8; 64] = input[96..160].try_into().unwrap();
-
-    // append 0x04 to the public key: uncompressed form
-    let mut uncompressed_pk = [0u8; 65];
-    uncompressed_pk[0] = 0x04;
-    uncompressed_pk[1..].copy_from_slice(pk);
-
-    // Can fail only if the input is not exact length.
-    let signature = Signature::from_slice(sig).unwrap();
-    // Can fail if the input is not valid, so we have to propagate the error.
-    let public_key = VerifyingKey::from_sec1_bytes(&uncompressed_pk).ok()?;
-
-    public_key.verify_prehash(msg, &signature).ok()
-}
 
 #[cfg(test)]
 mod test {

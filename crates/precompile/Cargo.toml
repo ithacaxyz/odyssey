@@ -15,7 +15,7 @@ reth-revm.workspace = true
 alloy-primitives.workspace = true
 
 p256 = { version = "0.13.2", features = ["ecdsa"] }
-
+revm-precompile = { git = "https://github.com/bluealloy/revm.git", features = ["secp256r1"] }
 [dev-dependencies]
 reth-node-api.workspace = true
 reth-primitives.workspace = true

@@ -32,8 +32,8 @@ impl OdysseyWallTime {
         tokio::task::spawn(async move {
             while let Some(notification) = st.next().await {
                 let tip = BlockTimeData {
-                    wall_time_ms: notification.tip().timestamp,
-                    block_timestamp: unix_epoch_ms(),
+                    wall_time_ms: unix_epoch_ms(),
+                    block_timestamp: notification.tip().timestamp,
                 };
                 *listener.inner.block_time_data.write().await = Some(tip);
             }

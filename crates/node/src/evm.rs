@@ -252,51 +252,43 @@ impl ConfigureEvm for OdysseyEvmConfig {
 
 /// Determine the revm spec ID from the current block and reth chainspec.
 fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> reth_revm::primitives::SpecId {
-    if chain_spec.fork(EthereumHardfork::Prague).active_at_head(block) {
-        reth_revm::primitives::OSAKA
-    } else if chain_spec.fork(OptimismHardfork::Granite).active_at_head(block) {
-        reth_revm::primitives::GRANITE
-    } else if chain_spec.fork(OptimismHardfork::Fjord).active_at_head(block) {
-        reth_revm::primitives::FJORD
-    } else if chain_spec.fork(OptimismHardfork::Ecotone).active_at_head(block) {
-        reth_revm::primitives::ECOTONE
-    } else if chain_spec.fork(OptimismHardfork::Canyon).active_at_head(block) {
-        reth_revm::primitives::CANYON
-    } else if chain_spec.fork(OptimismHardfork::Regolith).active_at_head(block) {
-        reth_revm::primitives::REGOLITH
-    } else if chain_spec.fork(OptimismHardfork::Bedrock).active_at_head(block) {
-        reth_revm::primitives::BEDROCK
-    } else if chain_spec.fork(EthereumHardfork::Prague).active_at_head(block) {
-        reth_revm::primitives::PRAGUE
-    } else if chain_spec.fork(EthereumHardfork::Cancun).active_at_head(block) {
-        reth_revm::primitives::CANCUN
-    } else if chain_spec.fork(EthereumHardfork::Shanghai).active_at_head(block) {
-        reth_revm::primitives::SHANGHAI
-    } else if chain_spec.fork(EthereumHardfork::Paris).active_at_head(block) {
-        reth_revm::primitives::MERGE
-    } else if chain_spec.fork(EthereumHardfork::London).active_at_head(block) {
-        reth_revm::primitives::LONDON
-    } else if chain_spec.fork(EthereumHardfork::Berlin).active_at_head(block) {
-        reth_revm::primitives::BERLIN
-    } else if chain_spec.fork(EthereumHardfork::Istanbul).active_at_head(block) {
-        reth_revm::primitives::ISTANBUL
-    } else if chain_spec.fork(EthereumHardfork::Petersburg).active_at_head(block) {
-        reth_revm::primitives::PETERSBURG
-    } else if chain_spec.fork(EthereumHardfork::Byzantium).active_at_head(block) {
-        reth_revm::primitives::BYZANTIUM
-    } else if chain_spec.fork(EthereumHardfork::SpuriousDragon).active_at_head(block) {
-        reth_revm::primitives::SPURIOUS_DRAGON
-    } else if chain_spec.fork(EthereumHardfork::Tangerine).active_at_head(block) {
-        reth_revm::primitives::TANGERINE
-    } else if chain_spec.fork(EthereumHardfork::Homestead).active_at_head(block) {
-        reth_revm::primitives::HOMESTEAD
-    } else if chain_spec.fork(EthereumHardfork::Frontier).active_at_head(block) {
-        reth_revm::primitives::FRONTIER
-    } else {
-        panic!(
-            "invalid hardfork chainspec: expected at least one hardfork, got {:?}",
-            chain_spec.hardforks
+    chain_spec
+        .hardforks
+        .iter()
+        .find(|(_, condition)| condition.active_at_head(block))
+        .map_or_else(
+            || {
+                panic!(
+                    "invalid hardfork chainspec: expected at least one active hardfork, got {:?}",
+                    chain_spec.hardforks
+                )
+            },
+            |(fork, _)| map_hardfork_to_spec_id(fork)
         )
+}
+
+/// Map hardfork to the corresponding `SpecId`.
+fn map_hardfork_to_spec_id(fork: &EthereumHardfork) -> reth_revm::primitives::SpecId {
+    match fork {
+        EthereumHardfork::Prague => reth_revm::primitives::OSAKA,
+        OptimismHardfork::Granite => reth_revm::primitives::GRANITE,
+        OptimismHardfork::Fjord => reth_revm::primitives::FJORD,
+        OptimismHardfork::Ecotone => reth_revm::primitives::ECOTONE,
+        OptimismHardfork::Canyon => reth_revm::primitives::CANYON,
+        OptimismHardfork::Regolith => reth_revm::primitives::REGOLITH,
+        OptimismHardfork::Bedrock => reth_revm::primitives::BEDROCK,
+        EthereumHardfork::Cancun => reth_revm::primitives::CANCUN,
+        EthereumHardfork::Shanghai => reth_revm::primitives::SHANGHAI,
+        EthereumHardfork::Paris => reth_revm::primitives::MERGE,
+        EthereumHardfork::London => reth_revm::primitives::LONDON,
+        EthereumHardfork::Berlin => reth_revm::primitives::BERLIN,
+        EthereumHardfork::Istanbul => reth_revm::primitives::ISTANBUL,
+        EthereumHardfork::Petersburg => reth_revm::primitives::PETERSBURG,
+        EthereumHardfork::Byzantium => reth_revm::primitives::BYZANTIUM,
+        EthereumHardfork::SpuriousDragon => reth_revm::primitives::SPURIOUS_DRAGON,
+        EthereumHardfork::Tangerine => reth_revm::primitives::TANGERINE,
+        EthereumHardfork::Homestead => reth_revm::primitives::HOMESTEAD,
+        EthereumHardfork::Frontier => reth_revm::primitives::FRONTIER,
     }
 }
 

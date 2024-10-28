@@ -89,8 +89,7 @@ pub trait OdysseyWalletApi {
     ///
     /// The transaction will only be processed if:
     ///
-    /// - The transaction is an [EIP-7702][eip-7702] transaction that delegates to one of the
-    ///   addresses listed in [`DelegationCapability`] (see [`Self::get_capabilities`])
+    /// - The transaction is an [EIP-7702][eip-7702] transaction.
     /// - The transaction is an [EIP-1559][eip-1559] transaction to an EOA that is currently
     ///   delegated to one of the addresses above
     /// - The value in the transaction is exactly 0.
@@ -123,19 +122,12 @@ pub enum OdysseyWalletError {
     /// Requests with the nonce field set are rejected, as this is managed by the sequencer.
     #[error("tx nonce is set")]
     NonceSet,
-    /// An authorization item was invalid.
-    ///
-    /// The item is invalid if it tries to delegate an account to a contract that is not
-    /// whitelisted.
-    #[error("invalid authorization address")]
-    InvalidAuthorization,
     /// The to field of the transaction was invalid.
     ///
     /// The destination is invalid if:
     ///
     /// - There is no bytecode at the destination, or
-    /// - The bytecode is not an EIP-7702 delegation designator, or
-    /// - The delegation designator points to a contract that is not whitelisted
+    /// - The bytecode is not an EIP-7702 delegation designator
     #[error("the destination of the transaction is not a delegated account")]
     IllegalDestination,
     /// The transaction request was invalid.
@@ -221,20 +213,6 @@ where
             return Err(err.into());
         }
 
-        let valid_delegations: &[Address] = self
-            .inner
-            .capabilities
-            .get(self.chain_id())
-            .map(|caps| caps.delegation.addresses.as_ref())
-            .unwrap_or_default();
-        if let Some(authorizations) = &request.authorization_list {
-            // check that all auth items delegate to a valid address
-            if authorizations.iter().any(|auth| !valid_delegations.contains(&auth.address)) {
-                self.inner.metrics.invalid_send_transaction_calls.increment(1);
-                return Err(OdysseyWalletError::InvalidAuthorization.into());
-            }
-        }
-
         // validate destination
         match (request.authorization_list.is_some(), request.to) {
             // if this is an eip-1559 tx, ensure that it is an account that delegates to a
@@ -254,10 +232,8 @@ where
                     })
                     .unwrap_or_default();
 
-                // not a whitelisted address, or not an eip-7702 bytecode
-                if delegated_address == Address::ZERO
-                    || !valid_delegations.contains(&delegated_address)
-                {
+                // not eip-7702 bytecode
+                if delegated_address == Address::ZERO {
                     self.inner.metrics.invalid_send_transaction_calls.increment(1);
                     return Err(OdysseyWalletError::IllegalDestination.into());
                 }

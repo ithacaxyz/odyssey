@@ -122,10 +122,10 @@ Consult the [Kurtosis OP package](https://github.com/ethpandaops/optimism-packag
 
 Odyssey has a custom `wallet_` namespace, that allows users to delegate their EOAs to a contract using EIP-7702, and perform transactions on those accounts, all funded by the sequencer.
 
-To enable this namespace, set the environment variable `EXP1_SK` to a private key that will sign the transactions, and `EXP1_WHITELIST` to a comma-delimited list of checksummed addresses accounts are allowed to delegate to. The new RPC method, `odyssey_sendTransaction`, will only sign transactions that either:
+To enable this namespace, set the environment variable `EXP1_SK` to a private key that will sign the transactions. The new RPC method, `wallet_sendTransaction`, will only sign transactions that either:
 
-1. Delegate accounts to one of the whitelisted addresses using EIP-7702, or
-1. Send transactions to an EIP-7702 EOA that is already delegated to a whitelisted address
+1. Designates a contract address to an EOA via EIP-7702, or
+1. Send transactions to an EIP-7702 EOA that is already delegated to an address
 
 The `odyssey_sendTransaction` endpoint accepts the same fields as `eth_sendTransaction`, with these notable exceptions:
 
@@ -138,8 +138,6 @@ The following fields are ignored, as they are overwritten internally:
 1. `gasPrice` (and EIP-1559 gas related pricing fields)
 1. `gasLimit`
 1. `chainId`
-
-To get the list of contracts that are whitelisted for `odyssey_sendTransaction`, you can query `wallet_getCapabilities`.
 
 ### Security
 

@@ -253,8 +253,7 @@ impl ConfigureEvm for OdysseyEvmConfig {
 /// Determine the revm spec ID from the current block and reth chainspec.
 fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> reth_revm::primitives::SpecId {
     chain_spec
-        .hardforks
-        .iter()
+        .forks_iter()
         .find(|(_, condition)| condition.active_at_head(block))
         .map_or_else(
             || {
@@ -266,6 +265,7 @@ fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> reth_revm::primitives::Spe
             |(fork, _)| map_hardfork_to_spec_id(fork)
         )
 }
+
 
 /// Map hardfork to the corresponding `SpecId`.
 fn map_hardfork_to_spec_id(fork: &EthereumHardfork) -> reth_revm::primitives::SpecId {

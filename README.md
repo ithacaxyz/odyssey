@@ -125,7 +125,7 @@ Odyssey has a custom `wallet_` namespace, that allows users to delegate their EO
 To enable this namespace, set the environment variable `EXP1_SK` to a private key that will sign the transactions. The new RPC method, `wallet_sendTransaction`, will only sign transactions that either:
 
 1. Designates a contract address to an EOA via EIP-7702, or
-2. Send transactions to an EIP-7702 EOA that is already delegated to an address
+1. Send transactions to an EIP-7702 EOA that is already delegated to an address
 
 The `odyssey_sendTransaction` endpoint accepts the same fields as `eth_sendTransaction`, with these notable exceptions:
 

@@ -11,7 +11,7 @@
 //! precompiles defined by [`odyssey_precompile`].
 
 use alloy_primitives::{Address, Bytes, TxKind, U256};
-use odyssey_precompile::secp256r1;
+use revm_precompile::secp256r1;
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
 use reth_optimism_chainspec::OpChainSpec;

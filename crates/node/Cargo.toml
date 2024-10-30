@@ -10,7 +10,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-odyssey-precompile.workspace = true
+revm-precompile ={version= "14.0.0",features=["secp256r1"]}
 reth-cli.workspace = true
 reth-node-api.workspace = true
 reth-node-builder.workspace = true

@@ -155,7 +155,6 @@ alloy-signer-local = { version = "0.5.3", features = ["mnemonic"] }
 tokio = { version = "1.21", default-features = false }
 
 # reth
-reth = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-chainspec = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-cli = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-cli-util = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }

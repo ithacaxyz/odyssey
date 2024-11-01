@@ -8,10 +8,9 @@
 //! implementation.
 //!
 //! This currently configures the instructions defined in [EIP3074-instructions](https://github.com/paradigmxyz/eip3074-instructions), and the
-//! precompiles defined by [`odyssey_precompile`].
+//! precompiles defined by [`revm_precompile`].
 
 use alloy_primitives::{Address, Bytes, TxKind, U256};
-use revm_precompile::secp256r1;
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
 use reth_optimism_chainspec::OpChainSpec;
@@ -31,6 +30,7 @@ use reth_revm::{
     },
     ContextPrecompiles, Database, Evm, EvmBuilder, GetInspector,
 };
+use revm_precompile::secp256r1;
 use std::sync::Arc;
 
 /// Custom EVM configuration

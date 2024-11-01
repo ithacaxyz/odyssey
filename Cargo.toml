@@ -189,6 +189,7 @@ reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", rev =
 reth-network = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-chain-state = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
+revm-precompile ={version= "14.0.0",features=["secp256r1"]}
 
 # metrics
 metrics = "0.23.0"

@@ -10,7 +10,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-revm-precompile ={version= "14.0.0",features=["secp256r1"]}
+revm-precompile.workspace = true
 reth-cli.workspace = true
 reth-node-api.workspace = true
 reth-node-builder.workspace = true

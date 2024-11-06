@@ -2,7 +2,6 @@
 members = [
     "bin/odyssey/",
     "crates/node",
-    "crates/precompile",
     "crates/e2e-tests",
     "crates/wallet",
     "crates/walltime",
@@ -136,7 +135,6 @@ strip = false
 [workspace.dependencies]
 # odyssey
 odyssey-node = { path = "crates/node" }
-odyssey-precompile = { path = "crates/precompile" }
 odyssey-wallet = { path = "crates/wallet" }
 odyssey-walltime = { path = "crates/walltime" }
 
@@ -190,6 +188,7 @@ reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", rev =
 reth-network = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-chain-state = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
+revm-precompile ={version= "14.0.0",features=["secp256r1"]}
 
 # metrics
 metrics = "0.23.0"

@@ -31,6 +31,10 @@ alloy-primitives.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 eyre.workspace = true
+revmc = "0.1.0"
 
 [lints]
 workspace = true
+
+[build-dependencies]
+revmc-build = "0.1.0"

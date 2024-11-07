@@ -244,6 +244,7 @@ impl ConfigureEvm for OdysseyEvmConfig {
             // add additional precompiles
             .append_handler_register(Self::set_precompiles)
             .append_handler_register(inspector_handle_register)
+            .append_handler_register(risc_v_handle_register)
             .build()
     }
 

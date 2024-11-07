@@ -4549,6 +4549,7 @@ version = "0.0.0"
 dependencies = [
  "alloy-primitives",
  "eyre",
+ "odyssey-risc-v-handler",
  "reth-chainspec",
  "reth-cli",
  "reth-evm",
@@ -4575,6 +4576,7 @@ dependencies = [
  "eth-riscv-interpreter",
  "reth-evm",
  "reth-revm",
+ "rvemu",
 ]
 
 [[package]]

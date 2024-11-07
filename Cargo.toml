@@ -136,7 +136,7 @@ strip = false
 [workspace.dependencies]
 # odyssey
 odyssey-node = { path = "crates/node" }
-odyssey-risc-v-handler = { path = "crates/node" }
+odyssey-risc-v-handler = { path = "crates/risc-v-handler" }
 odyssey-wallet = { path = "crates/wallet" }
 odyssey-walltime = { path = "crates/walltime" }
 
@@ -194,6 +194,7 @@ revm-precompile = { version = "14.0.0", features = ["secp256r1"] }
 
 # risc-v
 eth-riscv-interpreter = { git = "https://github.com/leonardoalt/r55.git" }
+rvemu = { git = "https://github.com/lvella/rvemu.git" }
 
 # metrics
 metrics = "0.23.0"

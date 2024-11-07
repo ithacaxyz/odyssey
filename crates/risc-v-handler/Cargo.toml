@@ -16,6 +16,7 @@ reth-revm.workspace = true
 
 # risc-v
 eth-riscv-interpreter.workspace = true
+rvemu.workspace = true
 
 [dev-dependencies]
 

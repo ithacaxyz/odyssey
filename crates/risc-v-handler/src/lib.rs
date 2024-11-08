@@ -1,5 +1,5 @@
+//! Odyssey's RISC-V EVM handler
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
-#![allow(missing_docs)] // TODO(0xurb) - docs
 
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 

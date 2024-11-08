@@ -34,7 +34,7 @@ impl RVEmu {
         shared_memory: &mut SharedMemory,
     ) -> Result<(), RiscVError> {
         if let Some(destiny) = std::mem::take(&mut self.returned_data_destiny) {
-            let data = self.emu.cpu.bus.get_dram_slice(destiny.clone())?;
+            let data = self.emu.cpu.bus.get_dram_slice(destiny)?;
             data.copy_from_slice(shared_memory.slice(0, data.len()));
             tracing::trace!("Copied {} bytes to DRAM range", data.len());
         }

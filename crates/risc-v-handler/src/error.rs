@@ -15,7 +15,7 @@ pub(crate) enum RiscVError {
 impl<E> From<RiscVError> for EVMError<E> {
     #[inline]
     fn from(err: RiscVError) -> Self {
-        EVMError::Custom(err.to_string())
+        Self::Custom(err.to_string())
     }
 }
 

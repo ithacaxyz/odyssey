@@ -11,6 +11,7 @@
 //! precompiles defined by [`revm_precompile`].
 
 use alloy_primitives::{Address, Bytes, TxKind, U256};
+use odyssey_risc_v_handler::risc_v_handle_register;
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
 use reth_optimism_chainspec::OpChainSpec;
@@ -244,6 +245,7 @@ impl ConfigureEvm for OdysseyEvmConfig {
             // add additional precompiles
             .append_handler_register(Self::set_precompiles)
             .append_handler_register(inspector_handle_register)
+            .append_handler_register(risc_v_handle_register)
             .build()
     }
 

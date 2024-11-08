@@ -2,6 +2,7 @@
 members = [
     "bin/odyssey/",
     "crates/node",
+    "crates/risc-v-handler",
     "crates/e2e-tests",
     "crates/wallet",
     "crates/walltime",
@@ -135,6 +136,7 @@ strip = false
 [workspace.dependencies]
 # odyssey
 odyssey-node = { path = "crates/node" }
+odyssey-risc-v-handler = { path = "crates/risc-v-handler" }
 odyssey-wallet = { path = "crates/wallet" }
 odyssey-walltime = { path = "crates/walltime" }
 
@@ -188,7 +190,12 @@ reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", rev =
 reth-network = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
 reth-chain-state = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }
-revm-precompile ={version= "14.0.0",features=["secp256r1"]}
+revm-precompile = { version = "14.0.0", features = ["secp256r1"] }
+
+# risc-v
+eth-riscv-interpreter = { git = "https://github.com/leonardoalt/r55.git" }
+eth-riscv-syscalls = { git = "https://github.com/leonardoalt/r55.git" }
+rvemu = { git = "https://github.com/lvella/rvemu.git" }
 
 # metrics
 metrics = "0.23.0"

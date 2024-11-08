@@ -2495,6 +2495,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "eth-riscv-interpreter"
+version = "0.1.0"
+source = "git+https://github.com/leonardoalt/r55.git#587a4850e293dea4c5ebf5710cf73618eba1509f"
+dependencies = [
+ "goblin",
+ "rvemu",
+]
+
+[[package]]
+name = "eth-riscv-syscalls"
+version = "0.1.0"
+source = "git+https://github.com/leonardoalt/r55.git#587a4850e293dea4c5ebf5710cf73618eba1509f"
+
+[[package]]
 name = "ethereum_serde_utils"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2884,6 +2898,17 @@ dependencies = [
  "serde_json",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "goblin"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b363a30c165f666402fe6a3024d3bec7ebc898f96a4a23bd1c99f8dbf3f4f47"
+dependencies = [
+ "log",
+ "plain",
+ "scroll",
 ]
 
 [[package]]
@@ -4529,6 +4554,7 @@ version = "0.0.0"
 dependencies = [
  "alloy-primitives",
  "eyre",
+ "odyssey-risc-v-handler",
  "reth-chainspec",
  "reth-cli",
  "reth-evm",
@@ -4545,6 +4571,18 @@ dependencies = [
  "reth-transaction-pool",
  "revm-precompile",
  "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "odyssey-risc-v-handler"
+version = "0.0.0"
+dependencies = [
+ "eth-riscv-interpreter",
+ "eth-riscv-syscalls",
+ "reth-revm",
+ "rvemu",
+ "thiserror",
  "tracing",
 ]
 
@@ -4962,6 +5000,12 @@ name = "pkg-config"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "953ec861398dccce10c670dfeaf3ec4911ca479e9c02154b3a215178c5f566f2"
+
+[[package]]
+name = "plain"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "pollster"
@@ -8312,6 +8356,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "rvemu"
+version = "0.0.11"
+source = "git+https://github.com/lvella/rvemu.git#e1cf76a8fb609fc1ebb028419799a3087d8deac0"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "ryu"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8357,6 +8412,26 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "scroll"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ab8598aa408498679922eff7fa985c25d58a90771bd6be794434c5277eab1a6"
+dependencies = [
+ "scroll_derive",
+]
+
+[[package]]
+name = "scroll_derive"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f81c2fde025af7e69b1d1420531c8a8811ca898919db177141a85313b1cb932"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.79",
+]
 
 [[package]]
 name = "sec1"

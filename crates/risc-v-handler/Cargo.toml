@@ -1,0 +1,27 @@
+[package]
+name = "odyssey-risc-v-handler"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+# reth
+reth-revm.workspace = true
+
+# risc-v
+eth-riscv-interpreter.workspace = true
+eth-riscv-syscalls.workspace = true
+rvemu.workspace = true
+
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+
+[lints]
+workspace = true

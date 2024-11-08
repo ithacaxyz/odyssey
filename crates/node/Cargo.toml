@@ -10,6 +10,8 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+odyssey-risc-v-handler.workspace = true
+
 revm-precompile.workspace = true
 reth-cli.workspace = true
 reth-node-api.workspace = true

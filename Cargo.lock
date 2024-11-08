@@ -2504,6 +2504,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "eth-riscv-syscalls"
+version = "0.1.0"
+source = "git+https://github.com/leonardoalt/r55.git#587a4850e293dea4c5ebf5710cf73618eba1509f"
+
+[[package]]
 name = "ethereum_serde_utils"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4574,9 +4579,11 @@ name = "odyssey-risc-v-handler"
 version = "0.0.0"
 dependencies = [
  "eth-riscv-interpreter",
- "reth-evm",
+ "eth-riscv-syscalls",
  "reth-revm",
  "rvemu",
+ "thiserror",
+ "tracing",
 ]
 
 [[package]]

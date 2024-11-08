@@ -11,12 +11,15 @@ categories.workspace = true
 
 [dependencies]
 # reth
-reth-evm.workspace = true
 reth-revm.workspace = true
 
 # risc-v
 eth-riscv-interpreter.workspace = true
+eth-riscv-syscalls.workspace = true
 rvemu.workspace = true
+
+thiserror.workspace = true
+tracing.workspace = true
 
 [dev-dependencies]
 

@@ -194,6 +194,7 @@ revm-precompile = { version = "14.0.0", features = ["secp256r1"] }
 
 # risc-v
 eth-riscv-interpreter = { git = "https://github.com/leonardoalt/r55.git" }
+eth-riscv-syscalls = { git = "https://github.com/leonardoalt/r55.git" }
 rvemu = { git = "https://github.com/lvella/rvemu.git" }
 
 # metrics

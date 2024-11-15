@@ -102,5 +102,6 @@ Additionally, a public function exists to put the contract into emergency pause 
 function emergencyPause(uint blockNum, bytes32 outputRoot1, uint256 index1, bytes32 outputRoot2, uint256 index2) external;
 ```
 - require that both proposals are Confirmed
-- require that outputRoot1 != outputRoot2
+- require that `outputRoot1 != outputRoot2`
 - set `emergencyPause = true`
+- provide a reward to the caller, which can be seeded in the contract upon deployment

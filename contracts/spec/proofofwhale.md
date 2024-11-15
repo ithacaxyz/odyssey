@@ -24,8 +24,8 @@ Putting the contract in emergency state will allow the caller to mark other prop
 
 While this does create the risk of pausing new state roots from being posted for an extended time, it is the preferred strategy because:
 - There is no possible attack that doesn't cost the attacker significant funds. If they don't challenge their own proposals, they will lose at least `EMERGENCY_THRESHOLD * challengeBond`. If they do challenge their own proposals and then set the emergency state themselves, they will lose `emergencyBond`.
-- All the defender's funds will be returned each `provingTime` (approx 1 day). This means the defender will be able to double their total funds every day. It will become incredible expensive for an attacker to maintain this.
-- Because the defender doubles their funds every 24 hours, a maximum emergency time of 10 days would allow for them to double 10 times, meaning that the attacker would need `2 ** 10 = 1024` times the funds to perform an attacker, which is infeasible.
+- All the defender's funds will be returned each `provingTime` (approx 1 day). This means the defender will be able to increase their total funds by `1 + challengeBond / proposalBond` every day. Assuming the bond sizes are similar, it will become incredible expensive for an attacker to maintain this.
+- In a simple case, let's say the defender doubles their funds every 24 hours, a maximum emergency time of 10 days would allow for them to double 10 times, meaning that the attacker would need `2 ** 10 = 1024` times the funds to perform an attacker, which is infeasible.
 - The sequencing of the chain is not interrupted, as that is performed in an unrelated process by op-batcher. The only thing that is paused is the ability to perform withdrawals.
 
 ### Option 2: EIP1559 Proposal Bonds

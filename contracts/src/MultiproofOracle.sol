@@ -2,46 +2,9 @@
 pragma solidity ^0.8.13;
 
 import { IProver } from "./interfaces/IProver.sol";
+import { IMultiproofOracle } from "./interfaces/IMultiproofOracle.sol";
 
-contract MultiproofOracle {
-
-    ///////////////////////////////
-    /////////// TYPES /////////////
-    ///////////////////////////////
-
-    struct Challenge {
-        uint256 blockNum;
-        bytes32 outputRoot;
-        uint256 index;
-    }
-
-    struct PauseData {
-        uint40 deadline;
-        Challenge[] challenges;
-    }
-
-    enum ProposalState {
-        None,
-        Unchallenged,
-        Challenged,
-        Rejected,
-        Confirmed
-    }
-
-    struct ProposalData {
-        address proposer;
-        Challenge parent;
-        uint40 deadline;
-        uint8 version;
-        ProposalState state;
-        uint40 provenBitmap;
-        address challenger;
-    }
-
-    struct ProofData {
-        bytes publicValues;
-        bytes proof;
-    }
+contract MultiproofOracle is IMultiproofOracle {
 
     ///////////////////////////////
     //////// STATE VARIABLES /////
@@ -49,21 +12,21 @@ contract MultiproofOracle {
 
     uint8 public constant VERSION = 1;
 
-    uint256 immutable proposalBond = 1 ether;
-    uint256 immutable challengeTime = 1 days;
+    uint256 immutable proposalBond;
+    uint256 immutable challengeTime;
 
-    uint256 immutable proofReward = 1 ether; // to challenge, we must bond `proofReward * provers.length`
-    uint256 immutable provingTime = 1 days;
+    uint256 immutable proofReward; // to challenge, we must bond `proofReward * provers.length`
+    uint256 immutable provingTime;
 
     mapping(uint256 blockNum => mapping(bytes32 outputRoot => ProposalData[])) public proposals;
-    IProver[] public provers; // must be immutable
+    IProver[] public provers;
 
-    uint256 treasuryFeePct; // in 1e18
+    uint256 treasuryFeePctWad;
     address treasury;
 
-    uint256 immutable pauseThreshold = 100;
-    uint256 immutable emergencyBond = 100 ether;
-    uint256 immutable emergencyPauseTime = 10 days;
+    uint256 immutable emergencyPauseThreshold;
+    uint256 immutable emergencyBond;
+    uint256 immutable emergencyPauseTime;
     address[] emergencyPauses;
     mapping(address pauser => PauseData) public emergencyPauseData;
 
@@ -73,13 +36,21 @@ contract MultiproofOracle {
     ///////// CONSTRUCTOR /////////
     ///////////////////////////////
 
-    constructor(IProver[] memory _provers, uint256 _initialBlockNum, bytes32 _initialOutputRoot) {
-        // proven bitmap has to fit in uint40
-        require(_provers.length < 40);
+    constructor(IProver[] memory _provers, uint256 _initialBlockNum, bytes32 _initialOutputRoot, ImmutableArgs memory _args) {
+        require(_provers.length < 40); // proven bitmap has to fit in uint40
         provers = _provers;
 
         // set params
-        // TODO: set immutables & treasury params from here instead of directly above
+        require(_args.treasuryFeePctWad < 1e18, "treasury fee must be less than 100%");
+        proposalBond = _args.proposalBond;                       // sane default: 1 ETH
+        challengeTime = _args.challengeTime;                     // sane default: 1 day
+        proofReward = _args.proofReward;                         // sane default: 1 ETH
+        provingTime = _args.provingTime;                         // sane default: 1 day
+        treasuryFeePctWad = _args.treasuryFeePctWad;             // sane default: 20%
+        treasury = _args.treasury;
+        emergencyPauseThreshold = _args.emergencyPauseThreshold; // sane default: 100
+        emergencyBond = _args.emergencyBond;                     // sane default: 100 ETH
+        emergencyPauseTime = _args.emergencyPauseTime;           // sane default: 10 days
 
         // initialize anchor state with Confirmed status
         proposals[_initialBlockNum][_initialOutputRoot].push(ProposalData({
@@ -148,7 +119,7 @@ contract MultiproofOracle {
 
         if (successfulProofCount > 0) {
             uint rewards = proofReward * successfulProofCount;
-            uint treasuryFee = rewards * treasuryFeePct / 1e18;
+            uint treasuryFee = rewards * treasuryFeePctWad / 1e18;
             payable(treasury).transfer(treasuryFee);
             payable(msg.sender).transfer(rewards - treasuryFee);
         }
@@ -210,8 +181,8 @@ contract MultiproofOracle {
 
         // The treasury fee here MUST be substantial enough to deter the attack where an attacker:
         // (a) proposes false root, (b) challenges self, (c) emergency pause to DOS the system.
-        // We can calculate this cost as `proposalBond * treasuryFeePct / 1e18 * pauseThreshold`.
-        uint treasuryFee = proposalBond * treasuryFeePct / 1e18;
+        // We can calculate this cost as `proposalBond * treasuryFeePctWad / 1e18 * emergencyPauseThreshold`.
+        uint treasuryFee = proposalBond * treasuryFeePctWad / 1e18;
         uint proposalBondRewards = proposalBond - treasuryFee;
         uint proofRewards = proofReward * (provers.length - successfulProofCount);
 
@@ -235,7 +206,7 @@ contract MultiproofOracle {
     function emergencyPause(Challenge[] memory challenges) public payable {
         require(msg.value == emergencyBond, "incorrect bond amount");
         require(emergencyPauseData[msg.sender].deadline == 0, "already in emergency pause");
-        require(challenges.length >= pauseThreshold, "not enough challenges");
+        require(challenges.length >= emergencyPauseThreshold, "not enough challenges");
 
         for (uint i = 0; i < challenges.length; i++) {
             Challenge memory c = challenges[i];

@@ -143,14 +143,17 @@ alloy = { version = "0.5.3", features = [
     "providers",
     "provider-http",
     "signers",
+    "consensus",
 ] }
-alloy-network = { version = "0.5.3" }
 alloy-primitives = { version = "0.8.7" }
+alloy-network = { version = "0.5.3" }
 alloy-rpc-types = { version = "0.5.3" }
+alloy-rpc-types-beacon = { version = "0.5.3" }
 alloy-signer-local = { version = "0.5.3", features = ["mnemonic"] }
 
 # tokio
 tokio = { version = "1.21", default-features = false }
+tokio-stream = "0.1"
 
 # reth
 reth-chainspec = { git = "https://github.com/paradigmxyz/reth.git", rev = "e98a050" }

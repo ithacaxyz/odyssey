@@ -22,7 +22,7 @@
 use alloy_network::{
     eip2718::Encodable2718, Ethereum, EthereumWallet, NetworkWallet, TransactionBuilder,
 };
-use alloy_primitives::{map::HashMap, Address, ChainId, TxHash, TxKind, U256, U64};
+use alloy_primitives::{map::HashMap, Address, Bytes, ChainId, TxHash, TxKind, U256, U64};
 use alloy_rpc_types::TransactionRequest;
 use jsonrpsee::{
     core::{async_trait, RpcResult},
@@ -38,7 +38,10 @@ use std::sync::Arc;
 use tracing::{trace, warn};
 
 use reth_optimism_rpc as _;
-use tokio::sync::Mutex;
+use tokio::sync::{mpsc::UnboundedSender, Mutex};
+
+mod bls_batcher;
+pub use bls_batcher::*;
 
 /// The capability to perform [EIP-7702][eip-7702] delegations, sponsored by the sequencer.
 ///
@@ -100,7 +103,11 @@ pub trait OdysseyWalletApi {
     /// [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
     /// [eip-1559]: https://eips.ethereum.org/EIPS/eip-1559
     #[method(name = "sendTransaction", aliases = ["odyssey_sendTransaction"])]
-    async fn send_transaction(&self, request: TransactionRequest) -> RpcResult<TxHash>;
+    async fn send_transaction(
+        &self,
+        request: TransactionRequest,
+        bls_data: Option<BlsData>,
+    ) -> RpcResult<TxHash>;
 }
 
 /// Errors returned by the wallet API.
@@ -172,6 +179,7 @@ impl<Provider, Eth> OdysseyWallet<Provider, Eth> {
         eth_api: Eth,
         chain_id: ChainId,
         valid_designations: Vec<Address>,
+        bls_batcher_tx: UnboundedSender<(TransactionRequest, BlsData)>,
     ) -> Self {
         let inner = OdysseyWalletInner {
             provider,
@@ -182,6 +190,7 @@ impl<Provider, Eth> OdysseyWallet<Provider, Eth> {
                 U64::from(chain_id),
                 Capabilities { delegation: DelegationCapability { addresses: valid_designations } },
             )])),
+            bls_batcher_tx,
             permit: Default::default(),
             metrics: WalletMetrics::default(),
         };
@@ -204,7 +213,11 @@ where
         Ok(self.inner.capabilities.clone())
     }
 
-    async fn send_transaction(&self, mut request: TransactionRequest) -> RpcResult<TxHash> {
+    async fn send_transaction(
+        &self,
+        mut request: TransactionRequest,
+        bls_data: Option<BlsData>,
+    ) -> RpcResult<TxHash> {
         trace!(target: "rpc::wallet", ?request, "Serving odyssey_sendTransaction");
 
         // validate fields common to eip-7702 and eip-1559
@@ -284,6 +297,13 @@ where
         }
         request.gas = Some(estimate.to());
 
+        // We send transaction to BLS aggregator only after performing the estimate check
+        // to ensure that aggregator has enough data to compose the batch.
+        if let Some(bls_data) = bls_data {
+            let _ = self.inner.bls_batcher_tx.send((request, bls_data));
+            return Ok(TxHash::default());
+        }
+
         // set gas price
         let (base_fee, _) = base_fee.map_err(|_| {
             self.inner.metrics.invalid_send_transaction_calls.increment(1);
@@ -328,6 +348,8 @@ struct OdysseyWalletInner<Provider, Eth> {
     wallet: EthereumWallet,
     chain_id: ChainId,
     capabilities: WalletCapabilities,
+    /// Used for sending BLS transactions to the aggregator.
+    bls_batcher_tx: UnboundedSender<(TransactionRequest, BlsData)>,
     /// Used to guard tx signing
     permit: Mutex<()>,
     /// Metrics for the `wallet_` RPC namespace.

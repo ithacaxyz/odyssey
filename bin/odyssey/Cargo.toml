@@ -25,6 +25,8 @@ reth-node-builder.workspace = true
 reth-optimism-node.workspace = true
 reth-optimism-cli.workspace = true
 reth-provider.workspace = true
+tokio = { workspace = true, features = ["sync"] }
+tokio-stream.workspace = true
 clap = { workspace = true, features = ["derive"] }
 
 [features]

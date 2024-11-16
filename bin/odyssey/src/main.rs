@@ -23,18 +23,22 @@
 //! - `min-debug-logs`: Disables all logs below `debug` level.
 //! - `min-trace-logs`: Disables all logs below `trace` level.
 
+use std::time::Duration;
+
 use alloy_network::EthereumWallet;
 use alloy_primitives::Address;
 use alloy_signer_local::PrivateKeySigner;
 use clap::Parser;
 use eyre::Context;
 use odyssey_node::{chainspec::OdysseyChainSpecParser, node::OdysseyNode};
-use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer};
+use odyssey_wallet::{BlsTransactionBatcher, OdysseyWallet, OdysseyWalletApiServer};
 use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher};
 use reth_optimism_cli::Cli;
 use reth_optimism_node::{args::RollupArgs, node::OptimismAddOns};
 use reth_provider::{providers::BlockchainProvider2, CanonStateSubscriptions};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 use tracing::{info, warn};
 
 #[global_allocator]
@@ -70,13 +74,29 @@ fn main() {
                             .collect::<Result<_, _>>()
                             .wrap_err("No valid EXP0001 delegations specified")?;
 
+                        let chain_id = ctx.config().chain.chain().id();
+                        let (bls_batcher_tx, bls_batcher_rx) = mpsc::unbounded_channel();
+
+                        let batch_gas_limit = 3_500_000;
+                        let wallet_ = wallet.clone();
+                        let eth_api = ctx.registry.eth_api().clone();
+                        tokio::task::spawn(BlsTransactionBatcher::new(
+                            chain_id,
+                            wallet_,
+                            Duration::from_millis(100),
+                            batch_gas_limit,
+                            eth_api,
+                            UnboundedReceiverStream::from(bls_batcher_rx),
+                        ));
+
                         ctx.modules.merge_configured(
                             OdysseyWallet::new(
                                 ctx.provider().clone(),
                                 wallet,
                                 ctx.registry.eth_api().clone(),
-                                ctx.config().chain.chain().id(),
+                                chain_id,
                                 valid_delegations,
+                                bls_batcher_tx,
                             )
                             .into_rpc(),
                         )?;

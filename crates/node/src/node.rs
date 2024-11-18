@@ -21,14 +21,12 @@ use reth_node_builder::{
 use reth_optimism_chainspec::OpChainSpec;
 use reth_optimism_node::{
     args::RollupArgs,
-    node::{
-        OptimismAddOns, OptimismConsensusBuilder, OptimismNetworkBuilder, OptimismPayloadBuilder,
-        OptimismPoolBuilder,
-    },
-    OpExecutionStrategyFactory, OptimismEngineTypes,
+    node::{OpAddOns, OpConsensusBuilder, OpNetworkBuilder, OpPayloadBuilder, OpPoolBuilder},
+    OpEngineTypes, OpExecutionStrategyFactory,
 };
 use reth_payload_builder::PayloadBuilderHandle;
 use reth_transaction_pool::{SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER};
+use reth_trie_db::MerklePatriciaTrie;
 use std::time::Duration;
 use tracing::info;
 
@@ -50,20 +48,20 @@ impl OdysseyNode {
         args: &RollupArgs,
     ) -> ComponentsBuilder<
         Node,
-        OptimismPoolBuilder,
+        OpPoolBuilder,
         OdysseyPayloadBuilder,
         OdysseyNetworkBuilder,
         OdysseyExecutorBuilder,
-        OptimismConsensusBuilder,
+        OpConsensusBuilder,
     >
     where
         Node: FullNodeTypes<
-            Types: NodeTypesWithEngine<Engine = OptimismEngineTypes, ChainSpec = OpChainSpec>,
+            Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec>,
         >,
     {
         ComponentsBuilder::default()
             .node_types::<Node>()
-            .pool(OptimismPoolBuilder {
+            .pool(OpPoolBuilder {
                 pool_config_overrides: PoolBuilderConfigOverrides {
                     queued_limit: Some(SubPoolLimit::default() * 2),
                     pending_limit: Some(SubPoolLimit::default() * 2),
@@ -73,12 +71,12 @@ impl OdysseyNode {
                 },
             })
             .payload(OdysseyPayloadBuilder::new(args.compute_pending_block))
-            .network(OdysseyNetworkBuilder::new(OptimismNetworkBuilder {
+            .network(OdysseyNetworkBuilder::new(OpNetworkBuilder {
                 disable_txpool_gossip: args.disable_txpool_gossip,
                 disable_discovery_v4: !args.discovery_v4,
             }))
             .executor(OdysseyExecutorBuilder::default())
-            .consensus(OptimismConsensusBuilder::default())
+            .consensus(OpConsensusBuilder::default())
     }
 }
 
@@ -86,30 +84,28 @@ impl OdysseyNode {
 impl NodeTypes for OdysseyNode {
     type Primitives = ();
     type ChainSpec = OpChainSpec;
+    type StateCommitment = MerklePatriciaTrie;
 }
 
 impl NodeTypesWithEngine for OdysseyNode {
-    type Engine = OptimismEngineTypes;
+    type Engine = OpEngineTypes;
 }
 
 impl<N> Node<N> for OdysseyNode
 where
-    N: FullNodeTypes<
-        Types: NodeTypesWithEngine<Engine = OptimismEngineTypes, ChainSpec = OpChainSpec>,
-    >,
+    N: FullNodeTypes<Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec>>,
 {
     type ComponentsBuilder = ComponentsBuilder<
         N,
-        OptimismPoolBuilder,
+        OpPoolBuilder,
         OdysseyPayloadBuilder,
         OdysseyNetworkBuilder,
         OdysseyExecutorBuilder,
-        OptimismConsensusBuilder,
+        OpConsensusBuilder,
     >;
 
-    type AddOns = OptimismAddOns<
-        NodeAdapter<N, <Self::ComponentsBuilder as NodeComponentsBuilder<N>>::Components>,
-    >;
+    type AddOns =
+        OpAddOns<NodeAdapter<N, <Self::ComponentsBuilder as NodeComponentsBuilder<N>>::Components>>;
 
     fn components_builder(&self) -> Self::ComponentsBuilder {
         let Self { args } = self;
@@ -117,7 +113,7 @@ where
     }
 
     fn add_ons(&self) -> Self::AddOns {
-        OptimismAddOns::new(self.args.sequencer_http.clone())
+        OpAddOns::new(self.args.sequencer_http.clone())
     }
 }
 
@@ -154,28 +150,27 @@ where
 #[derive(Debug, Default, Clone)]
 pub struct OdysseyPayloadBuilder {
     /// Inner Optimism payload builder service.
-    inner: OptimismPayloadBuilder,
+    inner: OpPayloadBuilder,
 }
 
 impl OdysseyPayloadBuilder {
     /// Create a new instance with the given `compute_pending_block` flag.
     pub const fn new(compute_pending_block: bool) -> Self {
-        Self { inner: OptimismPayloadBuilder::new(compute_pending_block) }
+        Self { inner: OpPayloadBuilder::new(compute_pending_block) }
     }
 }
 
 impl<Node, Pool> PayloadServiceBuilder<Node, Pool> for OdysseyPayloadBuilder
 where
-    Node: FullNodeTypes<
-        Types: NodeTypesWithEngine<Engine = OptimismEngineTypes, ChainSpec = OpChainSpec>,
-    >,
+    Node:
+        FullNodeTypes<Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec>>,
     Pool: TransactionPool + Unpin + 'static,
 {
     async fn spawn_payload_service(
         self,
         ctx: &BuilderContext<Node>,
         pool: Pool,
-    ) -> eyre::Result<PayloadBuilderHandle<OptimismEngineTypes>> {
+    ) -> eyre::Result<PayloadBuilderHandle<OpEngineTypes>> {
         self.inner.spawn(OdysseyEvmConfig::new(ctx.chain_spec()), ctx, pool)
     }
 }
@@ -183,12 +178,12 @@ where
 /// The default odyssey network builder.
 #[derive(Debug, Default, Clone)]
 pub struct OdysseyNetworkBuilder {
-    inner: OptimismNetworkBuilder,
+    inner: OpNetworkBuilder,
 }
 
 impl OdysseyNetworkBuilder {
     /// Create a new instance based on the given op builder
-    pub const fn new(network: OptimismNetworkBuilder) -> Self {
+    pub const fn new(network: OpNetworkBuilder) -> Self {
         Self { inner: network }
     }
 }

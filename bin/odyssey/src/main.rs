@@ -33,7 +33,7 @@ use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer};
 use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher};
 use reth_optimism_cli::Cli;
-use reth_optimism_node::{args::RollupArgs, node::OptimismAddOns};
+use reth_optimism_node::{args::RollupArgs, node::OpAddOns};
 use reth_provider::{providers::BlockchainProvider2, CanonStateSubscriptions};
 use tracing::{info, warn};
 
@@ -54,7 +54,7 @@ fn main() {
             let node = builder
                 .with_types_and_provider::<OdysseyNode, BlockchainProvider2<_>>()
                 .with_components(OdysseyNode::components(&rollup_args))
-                .with_add_ons(OptimismAddOns::new(rollup_args.sequencer_http.clone()))
+                .with_add_ons(OpAddOns::new(rollup_args.sequencer_http.clone()))
                 .extend_rpc_modules(move |ctx| {
                     // register odyssey wallet namespace
                     if let Ok(sk) = std::env::var("EXP1_SK") {

@@ -1,6 +1,7 @@
 //! Odyssey chainspec parsing logic.
 use std::sync::LazyLock;
 
+use alloy_eips::eip1559::ETHEREUM_BLOCK_GAS_LIMIT;
 use alloy_primitives::{b256, U256};
 use reth_chainspec::{
     once_cell_set, BaseFeeParams, BaseFeeParamsKind, Chain, ChainHardforks, ChainSpec,
@@ -8,8 +9,7 @@ use reth_chainspec::{
 };
 use reth_cli::chainspec::{parse_genesis, ChainSpecParser};
 use reth_optimism_chainspec::OpChainSpec;
-use reth_optimism_forks::OptimismHardfork;
-use reth_primitives::constants::ETHEREUM_BLOCK_GAS_LIMIT;
+use reth_optimism_forks::OpHardfork;
 use std::sync::Arc;
 
 /// Odyssey forks.
@@ -32,10 +32,10 @@ pub static ODYSSEY_FORKS: LazyLock<ChainHardforks> = LazyLock::new(|| {
         ),
         (EthereumHardfork::Shanghai.boxed(), ForkCondition::Timestamp(0)),
         (EthereumHardfork::Cancun.boxed(), ForkCondition::Timestamp(0)),
-        (OptimismHardfork::Regolith.boxed(), ForkCondition::Timestamp(0)),
-        (OptimismHardfork::Bedrock.boxed(), ForkCondition::Block(0)),
-        (OptimismHardfork::Ecotone.boxed(), ForkCondition::Timestamp(0)),
-        (OptimismHardfork::Canyon.boxed(), ForkCondition::Timestamp(0)),
+        (OpHardfork::Regolith.boxed(), ForkCondition::Timestamp(0)),
+        (OpHardfork::Bedrock.boxed(), ForkCondition::Block(0)),
+        (OpHardfork::Ecotone.boxed(), ForkCondition::Timestamp(0)),
+        (OpHardfork::Canyon.boxed(), ForkCondition::Timestamp(0)),
         (EthereumHardfork::Prague.boxed(), ForkCondition::Timestamp(0)),
     ])
 });
@@ -71,7 +71,7 @@ pub static ODYSSEY_MAINNET: LazyLock<Arc<OpChainSpec>> = LazyLock::new(|| {
         base_fee_params: BaseFeeParamsKind::Variable(
             vec![
                 (EthereumHardfork::London.boxed(), BaseFeeParams::optimism()),
-                (OptimismHardfork::Canyon.boxed(), BaseFeeParams::optimism_canyon()),
+                (OpHardfork::Canyon.boxed(), BaseFeeParams::optimism_canyon()),
             ]
             .into(),
         ),
@@ -128,7 +128,7 @@ mod tests {
     use super::OdysseyChainSpecParser;
     use reth_chainspec::EthereumHardforks;
     use reth_cli::chainspec::ChainSpecParser;
-    use reth_optimism_forks::OptimismHardforks;
+    use reth_optimism_forks::OpHardforks;
 
     #[test]
     fn chainspec_parser_adds_prague() {

@@ -10,16 +10,13 @@
 //! This currently configures the instructions defined in [EIP3074-instructions](https://github.com/paradigmxyz/eip3074-instructions), and the
 //! precompiles defined by [`revm_precompile`].
 
+use alloy_consensus::Header;
 use alloy_primitives::{Address, Bytes, TxKind, U256};
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
-use reth_optimism_chainspec::OpChainSpec;
-use reth_optimism_forks::OptimismHardfork;
-use reth_primitives::{
-    revm_primitives::{CfgEnvWithHandlerCfg, TxEnv},
-    transaction::FillTxEnv,
-    Header, TransactionSigned,
-};
+use reth_optimism_chainspec::{DecodeError, OpChainSpec};
+use reth_optimism_forks::OpHardfork;
+use reth_primitives::{transaction::FillTxEnv, TransactionSigned};
 use reth_revm::{
     handler::register::EvmHandler,
     inspector_handle_register,
@@ -31,6 +28,7 @@ use reth_revm::{
     ContextPrecompiles, Database, Evm, EvmBuilder, GetInspector,
 };
 use revm_precompile::secp256r1;
+use revm_primitives::{CfgEnvWithHandlerCfg, TxEnv};
 use std::sync::Arc;
 
 /// Custom EVM configuration
@@ -72,6 +70,7 @@ impl OdysseyEvmConfig {
 
 impl ConfigureEvmEnv for OdysseyEvmConfig {
     type Header = Header;
+    type Error = DecodeError;
 
     fn fill_tx_env(&self, tx_env: &mut TxEnv, transaction: &TransactionSigned, sender: Address) {
         transaction.fill_tx_env(tx_env, sender);
@@ -170,7 +169,7 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
         &self,
         parent: &Self::Header,
         attributes: NextBlockEnvAttributes,
-    ) -> (CfgEnvWithHandlerCfg, BlockEnv) {
+    ) -> Result<(CfgEnvWithHandlerCfg, BlockEnv), Self::Error> {
         // configure evm env based on parent block
         let cfg_env = CfgEnv::default().with_chain_id(self.chain_spec.chain().id());
 
@@ -210,13 +209,13 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
             blob_excess_gas_and_price,
         };
 
-        (
+        Ok((
             CfgEnvWithHandlerCfg {
                 cfg_env,
                 handler_cfg: HandlerCfg { spec_id, is_optimism: true },
             },
             block_env,
-        )
+        ))
     }
 }
 
@@ -254,17 +253,17 @@ impl ConfigureEvm for OdysseyEvmConfig {
 fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> reth_revm::primitives::SpecId {
     if chain_spec.fork(EthereumHardfork::Prague).active_at_head(block) {
         reth_revm::primitives::OSAKA
-    } else if chain_spec.fork(OptimismHardfork::Granite).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Granite).active_at_head(block) {
         reth_revm::primitives::GRANITE
-    } else if chain_spec.fork(OptimismHardfork::Fjord).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Fjord).active_at_head(block) {
         reth_revm::primitives::FJORD
-    } else if chain_spec.fork(OptimismHardfork::Ecotone).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Ecotone).active_at_head(block) {
         reth_revm::primitives::ECOTONE
-    } else if chain_spec.fork(OptimismHardfork::Canyon).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Canyon).active_at_head(block) {
         reth_revm::primitives::CANYON
-    } else if chain_spec.fork(OptimismHardfork::Regolith).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Regolith).active_at_head(block) {
         reth_revm::primitives::REGOLITH
-    } else if chain_spec.fork(OptimismHardfork::Bedrock).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Bedrock).active_at_head(block) {
         reth_revm::primitives::BEDROCK
     } else if chain_spec.fork(EthereumHardfork::Prague).active_at_head(block) {
         reth_revm::primitives::PRAGUE
@@ -304,10 +303,8 @@ fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> reth_revm::primitives::Spe
 mod tests {
     use super::*;
     use reth_chainspec::{Chain, ChainSpecBuilder, EthereumHardfork};
-    use reth_primitives::{
-        revm_primitives::{BlockEnv, CfgEnv, SpecId},
-        ForkCondition,
-    };
+    use reth_primitives::ForkCondition;
+    use revm_primitives::{BlockEnv, CfgEnv, SpecId};
 
     #[test]
     fn test_fill_cfg_and_block_env() {

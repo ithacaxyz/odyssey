@@ -19,6 +19,7 @@
 
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
+use alloy_eips::BlockId;
 use alloy_network::{
     eip2718::Encodable2718, Ethereum, EthereumWallet, NetworkWallet, TransactionBuilder,
 };
@@ -30,9 +31,9 @@ use jsonrpsee::{
 };
 use metrics::Counter;
 use metrics_derive::Metrics;
-use reth_primitives::{revm_primitives::Bytecode, BlockId};
 use reth_rpc_eth_api::helpers::{EthCall, EthTransactions, FullEthApi, LoadFee, LoadState};
 use reth_storage_api::{StateProvider, StateProviderFactory};
+use revm_primitives::Bytecode;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{trace, warn};

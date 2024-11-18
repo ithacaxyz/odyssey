@@ -33,7 +33,7 @@ use reth_revm::{
 use revm_precompile::secp256r1;
 use std::sync::Arc;
 
-use crate::compiler::register_compiler_handler;
+use crate::compiler::{self, register_compiler_handler};
 
 /// Custom EVM configuration
 #[derive(Debug, Clone)]
@@ -223,13 +223,13 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
 }
 
 impl ConfigureEvm for OdysseyEvmConfig {
-    type DefaultExternalContext<'a> = crate::compiler::ExternalContext;
+    type DefaultExternalContext<'a> = compiler::ExternalContext;
 
     fn evm<DB: Database>(&self, db: DB) -> Evm<'_, Self::DefaultExternalContext<'_>, DB> {
         EvmBuilder::default()
             .with_db(db)
             .optimism()
-            .reset_handler_with_external_context(crate::compiler::ExternalContext)
+            .reset_handler_with_external_context(compiler::ExternalContext::new())
             .append_handler_register(register_compiler_handler)
             // add additional precompiles
             .append_handler_register(Self::set_precompiles)
@@ -252,7 +252,7 @@ impl ConfigureEvm for OdysseyEvmConfig {
     }
 
     fn default_external_context<'a>(&self) -> Self::DefaultExternalContext<'a> {
-        crate::compiler::ExternalContext
+        compiler::ExternalContext::new()
     }
 }
 

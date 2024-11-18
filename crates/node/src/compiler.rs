@@ -1,11 +1,31 @@
+use alloy_primitives::B256;
 use reth_revm::{
     handler::register::EvmHandler,
-    interpreter::{InterpreterAction, SharedMemory},
+    interpreter::{InterpreterAction, SharedMemory, EMPTY_SHARED_MEMORY},
     Context as RevmContext, Database, Frame,
 };
+use revmc::EvmCompilerFn;
 use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::mpsc::{Receiver, Sender},
+};
 
-pub struct ExternalContext;
+#[derive(Debug)]
+pub struct ExternalContext {
+    cache: HashMap<B256, EvmCompilerFn>,
+}
+
+impl ExternalContext {
+    pub fn new() -> Self {
+        let cache = HashMap::new();
+        Self { cache }
+    }
+
+    pub fn get_compiled_fn(&self, hash: B256) -> Option<EvmCompilerFn> {
+        self.cache.get(&hash).cloned()
+    }
+}
 
 pub fn register_compiler_handler<DB>(handler: &mut EvmHandler<'_, ExternalContext, DB>)
 where
@@ -24,18 +44,18 @@ where
 
 fn execute_frame<DB: Database>(
     frame: &mut Frame,
-    _memory: &mut SharedMemory,
-    _context: &mut RevmContext<ExternalContext, DB>,
+    memory: &mut SharedMemory,
+    context: &mut RevmContext<ExternalContext, DB>,
 ) -> Option<InterpreterAction> {
     // let library = context.external.get_or_load_library(context.evm.spec_id())?;
     let interpreter = frame.interpreter_mut();
 
-    let _hash = match interpreter.contract.hash {
+    let hash = match interpreter.contract.hash {
         Some(hash) => hash,
         None => unreachable_no_hash(),
     };
 
-    None
+    let f = context.external.get_compiled_fn(hash)?;
 
     // let f = match library.get_function(hash) {
     //     Ok(Some(f)) => f,
@@ -52,10 +72,27 @@ fn execute_frame<DB: Database>(
     // let result = unsafe { f.call_with_interpreter(interpreter, context) };
     // *memory = interpreter.take_memory();
     // Some(result)
+
+    interpreter.shared_memory = std::mem::replace(memory, EMPTY_SHARED_MEMORY);
+    let result = unsafe { f.call_with_interpreter(interpreter, context) };
+    *memory = interpreter.take_memory();
+    Some(result)
 }
 
 #[cold]
 #[inline(never)]
 const fn unreachable_no_hash() -> ! {
     panic!("unreachable: bytecode hash is not set in the interpreter")
+}
+
+#[cold]
+#[inline(never)]
+const fn unreachable_misconfigured() -> ! {
+    panic!("unreachable: AOT EVM is misconfigured")
+}
+
+#[cold]
+#[inline(never)]
+fn unlikely_log_get_function_error(err: impl std::error::Error, hash: &B256) {
+    tracing::error!(%err, %hash, "failed getting function from shared library");
 }

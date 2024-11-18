@@ -208,3 +208,6 @@ futures = "0.3"
 
 # misc-testing
 rstest = "0.18.2"
+
+[patch.crates-io]
+revmc = { path = "../revmc/crates/revmc" }

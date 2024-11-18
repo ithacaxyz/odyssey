@@ -16,6 +16,6 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod chainspec;
-mod compiler;
+pub mod compiler;
 pub mod evm;
 pub mod node;

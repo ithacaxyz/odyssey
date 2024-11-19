@@ -74,6 +74,7 @@ fn execute_frame<DB: Database>(
     // Some(result)
 
     interpreter.shared_memory = std::mem::replace(memory, EMPTY_SHARED_MEMORY);
+
     let result = unsafe { f.call_with_interpreter(interpreter, context) };
     *memory = interpreter.take_memory();
     Some(result)

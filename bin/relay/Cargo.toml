@@ -1,42 +1,31 @@
 [package]
-name = "odyssey"
+name = "odyssey-relay"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Odyssey is a testnet OP Stack rollup aimed at enabling experimentation of bleeding edge Ethereum Research."
-default-run = "odyssey"
+description = "Odyssey Relay is an EIP-7702 native transaction batcher and sponsor."
 
 [lints]
 workspace = true
 
 [dependencies]
 alloy-signer-local.workspace = true
-alloy-network.workspace = true
 alloy-primitives.workspace = true
 alloy-provider.workspace = true
 alloy-rpc-client.workspace = true
-odyssey-node.workspace = true
 odyssey-wallet.workspace = true
-odyssey-walltime.workspace = true
 eyre.workspace = true
+jsonrpsee = { workspace = true, features = ["server"] }
 tracing.workspace = true
-reth-cli-util.workspace = true
-reth-node-builder.workspace = true
-reth-optimism-node.workspace = true
-reth-optimism-cli.workspace = true
-reth-provider.workspace = true
-clap = { workspace = true, features = ["derive"] }
+reth-tracing.workspace = true
+clap = { workspace = true, features = ["derive", "env"] }
+url.workspace = true
+tokio = { workspace = true, features = ["rt", "macros"] }
 
 [features]
-default = ["jemalloc"]
-
-asm-keccak = ["reth-optimism-cli/asm-keccak"]
-
-jemalloc = ["reth-cli-util/jemalloc"]
-jemalloc-prof = ["jemalloc", "reth-cli-util/jemalloc-prof"]
-
+default = []
 min-error-logs = ["tracing/release_max_level_error"]
 min-warn-logs = ["tracing/release_max_level_warn"]
 min-info-logs = ["tracing/release_max_level_info"]
@@ -44,5 +33,5 @@ min-debug-logs = ["tracing/release_max_level_debug"]
 min-trace-logs = ["tracing/release_max_level_trace"]
 
 [[bin]]
-name = "odyssey"
+name = "relay"
 path = "src/main.rs"

@@ -4552,6 +4552,8 @@ version = "0.0.0"
 dependencies = [
  "alloy-network",
  "alloy-primitives",
+ "alloy-provider",
+ "alloy-rpc-client",
  "alloy-signer-local",
  "clap",
  "eyre",
@@ -4630,20 +4632,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "odyssey-relay"
+version = "0.0.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-provider",
+ "alloy-rpc-client",
+ "alloy-signer-local",
+ "clap",
+ "eyre",
+ "jsonrpsee",
+ "odyssey-wallet",
+ "reth-tracing",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
 name = "odyssey-wallet"
 version = "0.0.0"
 dependencies = [
- "alloy-eips",
  "alloy-network",
  "alloy-primitives",
+ "alloy-provider",
  "alloy-rpc-types",
+ "alloy-transport",
+ "eyre",
  "jsonrpsee",
  "metrics 0.23.0",
  "metrics-derive",
  "reth-optimism-rpc",
  "reth-rpc-eth-api",
  "reth-storage-api",
- "revm-primitives",
  "serde",
  "serde_json",
  "thiserror 1.0.69",

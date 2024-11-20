@@ -229,7 +229,7 @@ impl ConfigureEvm for OdysseyEvmConfig {
         EvmBuilder::default()
             .with_db(db)
             .optimism()
-            .reset_handler_with_external_context(compiler::ExternalContext::new())
+            .reset_handler_with_external_context(self.default_external_context())
             .append_handler_register(register_compiler_handler)
             // add additional precompiles
             .append_handler_register(Self::set_precompiles)
@@ -252,7 +252,12 @@ impl ConfigureEvm for OdysseyEvmConfig {
     }
 
     fn default_external_context<'a>(&self) -> Self::DefaultExternalContext<'a> {
-        compiler::ExternalContext::new()
+        let Self { chain_spec } = self;
+
+        // TODO: not sure if this is correct, I don't see a call-site for this method
+        let spec_id = revm_spec(chain_spec, &Head::default());
+
+        compiler::ExternalContext::new(spec_id)
     }
 }
 

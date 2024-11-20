@@ -1,29 +1,69 @@
-use alloy_primitives::B256;
+use alloy_primitives::{hex, Bytes, B256};
+use core::panic;
+use reth_primitives::Bytecode;
 use reth_revm::{
     handler::register::EvmHandler,
     interpreter::{InterpreterAction, SharedMemory, EMPTY_SHARED_MEMORY},
     Context as RevmContext, Database, Frame,
 };
-use revmc::EvmCompilerFn;
-use std::sync::Arc;
+use revmc::{primitives::SpecId, EvmCompilerFn, EvmLlvmBackend, OptimizationLevel};
 use std::{
     collections::HashMap,
-    sync::mpsc::{Receiver, Sender},
+    sync::{
+        mpsc::{Receiver, Sender},
+        Arc, Mutex,
+    },
+    thread,
 };
 
 #[derive(Debug)]
 pub struct ExternalContext {
-    cache: HashMap<B256, EvmCompilerFn>,
+    sender: Sender<(B256, Bytes)>,
+    // TODO: cache shouldn't be here (and should definitely not be wrapped in a mutex)
+    cache: Arc<Mutex<HashMap<B256, EvmCompilerFn>>>,
 }
 
 impl ExternalContext {
-    pub fn new() -> Self {
-        let cache = HashMap::new();
-        Self { cache }
+    pub fn new(spec_id: SpecId) -> Self {
+        let cache = Arc::new(Mutex::new(HashMap::new()));
+        let (sender, receiver) = std::sync::mpsc::channel();
+
+        // TODO: graceful shutdown
+        thread::spawn({
+            let cache = cache.clone();
+
+            move || {
+                let context = Box::leak(Box::new(revmc::llvm::Context::create()));
+                // TODO: fail properly here.
+                let backend =
+                    EvmLlvmBackend::new(context, false, OptimizationLevel::Aggressive).unwrap();
+                let mut compiler = revmc::EvmCompiler::new(backend);
+
+                while let Ok((hash, code)) = receiver.recv() {
+                    // Do we have to allocate here? Not sure there's a better option
+                    let name = hex::encode(hash);
+                    dbg!("compiled", &name);
+
+                    let result =
+                        unsafe { compiler.jit(&name, &code, spec_id) }.expect("catastrophe");
+
+                    cache.lock().unwrap().insert(hash, result);
+
+                    unsafe { compiler.clear().expect("could not clear") };
+                }
+            }
+        });
+
+        Self { sender, cache }
     }
 
-    pub fn get_compiled_fn(&self, hash: B256) -> Option<EvmCompilerFn> {
-        self.cache.get(&hash).cloned()
+    pub fn get_compiled_fn(&self, hash: B256, code: Bytes) -> Option<EvmCompilerFn> {
+        let Some(f) = self.cache.lock().unwrap().get(&hash).cloned() else {
+            self.sender.send((hash, code)).unwrap();
+            return None;
+        };
+
+        Some(f)
     }
 }
 
@@ -35,6 +75,7 @@ where
 
     handler.execution.execute_frame = Arc::new(move |frame, memory, table, context| {
         let Some(action) = execute_frame(frame, memory, context) else {
+            dbg!("fallback");
             return f(frame, memory, table, context);
         };
 
@@ -55,7 +96,11 @@ fn execute_frame<DB: Database>(
         None => unreachable_no_hash(),
     };
 
-    let f = context.external.get_compiled_fn(hash)?;
+    // should be cheap enough to clone because it's backed by bytes::Bytes
+    let code = interpreter.contract.bytecode.bytes();
+
+    // TODO: put rules here for whether or not to compile the function
+    let f = context.external.get_compiled_fn(hash, code)?;
 
     // let f = match library.get_function(hash) {
     //     Ok(Some(f)) => f,
@@ -77,6 +122,9 @@ fn execute_frame<DB: Database>(
 
     let result = unsafe { f.call_with_interpreter(interpreter, context) };
     *memory = interpreter.take_memory();
+
+    dbg!("executed", &hash);
+
     Some(result)
 }
 

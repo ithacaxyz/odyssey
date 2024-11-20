@@ -118,10 +118,7 @@ fn execute_frame<DB: Database>(
     // *memory = interpreter.take_memory();
     // Some(result)
 
-    interpreter.shared_memory = std::mem::replace(memory, EMPTY_SHARED_MEMORY);
-
-    let result = unsafe { f.call_with_interpreter(interpreter, context) };
-    *memory = interpreter.take_memory();
+    let result = unsafe { f.call_with_interpreter_and_memory(interpreter, memory, context) };
 
     dbg!("executed", &hash);
 

@@ -19,6 +19,7 @@ reth-node-builder.workspace = true
 reth-optimism-node.workspace = true
 reth-optimism-forks.workspace = true
 reth-optimism-chainspec.workspace = true
+reth-optimism-primitives.workspace = true
 reth-chainspec.workspace = true
 reth-payload-builder.workspace = true
 reth-primitives.workspace = true

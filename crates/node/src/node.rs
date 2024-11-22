@@ -21,9 +21,12 @@ use reth_node_builder::{
 use reth_optimism_chainspec::OpChainSpec;
 use reth_optimism_node::{
     args::RollupArgs,
-    node::{OpAddOns, OpConsensusBuilder, OpNetworkBuilder, OpPayloadBuilder, OpPoolBuilder},
+    node::{
+        OpAddOns, OpConsensusBuilder, OpNetworkBuilder, OpPayloadBuilder, OpPoolBuilder, OpStorage,
+    },
     OpEngineTypes, OpExecutionStrategyFactory,
 };
+use reth_optimism_primitives::OpPrimitives;
 use reth_payload_builder::PayloadBuilderHandle;
 use reth_transaction_pool::{SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER};
 use reth_trie_db::MerklePatriciaTrie;
@@ -82,9 +85,10 @@ impl OdysseyNode {
 
 /// Configure the node types
 impl NodeTypes for OdysseyNode {
-    type Primitives = ();
+    type Primitives = OpPrimitives;
     type ChainSpec = OpChainSpec;
     type StateCommitment = MerklePatriciaTrie;
+    type Storage = OpStorage;
 }
 
 impl NodeTypesWithEngine for OdysseyNode {
@@ -93,7 +97,14 @@ impl NodeTypesWithEngine for OdysseyNode {
 
 impl<N> Node<N> for OdysseyNode
 where
-    N: FullNodeTypes<Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec>>,
+    N: FullNodeTypes<
+        Types: NodeTypesWithEngine<
+            Engine = OpEngineTypes,
+            ChainSpec = OpChainSpec,
+            Primitives = OpPrimitives,
+            Storage = OpStorage,
+        >,
+    >,
 {
     type ComponentsBuilder = ComponentsBuilder<
         N,

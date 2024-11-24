@@ -6,7 +6,10 @@ use reth_revm::{
     interpreter::{InterpreterAction, SharedMemory, EMPTY_SHARED_MEMORY},
     Context as RevmContext, Database, Frame,
 };
-use revmc::{primitives::SpecId, EvmCompilerFn, EvmLlvmBackend, OptimizationLevel};
+use revmc::{
+    llvm::Context as LlvmContext, primitives::SpecId, EvmCompiler, EvmCompilerFn, EvmLlvmBackend,
+    OptimizationLevel,
+};
 use std::{
     collections::HashMap,
     sync::{
@@ -20,7 +23,7 @@ use std::{
 pub struct ExternalContext {
     sender: Sender<(B256, Bytes)>,
     // TODO: cache shouldn't be here (and should definitely not be wrapped in a mutex)
-    cache: Arc<Mutex<HashMap<B256, EvmCompilerFn>>>,
+    cache: Arc<Mutex<HashMap<B256, Option<EvmCompilerFn>>>>,
 }
 
 impl ExternalContext {
@@ -33,13 +36,21 @@ impl ExternalContext {
             let cache = cache.clone();
 
             move || {
-                let context = Box::leak(Box::new(revmc::llvm::Context::create()));
-                // TODO: fail properly here.
-                let backend =
-                    EvmLlvmBackend::new(context, false, OptimizationLevel::Aggressive).unwrap();
-                let mut compiler = revmc::EvmCompiler::new(backend);
+                dbg!("spawned thread");
+                // this is wrong, I keep spawning threads. I need to spawn a single llvm context for this to work properly.
+                // I can do this with a thread-pool once I get it working with a single compiler thread.
+
+                let ctx = LlvmContext::create();
+                // let mut compilers = Vec::new();
 
                 while let Ok((hash, code)) = receiver.recv() {
+                    cache.lock().unwrap().insert(hash, None);
+
+                    // TODO: fail properly here.
+                    let backend =
+                        EvmLlvmBackend::new(&ctx, false, OptimizationLevel::Aggressive).unwrap();
+                    let mut compiler = Box::leak(Box::new(EvmCompiler::new(backend)));
+
                     // Do we have to allocate here? Not sure there's a better option
                     let name = hex::encode(hash);
                     dbg!("compiled", &name);
@@ -47,9 +58,9 @@ impl ExternalContext {
                     let result =
                         unsafe { compiler.jit(&name, &code, spec_id) }.expect("catastrophe");
 
-                    cache.lock().unwrap().insert(hash, result);
+                    cache.lock().unwrap().insert(hash, Some(result));
 
-                    unsafe { compiler.clear().expect("could not clear") };
+                    // compilers.push(compiler);
                 }
             }
         });
@@ -58,12 +69,13 @@ impl ExternalContext {
     }
 
     pub fn get_compiled_fn(&self, hash: B256, code: Bytes) -> Option<EvmCompilerFn> {
-        let Some(f) = self.cache.lock().unwrap().get(&hash).cloned() else {
-            self.sender.send((hash, code)).unwrap();
-            return None;
-        };
-
-        Some(f)
+        match self.cache.lock().unwrap().get(&hash) {
+            Some(maybe_f) => maybe_f.as_ref().cloned(),
+            None => {
+                self.sender.send((hash, code)).unwrap();
+                return None;
+            }
+        }
     }
 }
 

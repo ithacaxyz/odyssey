@@ -43,7 +43,8 @@ pub struct OdysseyEvmConfig {
 
 impl OdysseyEvmConfig {
     /// Creates a new Odyssey EVM configuration with the given chain spec.
-    pub const fn new(chain_spec: Arc<OpChainSpec>) -> Self {
+    pub fn new(chain_spec: Arc<OpChainSpec>) -> Self {
+        dbg!("EVM CONFIG");
         Self { chain_spec }
     }
 
@@ -252,12 +253,7 @@ impl ConfigureEvm for OdysseyEvmConfig {
     }
 
     fn default_external_context<'a>(&self) -> Self::DefaultExternalContext<'a> {
-        let Self { chain_spec } = self;
-
-        // TODO: not sure if this is correct, I don't see a call-site for this method
-        let spec_id = revm_spec(chain_spec, &Head::default());
-
-        compiler::ExternalContext::new(spec_id)
+        compiler::ExternalContext::new()
     }
 }
 

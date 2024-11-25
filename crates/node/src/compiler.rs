@@ -21,13 +21,13 @@ use std::{
 
 #[derive(Debug)]
 pub struct ExternalContext {
-    sender: Sender<(B256, Bytes)>,
+    sender: Sender<(SpecId, B256, Bytes)>,
     // TODO: cache shouldn't be here (and should definitely not be wrapped in a mutex)
     cache: Arc<Mutex<HashMap<B256, Option<EvmCompilerFn>>>>,
 }
 
 impl ExternalContext {
-    pub fn new(spec_id: SpecId) -> Self {
+    pub fn new() -> Self {
         let cache = Arc::new(Mutex::new(HashMap::new()));
         let (sender, receiver) = std::sync::mpsc::channel();
 
@@ -36,14 +36,14 @@ impl ExternalContext {
             let cache = cache.clone();
 
             move || {
-                dbg!("spawned thread");
+                dbg!("SPAWNED THREAD");
                 // this is wrong, I keep spawning threads. I need to spawn a single llvm context for this to work properly.
                 // I can do this with a thread-pool once I get it working with a single compiler thread.
 
                 let ctx = LlvmContext::create();
                 // let mut compilers = Vec::new();
 
-                while let Ok((hash, code)) = receiver.recv() {
+                while let Ok((spec_id, hash, code)) = receiver.recv() {
                     cache.lock().unwrap().insert(hash, None);
 
                     // TODO: fail properly here.
@@ -68,11 +68,16 @@ impl ExternalContext {
         Self { sender, cache }
     }
 
-    pub fn get_compiled_fn(&self, hash: B256, code: Bytes) -> Option<EvmCompilerFn> {
+    pub fn get_compiled_fn(
+        &self,
+        spec_id: SpecId,
+        hash: B256,
+        code: Bytes,
+    ) -> Option<EvmCompilerFn> {
         match self.cache.lock().unwrap().get(&hash) {
             Some(maybe_f) => maybe_f.as_ref().cloned(),
             None => {
-                self.sender.send((hash, code)).unwrap();
+                self.sender.send((spec_id, hash, code)).unwrap();
                 return None;
             }
         }
@@ -84,9 +89,10 @@ where
     DB: Database,
 {
     let f = handler.execution.execute_frame.clone();
+    let spec_id = handler.cfg.spec_id;
 
     handler.execution.execute_frame = Arc::new(move |frame, memory, table, context| {
-        let Some(action) = execute_frame(frame, memory, context) else {
+        let Some(action) = execute_frame(spec_id, frame, memory, context) else {
             dbg!("fallback");
             return f(frame, memory, table, context);
         };
@@ -96,6 +102,7 @@ where
 }
 
 fn execute_frame<DB: Database>(
+    spec_id: SpecId,
     frame: &mut Frame,
     memory: &mut SharedMemory,
     context: &mut RevmContext<ExternalContext, DB>,
@@ -112,7 +119,7 @@ fn execute_frame<DB: Database>(
     let code = interpreter.contract.bytecode.bytes();
 
     // TODO: put rules here for whether or not to compile the function
-    let f = context.external.get_compiled_fn(hash, code)?;
+    let f = context.external.get_compiled_fn(spec_id, hash, code)?;
 
     // let f = match library.get_function(hash) {
     //     Ok(Some(f)) => f,

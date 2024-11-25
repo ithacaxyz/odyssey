@@ -27,44 +27,10 @@ pub struct ExternalContext {
 }
 
 impl ExternalContext {
-    pub fn new() -> Self {
-        let cache = Arc::new(Mutex::new(HashMap::new()));
-        let (sender, receiver) = std::sync::mpsc::channel();
-
-        // TODO: graceful shutdown
-        thread::spawn({
-            let cache = cache.clone();
-
-            move || {
-                dbg!("SPAWNED THREAD");
-                // this is wrong, I keep spawning threads. I need to spawn a single llvm context for this to work properly.
-                // I can do this with a thread-pool once I get it working with a single compiler thread.
-
-                let ctx = LlvmContext::create();
-                // let mut compilers = Vec::new();
-
-                while let Ok((spec_id, hash, code)) = receiver.recv() {
-                    cache.lock().unwrap().insert(hash, None);
-
-                    // TODO: fail properly here.
-                    let backend =
-                        EvmLlvmBackend::new(&ctx, false, OptimizationLevel::Aggressive).unwrap();
-                    let mut compiler = Box::leak(Box::new(EvmCompiler::new(backend)));
-
-                    // Do we have to allocate here? Not sure there's a better option
-                    let name = hex::encode(hash);
-                    dbg!("compiled", &name);
-
-                    let result =
-                        unsafe { compiler.jit(&name, &code, spec_id) }.expect("catastrophe");
-
-                    cache.lock().unwrap().insert(hash, Some(result));
-
-                    // compilers.push(compiler);
-                }
-            }
-        });
-
+    pub fn new(
+        sender: Sender<(SpecId, alloy_primitives::FixedBytes<32>, Bytes)>,
+        cache: Arc<Mutex<HashMap<B256, Option<EvmCompilerFn>>>>,
+    ) -> Self {
         Self { sender, cache }
     }
 
@@ -139,7 +105,7 @@ fn execute_frame<DB: Database>(
 
     let result = unsafe { f.call_with_interpreter_and_memory(interpreter, memory, context) };
 
-    dbg!("executed", &hash);
+    dbg!("EXECUTED", &hash);
 
     Some(result)
 }

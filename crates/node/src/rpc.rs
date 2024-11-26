@@ -95,7 +95,12 @@ where
                         })
                         .collect::<Result<Vec<_>, _>>()
                         .map_err(EthApiError::from_eth_err)?;
-                    let proof = AccountProof { storage_root, storage_proofs, ..Default::default() };
+                    let proof = AccountProof {
+                        address,
+                        storage_root,
+                        storage_proofs,
+                        ..Default::default()
+                    };
                     Ok(from_primitive_account_proof(proof, keys))
                 })
                 .await

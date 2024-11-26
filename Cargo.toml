@@ -185,6 +185,7 @@ reth-payload-builder = { git = "https://github.com/paradigmxyz/reth.git", rev = 
 reth-primitives = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9", features = [
     "optimism",
 ] }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-provider = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9", features = [
     "optimism",
 ] }

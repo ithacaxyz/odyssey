@@ -1,9 +1,10 @@
+/*! The compiler module is responsible for compiling EVM bytecode to machine code using LLVM. */
+
 use alloy_primitives::{hex, Bytes, B256};
 use core::panic;
-use reth_primitives::Bytecode;
 use reth_revm::{
     handler::register::EvmHandler,
-    interpreter::{InterpreterAction, SharedMemory, EMPTY_SHARED_MEMORY},
+    interpreter::{InterpreterAction, SharedMemory},
     Context as RevmContext, Database, Frame,
 };
 use revmc::{
@@ -12,44 +13,102 @@ use revmc::{
 };
 use std::{
     collections::HashMap,
-    sync::{
-        mpsc::{Receiver, Sender},
-        Arc, Mutex,
-    },
+    sync::{mpsc::Sender, Arc, Mutex},
     thread,
 };
 
+/// The [Compiler] struct is a client for passing functions to the compiler thread. It also contains a cache of compiled functions
+#[derive(Debug, Clone)]
+pub struct Compiler {
+    sender: Sender<(SpecId, B256, Bytes)>,
+    fn_cache: Arc<Mutex<HashMap<B256, Option<EvmCompilerFn>>>>,
+}
+
+impl Default for Compiler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Compiler {
+    /// Create a new compiler instance. This spawns a new compiler thread and the returned struct contains a [Sender](std::sync::mpsc::Sender) for sending functions to the compiler thread,
+    /// as well as a cache to compiled functions
+    pub fn new() -> Self {
+        let fn_cache = Arc::new(Mutex::new(HashMap::new()));
+        let (sender, receiver) = std::sync::mpsc::channel();
+
+        // TODO: graceful shutdown
+        thread::spawn({
+            let fn_cache = fn_cache.clone();
+
+            move || {
+                let ctx = LlvmContext::create();
+                // let mut compilers = Vec::new();
+
+                while let Ok((spec_id, hash, code)) = receiver.recv() {
+                    fn_cache.lock().unwrap().insert(hash, None);
+
+                    // TODO: fail properly here.
+                    let backend =
+                        EvmLlvmBackend::new(&ctx, false, OptimizationLevel::Aggressive).unwrap();
+                    let compiler = Box::leak(Box::new(EvmCompiler::new(backend)));
+
+                    // Do we have to allocate here? Not sure there's a better option
+                    let name = hex::encode(hash);
+                    dbg!("compiled", &name);
+
+                    let result =
+                        unsafe { compiler.jit(&name, &code, spec_id) }.expect("catastrophe");
+
+                    fn_cache.lock().unwrap().insert(hash, Some(result));
+
+                    // compilers.push(compiler);
+                }
+            }
+        });
+
+        Self { sender, fn_cache }
+    }
+
+    // TODO:
+    // For safety, we should also borrow the EvmCompiler that holds the actual module with code to
+    // make sure that it's not dropped while before or during the function call.
+    fn get_compiled_fn(&self, spec_id: SpecId, hash: B256, code: Bytes) -> Option<EvmCompilerFn> {
+        match self.fn_cache.lock().unwrap().get(&hash) {
+            Some(maybe_f) => *maybe_f,
+            None => {
+                // TODO: put rules here for whether or not to compile the function
+                self.sender.send((spec_id, hash, code)).unwrap();
+                None
+            }
+        }
+    }
+}
+
+/// The [ExternalContext] struct is a container for the [Compiler] struct.
 #[derive(Debug)]
 pub struct ExternalContext {
-    sender: Sender<(SpecId, B256, Bytes)>,
-    // TODO: cache shouldn't be here (and should definitely not be wrapped in a mutex)
-    cache: Arc<Mutex<HashMap<B256, Option<EvmCompilerFn>>>>,
+    compiler: Compiler,
 }
 
 impl ExternalContext {
-    pub fn new(
-        sender: Sender<(SpecId, alloy_primitives::FixedBytes<32>, Bytes)>,
-        cache: Arc<Mutex<HashMap<B256, Option<EvmCompilerFn>>>>,
-    ) -> Self {
-        Self { sender, cache }
+    /// Create a new [ExternalContext] instance from a given [Compiler] instance.
+    pub const fn new(compiler: Compiler) -> Self {
+        Self { compiler }
     }
 
+    /// Get a compiled function if one exists, otherwise send the bytecode to the compiler to be compiled.
     pub fn get_compiled_fn(
         &self,
         spec_id: SpecId,
         hash: B256,
         code: Bytes,
     ) -> Option<EvmCompilerFn> {
-        match self.cache.lock().unwrap().get(&hash) {
-            Some(maybe_f) => maybe_f.as_ref().cloned(),
-            None => {
-                self.sender.send((spec_id, hash, code)).unwrap();
-                return None;
-            }
-        }
+        self.compiler.get_compiled_fn(spec_id, hash, code)
     }
 }
 
+/// Registers the compiler handler with the EVM handler.
 pub fn register_compiler_handler<DB>(handler: &mut EvmHandler<'_, ExternalContext, DB>)
 where
     DB: Database,
@@ -78,31 +137,16 @@ fn execute_frame<DB: Database>(
 
     let hash = match interpreter.contract.hash {
         Some(hash) => hash,
+        // TODO: is this an issue with EOF?
         None => unreachable_no_hash(),
     };
 
     // should be cheap enough to clone because it's backed by bytes::Bytes
     let code = interpreter.contract.bytecode.bytes();
 
-    // TODO: put rules here for whether or not to compile the function
     let f = context.external.get_compiled_fn(spec_id, hash, code)?;
 
-    // let f = match library.get_function(hash) {
-    //     Ok(Some(f)) => f,
-    //     Ok(None) => return None,
-    //     // Shouldn't happen.
-    //     Err(err) => {
-    //         unlikely_log_get_function_error(err, &hash);
-    //         return None;
-    //     }
-    // };
-
-    // interpreter.shared_memory =
-    //     std::mem::replace(memory, reth_revm::interpreter::EMPTY_SHARED_MEMORY);
-    // let result = unsafe { f.call_with_interpreter(interpreter, context) };
-    // *memory = interpreter.take_memory();
-    // Some(result)
-
+    // Safety: as long as the function is still in the cache, this is safe to call
     let result = unsafe { f.call_with_interpreter_and_memory(interpreter, memory, context) };
 
     dbg!("EXECUTED", &hash);
@@ -114,16 +158,4 @@ fn execute_frame<DB: Database>(
 #[inline(never)]
 const fn unreachable_no_hash() -> ! {
     panic!("unreachable: bytecode hash is not set in the interpreter")
-}
-
-#[cold]
-#[inline(never)]
-const fn unreachable_misconfigured() -> ! {
-    panic!("unreachable: AOT EVM is misconfigured")
-}
-
-#[cold]
-#[inline(never)]
-fn unlikely_log_get_function_error(err: impl std::error::Error, hash: &B256) {
-    tracing::error!(%err, %hash, "failed getting function from shared library");
 }

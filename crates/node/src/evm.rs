@@ -10,7 +10,7 @@
 //! This currently configures the instructions defined in [EIP3074-instructions](https://github.com/paradigmxyz/eip3074-instructions), and the
 //! precompiles defined by [`revm_precompile`].
 
-use alloy_primitives::{hex, Address, Bytes, TxKind, B256, U256};
+use alloy_primitives::{Address, Bytes, TxKind, U256};
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
 use reth_optimism_chainspec::OpChainSpec;
@@ -31,66 +31,22 @@ use reth_revm::{
     ContextPrecompiles, Database, Evm, EvmBuilder, GetInspector,
 };
 use revm_precompile::secp256r1;
-use revmc::{
-    llvm::Context as LlvmContext, EvmCompiler, EvmCompilerFn, EvmLlvmBackend, OptimizationLevel,
-};
-use std::{
-    collections::HashMap,
-    sync::{mpsc::Sender, Arc, Mutex},
-    thread,
-};
+use std::sync::Arc;
 
-use crate::compiler::{self, register_compiler_handler};
+use crate::compiler::{self, register_compiler_handler, Compiler};
 
 /// Custom EVM configuration
 #[derive(Debug, Clone)]
 pub struct OdysseyEvmConfig {
     chain_spec: Arc<OpChainSpec>,
-    sender: Sender<(SpecId, B256, Bytes)>,
-    // TODO: cache shouldn't be here (and should definitely not be wrapped in a mutex)
-    cache: Arc<Mutex<HashMap<B256, Option<EvmCompilerFn>>>>,
+    compiler: Compiler,
 }
 
 impl OdysseyEvmConfig {
     /// Creates a new Odyssey EVM configuration with the given chain spec.
     pub fn new(chain_spec: Arc<OpChainSpec>) -> Self {
-        let cache = Arc::new(Mutex::new(HashMap::new()));
-        let (sender, receiver) = std::sync::mpsc::channel();
-
-        // TODO: graceful shutdown
-        thread::spawn({
-            let cache = cache.clone();
-
-            move || {
-                // this is wrong, I keep spawning threads. I need to spawn a single llvm context for this to work properly.
-                // I can do this with a thread-pool once I get it working with a single compiler thread.
-
-                let ctx = LlvmContext::create();
-                // let mut compilers = Vec::new();
-
-                while let Ok((spec_id, hash, code)) = receiver.recv() {
-                    cache.lock().unwrap().insert(hash, None);
-
-                    // TODO: fail properly here.
-                    let backend =
-                        EvmLlvmBackend::new(&ctx, false, OptimizationLevel::Aggressive).unwrap();
-                    let mut compiler = Box::leak(Box::new(EvmCompiler::new(backend)));
-
-                    // Do we have to allocate here? Not sure there's a better option
-                    let name = hex::encode(hash);
-                    dbg!("compiled", &name);
-
-                    let result =
-                        unsafe { compiler.jit(&name, &code, spec_id) }.expect("catastrophe");
-
-                    cache.lock().unwrap().insert(hash, Some(result));
-
-                    // compilers.push(compiler);
-                }
-            }
-        });
-
-        Self { chain_spec, cache, sender }
+        let compiler = Compiler::new();
+        Self { chain_spec, compiler }
     }
 
     /// Sets the precompiles to the EVM handler
@@ -298,7 +254,7 @@ impl ConfigureEvm for OdysseyEvmConfig {
     }
 
     fn default_external_context<'a>(&self) -> Self::DefaultExternalContext<'a> {
-        compiler::ExternalContext::new(self.sender.clone(), self.cache.clone())
+        compiler::ExternalContext::new(self.compiler.clone())
     }
 }
 

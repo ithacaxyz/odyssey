@@ -14,6 +14,7 @@ revm-precompile.workspace = true
 revm-primitives.workspace = true
 
 reth-cli.workspace = true
+reth-errors.workspace = true
 reth-node-api.workspace = true
 reth-node-builder.workspace = true
 reth-optimism-node.workspace = true
@@ -25,7 +26,12 @@ reth-payload-builder.workspace = true
 reth-primitives.workspace = true
 reth-evm.workspace = true
 reth-revm.workspace = true
+reth-rpc-eth-api.workspace = true
+reth-rpc-eth-types.workspace = true
+reth-rpc-types-compat.workspace = true
+reth-storage-api.workspace = true
 reth-transaction-pool.workspace = true
+reth-trie-common.workspace = true
 reth-trie-db.workspace = true
 reth-network.workspace = true
 reth-network-types.workspace = true
@@ -33,10 +39,14 @@ reth-network-types.workspace = true
 alloy-consensus.workspace = true
 alloy-eips.workspace = true
 alloy-primitives.workspace = true
+alloy-rpc-types.workspace  = true
+alloy-rpc-types-eth.workspace  = true
+
 
 serde_json.workspace = true
 tracing.workspace = true
 eyre.workspace = true
+jsonrpsee.workspace = true
 
 [lints]
 workspace = true

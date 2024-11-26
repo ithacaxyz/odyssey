@@ -149,6 +149,7 @@ alloy-eips = "0.6.4"
 alloy-network = "0.6.4"
 alloy-primitives = "0.8.11"
 alloy-rpc-types = "0.6.4"
+alloy-rpc-types-eth = "0.6.4"
 alloy-signer-local = { version = "0.6.4", features = ["mnemonic"] }
 
 # tokio
@@ -158,6 +159,7 @@ tokio = { version = "1.21", default-features = false }
 reth-chainspec = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-cli = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-cli-util = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
+reth-errors = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-evm = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-rpc-eth-api = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-node-api = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
@@ -185,9 +187,12 @@ reth-provider = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aa
     "optimism",
 ] }
 reth-revm = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
+reth-rpc-types-compat = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
+reth-rpc-eth-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-storage-api = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-tracing = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
+reth-trie-common = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-trie-db = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-network = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }
 reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "f211aac" }

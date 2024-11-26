@@ -13,6 +13,7 @@ use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
 };
+use odyssey_constants::WITHDRAWAL_CONTRACT;
 use reth_errors::RethError;
 use reth_rpc_eth_api::{
     helpers::{EthState, FullEthApi},
@@ -22,7 +23,6 @@ use reth_rpc_eth_types::EthApiError;
 use reth_rpc_types_compat::proof::from_primitive_account_proof;
 use reth_trie_common::AccountProof;
 use tracing::trace;
-use odyssey_constants::WITHDRAWAL_CONTRACT;
 
 /// Odyssey `eth_` RPC namespace overrides.
 #[cfg_attr(not(test), rpc(server, namespace = "eth"))]

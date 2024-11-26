@@ -1,4 +1,4 @@
-use alloy_primitives::{Address, address};
+use alloy_primitives::{address, Address};
 
 /// Withdrawal predeployed contract address.
 ///

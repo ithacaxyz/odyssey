@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, sync::LazyLock};
 
 use alloy::{
     eips::eip7702::Authorization,
-    primitives::{address, b256, Address, B256, U256},
+    primitives::{b256, Address, B256, U256},
     providers::{PendingTransactionBuilder, Provider, ProviderBuilder},
     signers::SignerSync,
 };

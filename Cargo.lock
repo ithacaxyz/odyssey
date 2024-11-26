@@ -4567,7 +4567,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "odyssey-constants"
+name = "odyssey-common"
 version = "0.0.0"
 dependencies = [
  "alloy-primitives",
@@ -4582,7 +4582,7 @@ dependencies = [
  "alloy-rpc-types",
  "alloy-signer-local",
  "ci_info",
- "odyssey-constants",
+ "odyssey-common",
  "serde",
  "tokio",
  "url",
@@ -4599,7 +4599,7 @@ dependencies = [
  "alloy-rpc-types-eth",
  "eyre",
  "jsonrpsee",
- "odyssey-constants",
+ "odyssey-common",
  "reth-chainspec",
  "reth-cli",
  "reth-errors",

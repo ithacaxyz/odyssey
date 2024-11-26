@@ -13,7 +13,7 @@ use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
 };
-use odyssey_constants::WITHDRAWAL_CONTRACT;
+use odyssey_common::WITHDRAWAL_CONTRACT;
 use reth_errors::RethError;
 use reth_rpc_eth_api::{
     helpers::{EthState, FullEthApi},

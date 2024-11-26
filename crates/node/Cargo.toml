@@ -10,7 +10,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-odyssey-constants.workspace = true
+odyssey-common.workspace = true
 
 revm-precompile.workspace = true
 revm-primitives.workspace = true

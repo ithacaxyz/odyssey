@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "bin/odyssey/",
-    "crates/constants",
+    "crates/common",
     "crates/node",
     "crates/e2e-tests",
     "crates/wallet",
@@ -135,7 +135,7 @@ strip = false
 
 [workspace.dependencies]
 # odyssey
-odyssey-constants = { path = "crates/constants" }
+odyssey-common = { path = "crates/common" }
 odyssey-node = { path = "crates/node" }
 odyssey-wallet = { path = "crates/wallet" }
 odyssey-walltime = { path = "crates/walltime" }

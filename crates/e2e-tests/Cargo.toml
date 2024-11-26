@@ -10,7 +10,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dev-dependencies]
-odyssey-constants.workspace = true
+odyssey-common.workspace = true
 
 alloy.workspace = true
 alloy-network.workspace = true

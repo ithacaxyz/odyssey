@@ -4583,7 +4583,8 @@ dependencies = [
  "alloy-signer-local",
  "ci_info",
  "odyssey-common",
- "serde",
+ "reth-primitives-traits",
+ "reth-trie-common",
  "tokio",
  "url",
 ]

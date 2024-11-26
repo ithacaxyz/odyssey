@@ -12,6 +12,9 @@ categories.workspace = true
 [dev-dependencies]
 odyssey-common.workspace = true
 
+reth-primitives-traits.workspace = true
+reth-trie-common.workspace = true
+
 alloy.workspace = true
 alloy-network.workspace = true
 alloy-rpc-types.workspace = true
@@ -20,7 +23,6 @@ alloy-signer-local.workspace = true
 tokio.workspace = true
 url = "2.5.0"
 ci_info = "0.14.14"
-serde.workspace = true
 
 [lints]
 workspace = true

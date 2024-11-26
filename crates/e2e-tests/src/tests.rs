@@ -152,7 +152,7 @@ async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error:
         .request(
             "eth_getProof",
             ProofParams {
-                address: address!("4200000000000000000000000000000000000011"),
+                address: odyssey_constants::WITHDRAWAL_CONTRACT,
                 keys: vec![B256::ZERO],
                 block: BlockNumberOrTag::Latest,
             },

@@ -10,6 +10,8 @@ keywords.workspace = true
 categories.workspace = true
 
 [dev-dependencies]
+odyssey-constants.workspace = true
+
 alloy.workspace = true
 alloy-network.workspace = true
 alloy-rpc-types.workspace = true

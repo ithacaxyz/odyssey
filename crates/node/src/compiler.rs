@@ -24,6 +24,7 @@ pub struct Compiler {
     fn_cache: Arc<Mutex<HashMap<B256, Option<EvmCompilerFn>>>>,
 }
 
+// TODO: probably shouldn't have a default for something that spawns a thread?
 impl Default for Compiler {
     fn default() -> Self {
         Self::new()

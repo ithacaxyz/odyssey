@@ -28,7 +28,11 @@ use alloy_primitives::Address;
 use alloy_signer_local::PrivateKeySigner;
 use clap::Parser;
 use eyre::Context;
-use odyssey_node::{chainspec::OdysseyChainSpecParser, node::OdysseyNode};
+use odyssey_node::{
+    chainspec::OdysseyChainSpecParser,
+    node::OdysseyNode,
+    rpc::{EthApiExt, EthApiOverrideServer},
+};
 use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer};
 use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher};
@@ -56,6 +60,11 @@ fn main() {
                 .with_components(OdysseyNode::components(&rollup_args))
                 .with_add_ons(OpAddOns::new(rollup_args.sequencer_http))
                 .extend_rpc_modules(move |ctx| {
+                    // override eth namespace
+                    ctx.modules.replace_configured(
+                        EthApiExt::new(ctx.registry.eth_api().clone()).into_rpc(),
+                    )?;
+
                     // register odyssey wallet namespace
                     if let Ok(sk) = std::env::var("EXP1_SK") {
                         let signer: PrivateKeySigner =

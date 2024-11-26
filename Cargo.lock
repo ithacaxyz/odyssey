@@ -4567,6 +4567,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "odyssey-common"
+version = "0.0.0"
+dependencies = [
+ "alloy-primitives",
+]
+
+[[package]]
 name = "odyssey-e2e-tests"
 version = "0.0.0"
 dependencies = [
@@ -4575,6 +4582,9 @@ dependencies = [
  "alloy-rpc-types",
  "alloy-signer-local",
  "ci_info",
+ "odyssey-common",
+ "reth-primitives-traits",
+ "reth-trie-common",
  "tokio",
  "url",
 ]
@@ -4586,9 +4596,14 @@ dependencies = [
  "alloy-consensus",
  "alloy-eips",
  "alloy-primitives",
+ "alloy-rpc-types",
+ "alloy-rpc-types-eth",
  "eyre",
+ "jsonrpsee",
+ "odyssey-common",
  "reth-chainspec",
  "reth-cli",
+ "reth-errors",
  "reth-evm",
  "reth-network",
  "reth-network-types",
@@ -4601,7 +4616,11 @@ dependencies = [
  "reth-payload-builder",
  "reth-primitives",
  "reth-revm",
+ "reth-rpc-eth-api",
+ "reth-rpc-eth-types",
+ "reth-rpc-types-compat",
  "reth-transaction-pool",
+ "reth-trie-common",
  "reth-trie-db",
  "revm-precompile",
  "revm-primitives",

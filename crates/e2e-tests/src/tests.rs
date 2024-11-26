@@ -7,10 +7,9 @@ use alloy::{
     signers::SignerSync,
 };
 use alloy_network::{TransactionBuilder, TransactionBuilder7702};
-use alloy_rpc_types::{BlockNumberOrTag, TransactionRequest};
+use alloy_rpc_types::{BlockNumberOrTag, EIP1186AccountProofResponse, TransactionRequest};
 use alloy_signer_local::PrivateKeySigner;
 use url::Url;
-use alloy_rpc_types::EIP1186AccountProofResponse;
 
 static REPLICA_RPC: LazyLock<Url> = LazyLock::new(|| {
     std::env::var("REPLICA_RPC")
@@ -129,7 +128,6 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-
 #[tokio::test]
 async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
@@ -140,31 +138,43 @@ async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error:
     struct ProofParams {
         address: Address,
         keys: Vec<B256>,
-        block: BlockNumberOrTag
+        block: BlockNumberOrTag,
     }
-    
+
     let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
     let signer = PrivateKeySigner::from_bytes(&b256!(
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
     // Withdrawal contract will return an empty account proof, since it only handles storage proofs
-    let withdrawal_contract_response: EIP1186AccountProofResponse = provider.client().request("eth_getProof", ProofParams {
-        address: address!("4200000000000000000000000000000000000011"),
-        keys: vec![B256::ZERO],
-        block: BlockNumberOrTag::Latest
-    }).await?;
+    let withdrawal_contract_response: EIP1186AccountProofResponse = provider
+        .client()
+        .request(
+            "eth_getProof",
+            ProofParams {
+                address: address!("4200000000000000000000000000000000000011"),
+                keys: vec![B256::ZERO],
+                block: BlockNumberOrTag::Latest,
+            },
+        )
+        .await?;
     assert!(withdrawal_contract_response.account_proof.is_empty());
     assert!(!withdrawal_contract_response.storage_proof.is_empty());
 
-    // If not targeting the withdrawal contract, it defaults back to the standard getProof implementation
-    let eoa_response: EIP1186AccountProofResponse = provider.client().request("eth_getProof", ProofParams {
-        address: signer.address(),
-        keys: vec![],
-        block: BlockNumberOrTag::Latest
-    }).await?;
+    // If not targeting the withdrawal contract, it defaults back to the standard getProof
+    // implementation
+    let eoa_response: EIP1186AccountProofResponse = provider
+        .client()
+        .request(
+            "eth_getProof",
+            ProofParams {
+                address: signer.address(),
+                keys: vec![],
+                block: BlockNumberOrTag::Latest,
+            },
+        )
+        .await?;
     assert!(!eoa_response.account_proof.is_empty());
-    
 
     Ok(())
 }

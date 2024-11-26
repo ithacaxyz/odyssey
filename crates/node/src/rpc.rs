@@ -23,7 +23,9 @@ use reth_rpc_types_compat::proof::from_primitive_account_proof;
 use reth_trie_common::AccountProof;
 use tracing::trace;
 
-/// Withdrawal contract address.
+/// Withdrawal predeployed contract address.
+///
+/// [The L2ToL1MessagePasser](https://specs.optimism.io/protocol/withdrawals.html#the-l2tol1messagepasser-contract)
 const WITHDRAWAL_CONTRACT: alloy_primitives::Address =
     alloy_primitives::address!("4200000000000000000000000000000000000011");
 

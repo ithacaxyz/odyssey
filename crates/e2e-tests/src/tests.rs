@@ -178,7 +178,7 @@ async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error:
         info: Some(Account {
             nonce: eoa_response.nonce,
             balance: eoa_response.balance,
-            bytecode_hash: None,
+            bytecode_hash: Some(eoa_response.code_hash),
         }),
         proof: eoa_response.account_proof,
         ..Default::default()

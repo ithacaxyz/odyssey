@@ -1,6 +1,6 @@
 FROM ubuntu
 
-COPY target/release/odyssey /usr/local/bin
+COPY dist/odyssey /usr/local/bin
 
 # Copy licenses
 COPY LICENSE-* ./

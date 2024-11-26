@@ -37,6 +37,8 @@ jobs:
       - name: Build Odyssey
         run: |
            cargo build --profile release --locked --bin odyssey &&
+           mkdir dist/ &&
+           cp ./target/release/odyssey dist/odyssey &&
            docker buildx build . --load -f .github/assets/Dockerfile -t ghcr.io/ithacaxyz/odyssey:latest
       - name: Run enclave
         id: kurtosis

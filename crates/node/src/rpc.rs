@@ -23,6 +23,7 @@ use reth_rpc_types_compat::proof::from_primitive_account_proof;
 use reth_trie_common::AccountProof;
 use tracing::trace;
 
+/// Withdrawal contract address.
 const WITHDRAWAL_CONTRACT: alloy_primitives::Address =
     alloy_primitives::address!("4200000000000000000000000000000000000011");
 

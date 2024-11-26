@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "bin/odyssey/",
+    "crates/common",
     "crates/node",
     "crates/e2e-tests",
     "crates/wallet",
@@ -134,6 +135,7 @@ strip = false
 
 [workspace.dependencies]
 # odyssey
+odyssey-common = { path = "crates/common" }
 odyssey-node = { path = "crates/node" }
 odyssey-wallet = { path = "crates/wallet" }
 odyssey-walltime = { path = "crates/walltime" }
@@ -149,6 +151,7 @@ alloy-eips = "0.6.4"
 alloy-network = "0.6.4"
 alloy-primitives = "0.8.11"
 alloy-rpc-types = "0.6.4"
+alloy-rpc-types-eth = "0.6.4"
 alloy-signer-local = { version = "0.6.4", features = ["mnemonic"] }
 
 # tokio
@@ -158,6 +161,7 @@ tokio = { version = "1.21", default-features = false }
 reth-chainspec = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-cli = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-cli-util = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
+reth-errors = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-evm = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-rpc-eth-api = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-node-api = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
@@ -185,9 +189,12 @@ reth-provider = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c
     "optimism",
 ] }
 reth-revm = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
+reth-rpc-types-compat = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
+reth-rpc-eth-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-storage-api = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-tracing = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
+reth-trie-common = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-trie-db = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-network = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }
 reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9" }

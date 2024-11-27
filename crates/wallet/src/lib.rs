@@ -76,16 +76,6 @@ impl WalletCapabilities {
 #[cfg_attr(not(test), rpc(server, namespace = "wallet"))]
 #[cfg_attr(test, rpc(server, client, namespace = "wallet"))]
 pub trait OdysseyWalletApi {
-    /// Get the capabilities of the wallet.
-    ///
-    /// Currently the only capability is [`DelegationCapability`].
-    ///
-    /// See also [EIP-5792][eip-5792].
-    ///
-    /// [eip-5792]: https://eips.ethereum.org/EIPS/eip-5792
-    #[method(name = "getCapabilities")]
-    fn get_capabilities(&self) -> RpcResult<WalletCapabilities>;
-
     /// Send a sequencer-sponsored transaction.
     ///
     /// The transaction will only be processed if:
@@ -200,10 +190,6 @@ where
     Provider: StateProviderFactory + Send + Sync + 'static,
     Eth: FullEthApi + Send + Sync + 'static,
 {
-    fn get_capabilities(&self) -> RpcResult<WalletCapabilities> {
-        trace!(target: "rpc::wallet", "Serving wallet_getCapabilities");
-        Ok(self.inner.capabilities.clone())
-    }
 
     async fn send_transaction(&self, mut request: TransactionRequest) -> RpcResult<TxHash> {
         trace!(target: "rpc::wallet", ?request, "Serving odyssey_sendTransaction");

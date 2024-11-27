@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, sync::LazyLock};
+use std::{collections::BTreeMap, str::FromStr, sync::LazyLock};
 
 use alloy::{
     eips::eip7702::Authorization,
@@ -27,6 +27,7 @@ static SEQUENCER_RPC: LazyLock<Url> = LazyLock::new(|| {
         .expect("failed to parse SEQUENCER_RPC env var")
 });
 
+
 #[tokio::test]
 async fn assert_chain_advances() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
@@ -54,8 +55,21 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
-    let capabilities: BTreeMap<U256, BTreeMap<String, BTreeMap<String, Vec<Address>>>> =
-        provider.client().request_noparams("wallet_getCapabilities").await?;
+    let capabilities = {
+        let mut innermost_tree = BTreeMap::new();
+        innermost_tree.insert(
+            "addresses".to_string(),
+            vec![Address::from_str(&std::env::var("DELEGATION_ADDRESS").unwrap()).unwrap()],
+        );
+
+        let mut inner_tree = BTreeMap::new();
+        inner_tree.insert("delegation".to_string(), innermost_tree);
+
+        let mut capabilities = BTreeMap::new();
+        capabilities.insert(U256::from(1), inner_tree);
+
+        capabilities
+    };
 
     let chain_id = U256::from(provider.get_chain_id().await?);
 
@@ -98,8 +112,21 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
-    let capabilities: BTreeMap<U256, BTreeMap<String, BTreeMap<String, Vec<Address>>>> =
-        provider.client().request_noparams("wallet_getCapabilities").await?;
+    let capabilities = {
+        let mut innermost_tree = BTreeMap::new();
+        innermost_tree.insert(
+            "addresses".to_string(),
+            vec![Address::from_str(&std::env::var("DELEGATION_ADDRESS").unwrap()).unwrap()],
+        );
+
+        let mut inner_tree = BTreeMap::new();
+        inner_tree.insert("delegation".to_string(), innermost_tree);
+
+        let mut capabilities = BTreeMap::new();
+        capabilities.insert(U256::from(1), inner_tree);
+
+        capabilities
+    };
 
     let chain_id = U256::from(provider.get_chain_id().await?);
 

@@ -27,9 +27,16 @@ use reth_revm::{
     },
     ContextPrecompiles, Database, Evm, EvmBuilder, GetInspector,
 };
-use revm_precompile::secp256r1;
-use revm_primitives::{CfgEnvWithHandlerCfg, TxEnv};
+use revm_precompile::{secp256r1::p256_verify, u64_to_address, PrecompileWithAddress};
+use revm_primitives::{CfgEnvWithHandlerCfg, Precompile, TxEnv};
 use std::sync::Arc;
+
+/// P256 verify precompile address.
+pub const P256VERIFY_ADDRESS: u64 = 0x14;
+
+/// [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212#specification) secp256r1 precompile.
+pub const P256VERIFY: PrecompileWithAddress =
+    PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), Precompile::Standard(p256_verify));
 
 /// Custom EVM configuration
 #[derive(Debug, Clone)]
@@ -41,6 +48,10 @@ impl OdysseyEvmConfig {
     /// Creates a new Odyssey EVM configuration with the given chain spec.
     pub const fn new(chain_spec: Arc<OpChainSpec>) -> Self {
         Self { chain_spec }
+    }
+
+    fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
+        [P256VERIFY].into_iter()
     }
 
     /// Sets the precompiles to the EVM handler
@@ -61,7 +72,7 @@ impl OdysseyEvmConfig {
             let mut loaded_precompiles: ContextPrecompiles<DB> =
                 ContextPrecompiles::new(PrecompileSpecId::from_spec_id(spec_id));
 
-            loaded_precompiles.extend(secp256r1::precompiles());
+            loaded_precompiles.extend(Self::precompiles());
 
             loaded_precompiles
         });

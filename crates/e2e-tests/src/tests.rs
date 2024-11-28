@@ -55,6 +55,8 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
+    let chain_id = U256::from(provider.get_chain_id().await?);
+
     let capabilities = {
         let mut innermost_tree = BTreeMap::new();
         innermost_tree.insert(
@@ -66,12 +68,11 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         inner_tree.insert("delegation".to_string(), innermost_tree);
 
         let mut capabilities = BTreeMap::new();
-        capabilities.insert(U256::from(1), inner_tree);
+        capabilities.insert(chain_id, inner_tree);
 
         capabilities
     };
 
-    let chain_id = U256::from(provider.get_chain_id().await?);
 
     let delegation_address =
         capabilities.get(&chain_id).unwrap().get("delegation").unwrap().get("addresses").unwrap()
@@ -112,23 +113,24 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
+    let chain_id = U256::from(provider.get_chain_id().await?);
+
     let capabilities = {
         let mut innermost_tree = BTreeMap::new();
         innermost_tree.insert(
             "addresses".to_string(),
-            vec![Address::from_str(&std::env::var("DELEGATION_ADDRESS").unwrap()).unwrap()],
+            vec![Address::from_str("0x90f79bf6eb2c4f870365e785982e1f101e93b906").unwrap()],
+            // vec![Address::from_str(&std::env::var("DELEGATION_ADDRESS").unwrap()).unwrap()],
         );
 
         let mut inner_tree = BTreeMap::new();
         inner_tree.insert("delegation".to_string(), innermost_tree);
 
         let mut capabilities = BTreeMap::new();
-        capabilities.insert(U256::from(1), inner_tree);
+        capabilities.insert(chain_id, inner_tree);
 
         capabilities
     };
-
-    let chain_id = U256::from(provider.get_chain_id().await?);
 
     let delegation_address =
         capabilities.get(&chain_id).unwrap().get("delegation").unwrap().get("addresses").unwrap()

@@ -17,7 +17,7 @@ pub async fn periodic_broadcaster<P>(
 ) where
     P: TransactionPool,
 {
-    let mut interval_timer = tokio::time::interval(Duration::from_secs(60 * 10));
+    let mut interval_timer = tokio::time::interval(Duration::from_secs(60));
 
     loop {
         let transactions =

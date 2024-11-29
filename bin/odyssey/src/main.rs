@@ -138,6 +138,7 @@ fn main() {
     }
 }
 
+/// Returns a [`EthereumWallet`] with the sponsor private key.
 fn sponsor() -> eyre::Result<Option<EthereumWallet>> {
     std::env::var("EXP1_SK")
         .ok()

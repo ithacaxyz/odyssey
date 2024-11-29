@@ -56,7 +56,11 @@ fn main() {
 
     if let Err(err) =
         Cli::<OdysseyChainSpecParser, RollupArgs>::parse().run(|builder, rollup_args| async move {
-            let (wallet, address) = init_sponsor()?;
+            let wallet = sponsor()?;
+            let address = wallet
+                .as_ref()
+                .map(<EthereumWallet as NetworkWallet<Ethereum>>::default_signer_address);
+
             let node = builder
                 .with_types_and_provider::<OdysseyNode, BlockchainProvider2<_>>()
                 .with_components(OdysseyNode::components(&rollup_args))
@@ -134,8 +138,8 @@ fn main() {
     }
 }
 
-fn init_sponsor() -> eyre::Result<(Option<EthereumWallet>, Option<Address>)> {
-    let wallet = std::env::var("EXP1_SK")
+fn sponsor() -> eyre::Result<Option<EthereumWallet>> {
+    std::env::var("EXP1_SK")
         .ok()
         .or_else(|| {
             warn!(target: "reth::cli", "EXP0001 wallet not configured");
@@ -149,10 +153,5 @@ fn init_sponsor() -> eyre::Result<(Option<EthereumWallet>, Option<Address>)> {
             info!(target: "reth::cli", "EXP0001 wallet configured");
             Ok::<_, eyre::Report>(wallet)
         })
-        .transpose()?;
-
-    let address =
-        wallet.as_ref().map(<EthereumWallet as NetworkWallet<Ethereum>>::default_signer_address);
-
-    Ok((wallet, address))
+        .transpose()
 }

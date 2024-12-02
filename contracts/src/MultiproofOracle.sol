@@ -18,7 +18,7 @@ contract MultiproofOracle is IMultiproofOracle {
     uint256 public immutable proofReward; // to challenge, we must bond `proofReward * provers.length`
     uint256 public immutable provingTime;
 
-    mapping(uint256 blockNum => mapping(bytes32 outputRoot => ProposalData[])) public proposals;
+    mapping(bytes32 outputRoot => ProposalData[]) public proposals;
     IProver[] public provers;
 
     // TODO: Split into separate fees for proof and challenge, if necessary.
@@ -37,7 +37,7 @@ contract MultiproofOracle is IMultiproofOracle {
     ///////// CONSTRUCTOR /////////
     ///////////////////////////////
 
-    constructor(IProver[] memory _provers, uint256 _initialBlockNum, bytes32 _initialOutputRoot, ImmutableArgs memory _args) {
+    constructor(IProver[] memory _provers, uint96 _initialBlockNum, bytes32 _initialOutputRoot, ImmutableArgs memory _args) {
         require(_provers.length < 40); // proven bitmap has to fit in uint40
         provers = _provers;
 
@@ -53,7 +53,7 @@ contract MultiproofOracle is IMultiproofOracle {
         emergencyPauseTime = _args.emergencyPauseTime;
 
         // initialize anchor state with Confirmed status
-        proposals[_initialBlockNum][_initialOutputRoot].push(ProposalData({
+        proposals[_initialOutputRoot].push(ProposalData({
             proposer: address(0),
             parent: Challenge({
                 blockNum: 0,
@@ -64,7 +64,8 @@ contract MultiproofOracle is IMultiproofOracle {
             version: VERSION,
             state: ProposalState.Confirmed,
             provenBitmap: 0,
-            challenger: address(0)
+            challenger: address(0),
+            blockNum: _initialBlockNum
         }));
     }
 
@@ -72,37 +73,38 @@ contract MultiproofOracle is IMultiproofOracle {
     ////////// LIFECYCLE //////////
     ///////////////////////////////
 
-    function propose(Challenge memory parent, uint256 blockNum, bytes32 outputRoot) public payable {
+    function propose(Challenge memory parent, uint96 blockNum, bytes32 outputRoot) public payable {
         require(msg.value == proposalBond, "incorrect bond amount");
         require(!emergencyShutdown, "emergency shutdown");
 
-        proposals[blockNum][outputRoot].push(ProposalData({
+        proposals[outputRoot].push(ProposalData({
             proposer: msg.sender,
             parent: parent,
             deadline: uint40(block.timestamp + challengeTime),
             version: VERSION,
             state: ProposalState.Unchallenged,
             provenBitmap: 0,
-            challenger: address(0)
+            challenger: address(0),
+            blockNum: blockNum
         }));
     }
 
-    function challenge(uint256 blockNum, bytes32 outputRoot, uint256 index) public payable {
+    function challenge(uint96 blockNum, bytes32 outputRoot, uint256 index) public payable {
         require(!emergencyShutdown, "emergency shutdown");
         require(msg.value == proofReward * provers.length, "incorrect bond amount");
 
-        ProposalData storage proposal = proposals[blockNum][outputRoot][index];
+        ProposalData storage proposal = proposals[outputRoot][index];
         require(proposal.state == ProposalState.Unchallenged, "can only challenge unchallenged proposals");
         require(proposal.deadline > block.timestamp, "deadline passed");
 
-        proposals[blockNum][outputRoot][index].deadline = uint40(block.timestamp + provingTime);
-        proposals[blockNum][outputRoot][index].state = ProposalState.Challenged;
-        proposals[blockNum][outputRoot][index].challenger = msg.sender;
+        proposals[outputRoot][index].deadline = uint40(block.timestamp + provingTime);
+        proposals[outputRoot][index].state = ProposalState.Challenged;
+        proposals[outputRoot][index].challenger = msg.sender;
     }
 
-    function prove(uint256 blockNum, bytes32 outputRoot, uint256 index, ProofData[] memory proofs) public {
+    function prove(bytes32 outputRoot, uint256 index, ProofData[] memory proofs) public {
         require(!emergencyShutdown, "emergency shutdown");
-        ProposalData storage proposal = proposals[blockNum][outputRoot][index];
+        ProposalData storage proposal = proposals[outputRoot][index];
         require(proposal.state == ProposalState.Challenged, "can only prove challenged proposals");
         require(proposal.deadline > block.timestamp, "deadline passed");
 
@@ -113,6 +115,10 @@ contract MultiproofOracle is IMultiproofOracle {
             if (proposal.provenBitmap & (1 << i) != 0) {
                 continue;
             }
+
+            // figure out simplest way to check this given that we want to stay bytes for flexibility across proof systems
+            // - require parent output root & blocknum match public values
+            // - require proposal blocknum matches public values
 
             if (provers[i].verify(proofs[i].publicValues, proofs[i].proof)) {
                 proposal.provenBitmap |= uint40(1 << i);
@@ -128,15 +134,15 @@ contract MultiproofOracle is IMultiproofOracle {
         }
     }
 
-    function finalize(uint256 blockNum, bytes32 outputRoot, uint256 index) public {
+    function finalize(bytes32 outputRoot, uint256 index) public {
         require(!emergencyShutdown, "emergency shutdown");
-        ProposalData storage proposal = proposals[blockNum][outputRoot][index];
+        ProposalData storage proposal = proposals[outputRoot][index];
         require(!isFinalized(proposal.state), "proposal already finalized");
 
         Challenge memory parent = proposal.parent;
-        ProposalData storage parentProposal = proposals[parent.blockNum][parent.outputRoot][parent.index];
+        ProposalData storage parentProposal = proposals[parent.outputRoot][parent.index];
         if (!isFinalized(parentProposal.state)) {
-            finalize(parent.blockNum, parent.outputRoot, parent.index);
+            finalize(parent.outputRoot, parent.index);
 
             // extra safety check
             require(isFinalized(parentProposal.state), "parent not finalized");
@@ -209,7 +215,7 @@ contract MultiproofOracle is IMultiproofOracle {
 
         for (uint i = 0; i < challenges.length; i++) {
             Challenge memory c = challenges[i];
-            require(proposals[c.blockNum][c.outputRoot][c.index].state == ProposalState.Challenged, "proposal not confirmed");
+            require(proposals[c.outputRoot][c.index].state == ProposalState.Challenged, "proposal not confirmed");
             emergencyPauseChallenges.push(c);
         }
 
@@ -247,17 +253,17 @@ contract MultiproofOracle is IMultiproofOracle {
     // This can be called on chain to check if a block number and output root have been confirmed.
     // TODO: Do some gas testing to see the max length of proposals that can be checked
     // without running out of gas. We probably wouldn't want to use this anywhere mission critical.
-    function isValidProposal(uint256 blockNum, bytes32 outputRoot) public view returns (bool) {
-        uint proposalsLength = proposals[blockNum][outputRoot].length;
+    function isValidProposal(bytes32 outputRoot) public view returns (bool) {
+        uint proposalsLength = proposals[outputRoot].length;
         for (uint i = 0; i < proposalsLength; i++) {
-            if (isValidProposal(blockNum, outputRoot, i)) return true;
+            if (isValidProposal(outputRoot, i)) return true;
         }
 
         return false;
     }
 
-    function isValidProposal(uint256 blockNum, bytes32 outputRoot, uint256 index) public view returns (bool) {
+    function isValidProposal(bytes32 outputRoot, uint256 index) public view returns (bool) {
         require(!emergencyShutdown, "emergency shutdown");
-        return proposals[blockNum][outputRoot][index].state == ProposalState.Confirmed;
+        return proposals[outputRoot][index].state == ProposalState.Confirmed;
     }
 }

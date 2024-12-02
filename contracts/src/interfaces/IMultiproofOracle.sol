@@ -15,7 +15,6 @@ interface IMultiproofOracle {
     }
 
     struct Challenge {
-        uint256 blockNum;
         bytes32 outputRoot;
         uint256 index;
     }
@@ -36,6 +35,7 @@ interface IMultiproofOracle {
         ProposalState state;
         uint40 provenBitmap;
         address challenger;
+        uint96 blockNum;
     }
 
     struct ProofData {

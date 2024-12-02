@@ -27,7 +27,6 @@ static SEQUENCER_RPC: LazyLock<Url> = LazyLock::new(|| {
         .expect("failed to parse SEQUENCER_RPC env var")
 });
 
-
 #[tokio::test]
 async fn assert_chain_advances() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
@@ -55,28 +54,11 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
-    let chain_id = U256::from(provider.get_chain_id().await?);
-
-    let capabilities = {
-        let mut innermost_tree = BTreeMap::new();
-        innermost_tree.insert(
-            "addresses".to_string(),
-            vec![Address::from_str(&std::env::var("DELEGATION_ADDRESS").unwrap()).unwrap()],
-        );
-
-        let mut inner_tree = BTreeMap::new();
-        inner_tree.insert("delegation".to_string(), innermost_tree);
-
-        let mut capabilities = BTreeMap::new();
-        capabilities.insert(chain_id, inner_tree);
-
-        capabilities
-    };
-
-
-    let delegation_address =
-        capabilities.get(&chain_id).unwrap().get("delegation").unwrap().get("addresses").unwrap()
-            [0];
+    let delegation_address = Address::from_str(
+        &std::env::var("DELEGATION_ADDRESS")
+            .unwrap_or("0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
+    )
+    .unwrap();
 
     let auth = Authorization {
         chain_id: provider.get_chain_id().await?,
@@ -113,28 +95,11 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
-    let chain_id = U256::from(provider.get_chain_id().await?);
-
-    let capabilities = {
-        let mut innermost_tree = BTreeMap::new();
-        innermost_tree.insert(
-            "addresses".to_string(),
-            vec![Address::from_str("0x90f79bf6eb2c4f870365e785982e1f101e93b906").unwrap()],
-            // vec![Address::from_str(&std::env::var("DELEGATION_ADDRESS").unwrap()).unwrap()],
-        );
-
-        let mut inner_tree = BTreeMap::new();
-        inner_tree.insert("delegation".to_string(), innermost_tree);
-
-        let mut capabilities = BTreeMap::new();
-        capabilities.insert(chain_id, inner_tree);
-
-        capabilities
-    };
-
-    let delegation_address =
-        capabilities.get(&chain_id).unwrap().get("delegation").unwrap().get("addresses").unwrap()
-            [0];
+    let delegation_address = Address::from_str(
+        &std::env::var("DELEGATION_ADDRESS")
+            .unwrap_or("0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
+    )
+    .unwrap();
 
     let auth = Authorization {
         chain_id: provider.get_chain_id().await?,

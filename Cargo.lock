@@ -4625,6 +4625,7 @@ dependencies = [
  "revm-precompile",
  "revm-primitives",
  "serde_json",
+ "tokio",
  "tracing",
 ]
 

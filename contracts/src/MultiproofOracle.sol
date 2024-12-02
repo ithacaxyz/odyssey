@@ -56,7 +56,6 @@ contract MultiproofOracle is IMultiproofOracle {
         proposals[_initialOutputRoot].push(ProposalData({
             proposer: address(0),
             parent: Challenge({
-                blockNum: 0,
                 outputRoot: bytes32(0),
                 index: 0
             }),
@@ -89,7 +88,7 @@ contract MultiproofOracle is IMultiproofOracle {
         }));
     }
 
-    function challenge(uint96 blockNum, bytes32 outputRoot, uint256 index) public payable {
+    function challenge(bytes32 outputRoot, uint256 index) public payable {
         require(!emergencyShutdown, "emergency shutdown");
         require(msg.value == proofReward * provers.length, "incorrect bond amount");
 
@@ -233,9 +232,9 @@ contract MultiproofOracle is IMultiproofOracle {
     }
 
     // TODO: Can deploy contract with an incentive for calling this, if we want.
-    function triggerEmergencyShutdown(uint blockNum, bytes32 outputRoot1, uint index1, bytes32 outputRoot2, uint index2) external {
-        require(isValidProposal(blockNum, outputRoot1, index1), "invalid proposal 1");
-        require(isValidProposal(blockNum, outputRoot2, index2), "invalid proposal 2");
+    function triggerEmergencyShutdown(bytes32 outputRoot1, uint index1, bytes32 outputRoot2, uint index2) external {
+        require(isValidProposal(outputRoot1, index1), "invalid proposal 1");
+        require(isValidProposal(outputRoot2, index2), "invalid proposal 2");
         require(outputRoot1 != outputRoot2, "output roots must be different");
 
         emergencyShutdown = true;

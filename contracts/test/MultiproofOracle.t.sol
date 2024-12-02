@@ -10,7 +10,7 @@ import { Test, console } from "forge-std/Test.sol";
 contract MultiproofOracleTest is Test {
     MultiproofOracle public oracle;
     IMultiproofOracle.Challenge public anchor;
-    uint proposedBlockNum = 1;
+    uint96 proposedBlockNum = 1;
     bytes32 proposedOutputRoot = bytes32(uint256(1));
 
     function setUp() public {
@@ -35,7 +35,6 @@ contract MultiproofOracleTest is Test {
         vm.deal(address(oracle), 100 ether);
 
         anchor = IMultiproofOracle.Challenge({
-            blockNum: 0,
             outputRoot: bytes32(0),
             index: 0
         });
@@ -45,8 +44,8 @@ contract MultiproofOracleTest is Test {
     function testMultiproof_unchallengedCanFinalize() public {
         oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
         vm.warp(block.timestamp + oracle.challengeTime() + 1);
-        oracle.finalize(proposedBlockNum, proposedOutputRoot, 0);
-        assert(oracle.isValidProposal(proposedBlockNum, proposedOutputRoot));
+        oracle.finalize(proposedOutputRoot, 0);
+        assert(oracle.isValidProposal(proposedOutputRoot));
     }
 
     // propose, try finalize: deadline not passed
@@ -54,29 +53,29 @@ contract MultiproofOracleTest is Test {
         oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
 
         vm.expectRevert("deadline not passed");
-        oracle.finalize(proposedBlockNum, proposedOutputRoot, 0);
-        assert(!oracle.isValidProposal(proposedBlockNum, proposedOutputRoot));
+        oracle.finalize(proposedOutputRoot, 0);
+        assert(!oracle.isValidProposal(proposedOutputRoot));
     }
 
     // propose, challenge, wait, try finalize: deadline not passed
     function testMultiproof_cannotFinalizeBeforeProvingDeadline() public {
         oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
-        oracle.challenge{value: oracle.proofReward() * 3}(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.challenge{value: oracle.proofReward() * 3}(proposedOutputRoot, 0);
 
         vm.expectRevert("deadline not passed");
-        oracle.finalize(proposedBlockNum, proposedOutputRoot, 0);
-        assert(!oracle.isValidProposal(proposedBlockNum, proposedOutputRoot));
+        oracle.finalize(proposedOutputRoot, 0);
+        assert(!oracle.isValidProposal(proposedOutputRoot));
     }
 
     // propose, challenge, no proof, finalize: rejected
     function testMultiproof_rejectedAfterUnprovenChallenge() public {
         oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
-        oracle.challenge{value: oracle.proofReward() * 3}(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.challenge{value: oracle.proofReward() * 3}(proposedOutputRoot, 0);
 
         vm.warp(block.timestamp + oracle.provingTime() + 1);
-        oracle.finalize(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.finalize(proposedOutputRoot, 0);
 
-        (,,,, IMultiproofOracle.ProposalState proposalState,,) = oracle.proposals(proposedBlockNum, proposedOutputRoot, 0);
+        (,,,, IMultiproofOracle.ProposalState proposalState,,,) = oracle.proposals(proposedOutputRoot, 0);
         assertEq(uint8(proposalState), uint8(IMultiproofOracle.ProposalState.Rejected));
         assert(!oracle.emergencyShutdown());
     }
@@ -84,16 +83,16 @@ contract MultiproofOracleTest is Test {
     // failed proof rejected but doesn't shutdown
     function testMultiproof_rejectedAndActiveAfterFailedProof() public {
         oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
-        oracle.challenge{value: oracle.proofReward() * 3}(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.challenge{value: oracle.proofReward() * 3}(proposedOutputRoot, 0);
 
         // all failed proofs
         IMultiproofOracle.ProofData[] memory proofs = _generateProofs(false, true);
-        oracle.prove(proposedBlockNum, proposedOutputRoot, 0, proofs);
+        oracle.prove(proposedOutputRoot, 0, proofs);
 
         vm.warp(block.timestamp + oracle.provingTime() + 1);
-        oracle.finalize(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.finalize(proposedOutputRoot, 0);
 
-        (,,,, IMultiproofOracle.ProposalState proposalState,,) = oracle.proposals(proposedBlockNum, proposedOutputRoot, 0);
+        (,,,, IMultiproofOracle.ProposalState proposalState,,,) = oracle.proposals(proposedOutputRoot, 0);
         assertEq(uint8(proposalState), uint8(IMultiproofOracle.ProposalState.Rejected));
         assert(!oracle.emergencyShutdown());
     }
@@ -101,16 +100,16 @@ contract MultiproofOracleTest is Test {
     // semi proven proof rejected and shutdown
     function testMultiproof_rejectedAndShutdownAfterSemiprovenProof() public {
         oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
-        oracle.challenge{value: oracle.proofReward() * 3}(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.challenge{value: oracle.proofReward() * 3}(proposedOutputRoot, 0);
 
         // all failed proofs
         IMultiproofOracle.ProofData[] memory proofs = _generateProofs(false, false);
-        oracle.prove(proposedBlockNum, proposedOutputRoot, 0, proofs);
+        oracle.prove(proposedOutputRoot, 0, proofs);
 
         vm.warp(block.timestamp + oracle.provingTime() + 1);
-        oracle.finalize(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.finalize(proposedOutputRoot, 0);
 
-        (,,,, IMultiproofOracle.ProposalState proposalState,,) = oracle.proposals(proposedBlockNum, proposedOutputRoot, 0);
+        (,,,, IMultiproofOracle.ProposalState proposalState,,,) = oracle.proposals(proposedOutputRoot, 0);
         assertEq(uint8(proposalState), uint8(IMultiproofOracle.ProposalState.Rejected));
         assert(oracle.emergencyShutdown());
     }
@@ -118,16 +117,16 @@ contract MultiproofOracleTest is Test {
     // fully proven proof confirmed
     function testMultiproof_confirmedAndActiveAfterSuccessfulProof() public {
         oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
-        oracle.challenge{value: oracle.proofReward() * 3}(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.challenge{value: oracle.proofReward() * 3}(proposedOutputRoot, 0);
 
         // all failed proofs
         IMultiproofOracle.ProofData[] memory proofs = _generateProofs(true, false);
-        oracle.prove(proposedBlockNum, proposedOutputRoot, 0, proofs);
+        oracle.prove(proposedOutputRoot, 0, proofs);
 
         vm.warp(block.timestamp + oracle.provingTime() + 1);
-        oracle.finalize(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.finalize(proposedOutputRoot, 0);
 
-        (,,,, IMultiproofOracle.ProposalState proposalState,,) = oracle.proposals(proposedBlockNum, proposedOutputRoot, 0);
+        (,,,, IMultiproofOracle.ProposalState proposalState,,,) = oracle.proposals(proposedOutputRoot, 0);
         assertEq(uint8(proposalState), uint8(IMultiproofOracle.ProposalState.Confirmed));
         assert(!oracle.emergencyShutdown());
     }
@@ -135,24 +134,24 @@ contract MultiproofOracleTest is Test {
     // propose, propose child, challegen parent, wait: both rejected
     function testMultiproof_rejectedParentRejectsChild() public {
         oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
+        bytes32 newOutputRoot = keccak256(abi.encode(proposedOutputRoot));
+
         IMultiproofOracle.Challenge memory parent = IMultiproofOracle.Challenge({
-            blockNum: proposedBlockNum,
             outputRoot: proposedOutputRoot,
             index: 0
         });
-        oracle.propose{value: oracle.proposalBond()}(parent, proposedBlockNum + 1, proposedOutputRoot);
+        oracle.propose{value: oracle.proposalBond()}(parent, proposedBlockNum + 1, newOutputRoot);
 
-        oracle.challenge{value: oracle.proofReward() * 3}(proposedBlockNum, proposedOutputRoot, 0);
+        oracle.challenge{value: oracle.proofReward() * 3}(proposedOutputRoot, 0);
 
         vm.warp(block.timestamp + oracle.provingTime() + 1);
-        oracle.finalize(proposedBlockNum + 1, proposedOutputRoot, 0);
+        oracle.finalize(newOutputRoot, 0);
 
-        (,,,, IMultiproofOracle.ProposalState proposalState,,) = oracle.proposals(proposedBlockNum, proposedOutputRoot, 0);
+        (,,,, IMultiproofOracle.ProposalState proposalState,,,) = oracle.proposals(proposedOutputRoot, 0);
         assertEq(uint8(proposalState), uint8(IMultiproofOracle.ProposalState.Rejected));
 
-        (,,,, proposalState,,) = oracle.proposals(proposedBlockNum + 1, proposedOutputRoot, 0);
+        (,,,, proposalState,,,) = oracle.proposals(newOutputRoot, 0);
         assertEq(uint8(proposalState), uint8(IMultiproofOracle.ProposalState.Rejected));
-
     }
 
     // propose 200+, challenge 200+, emergency pause
@@ -161,12 +160,11 @@ contract MultiproofOracleTest is Test {
         IMultiproofOracle.Challenge[] memory challenges = new IMultiproofOracle.Challenge[](emergencyThreshold);
         for (uint i; i < emergencyThreshold; i++) {
             challenges[i] = IMultiproofOracle.Challenge({
-                blockNum: proposedBlockNum + i,
                 outputRoot: proposedOutputRoot,
-                index: 0
+                index: i
             });
-            oracle.propose{value: oracle.proposalBond()}(anchor, challenges[i].blockNum, proposedOutputRoot);
-            oracle.challenge{value: oracle.proofReward() * 3}(challenges[i].blockNum, proposedOutputRoot, 0);
+            oracle.propose{value: oracle.proposalBond()}(anchor, proposedBlockNum, proposedOutputRoot);
+            oracle.challenge{value: oracle.proofReward() * 3}(proposedOutputRoot, i);
         }
         oracle.emergencyPause(challenges);
 
@@ -181,14 +179,14 @@ contract MultiproofOracleTest is Test {
 
         vm.warp(block.timestamp + oracle.challengeTime() + 1);
 
-        oracle.finalize(proposedBlockNum, proposedOutputRoot, 0);
-        oracle.finalize(proposedBlockNum, outputRoot2, 0);
+        oracle.finalize(proposedOutputRoot, 0);
+        oracle.finalize(outputRoot2, 0);
 
-        oracle.triggerEmergencyShutdown(proposedBlockNum, proposedOutputRoot, 0, outputRoot2, 0);
+        oracle.triggerEmergencyShutdown(proposedOutputRoot, 0, outputRoot2, 0);
         assert(oracle.emergencyShutdown());
     }
 
-    // TODO: Add tests to ensure all the bonds flow to the right people
+    // // TODO: Add tests to ensure all the bonds flow to the right people
 
     receive() external payable {}
 

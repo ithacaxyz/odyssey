@@ -1,8 +1,8 @@
-use std::{collections::BTreeMap, str::FromStr, sync::LazyLock};
+use std::{str::FromStr, sync::LazyLock};
 
 use alloy::{
     eips::eip7702::Authorization,
-    primitives::{b256, Address, B256, U256},
+    primitives::{b256, Address, B256},
     providers::{PendingTransactionBuilder, Provider, ProviderBuilder},
     signers::SignerSync,
 };
@@ -56,7 +56,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
 
     let delegation_address = Address::from_str(
         &std::env::var("DELEGATION_ADDRESS")
-            .unwrap_or("0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
+            .unwrap_or_else(|_| "0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
     )
     .unwrap();
 
@@ -97,7 +97,7 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
 
     let delegation_address = Address::from_str(
         &std::env::var("DELEGATION_ADDRESS")
-            .unwrap_or("0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
+            .unwrap_or_else(|_| "0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
     )
     .unwrap();
 

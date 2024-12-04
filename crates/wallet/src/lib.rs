@@ -23,7 +23,7 @@ use alloy_eips::BlockId;
 use alloy_network::{
     eip2718::Encodable2718, Ethereum, EthereumWallet, NetworkWallet, TransactionBuilder,
 };
-use alloy_primitives::{map::HashMap, Address, ChainId, TxHash, TxKind, U256, U64};
+use alloy_primitives::{Address, ChainId, TxHash, TxKind, U256};
 use alloy_rpc_types::TransactionRequest;
 use jsonrpsee::{
     core::{async_trait, RpcResult},
@@ -143,7 +143,6 @@ impl<Provider, Eth> OdysseyWallet<Provider, Eth> {
         wallet: EthereumWallet,
         eth_api: Eth,
         chain_id: ChainId,
-        valid_designations: Vec<Address>,
     ) -> Self {
         let inner = OdysseyWalletInner {
             provider,
@@ -327,8 +326,8 @@ struct WalletMetrics {
 
 #[cfg(test)]
 mod tests {
-    use crate::{validate_tx_request, DelegationCapability, OdysseyWalletError};
-    use alloy_primitives::{address, map::HashMap, Address, U256, U64};
+    use crate::{validate_tx_request, OdysseyWalletError};
+    use alloy_primitives::{Address, U256};
     use alloy_rpc_types::TransactionRequest;
     #[test]
     fn no_value_allowed() {

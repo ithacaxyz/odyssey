@@ -35,7 +35,11 @@ jobs:
             sudo apt update
             sudo apt install kurtosis-cli
       - name: Build Odyssey
-        run: docker buildx build . --load -t ghcr.io/ithacaxyz/odyssey:latest
+        run: |
+           cargo build --profile release --locked --bin odyssey &&
+           mkdir dist/ &&
+           cp ./target/release/odyssey dist/odyssey &&
+           docker buildx build . --load -f .github/assets/Dockerfile -t ghcr.io/ithacaxyz/odyssey:latest
       - name: Run enclave
         id: kurtosis
         run: |

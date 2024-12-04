@@ -59,7 +59,11 @@ impl OdysseyNode {
     >
     where
         Node: FullNodeTypes<
-            Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec>,
+            Types: NodeTypesWithEngine<
+                Engine = OpEngineTypes,
+                ChainSpec = OpChainSpec,
+                Primitives = OpPrimitives,
+            >,
         >,
     {
         ComponentsBuilder::default()
@@ -173,8 +177,13 @@ impl OdysseyPayloadBuilder {
 
 impl<Node, Pool> PayloadServiceBuilder<Node, Pool> for OdysseyPayloadBuilder
 where
-    Node:
-        FullNodeTypes<Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec>>,
+    Node: FullNodeTypes<
+        Types: NodeTypesWithEngine<
+            Engine = OpEngineTypes,
+            ChainSpec = OpChainSpec,
+            Primitives = OpPrimitives,
+        >,
+    >,
     Pool: TransactionPool + Unpin + 'static,
 {
     async fn spawn_payload_service(
@@ -201,7 +210,7 @@ impl OdysseyNetworkBuilder {
 
 impl<Node, Pool> NetworkBuilder<Node, Pool> for OdysseyNetworkBuilder
 where
-    Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec>>,
+    Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec, Primitives = OpPrimitives>>,
     Pool: TransactionPool + Unpin + 'static,
 {
     async fn build_network(

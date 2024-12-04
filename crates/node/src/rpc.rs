@@ -6,7 +6,7 @@
 //!   the withdrawal contract. Otherwise, it fallbacks to default behaviour.
 
 use alloy_eips::BlockId;
-use alloy_primitives::Address;
+use alloy_primitives::{Address, B256};
 use alloy_rpc_types::serde_helpers::JsonStorageKey;
 use alloy_rpc_types_eth::EIP1186AccountProofResponse;
 use jsonrpsee::{
@@ -78,28 +78,25 @@ where
             return self
                 .eth_api
                 .spawn_blocking_io(move |this| {
+                    let b256_keys: Vec<B256> = keys.iter().map(|k| k.as_b256()).collect();
                     let state = this.state_at_block_id(block_number.unwrap_or_default())?;
-                    let storage_root = state
-                        .storage_root(WITHDRAWAL_CONTRACT, Default::default())
+
+                    let proofs = state
+                        .storage_multiproof(WITHDRAWAL_CONTRACT, &b256_keys, Default::default())
                         .map_err(EthApiError::from_eth_err)?;
-                    let storage_proofs = keys
-                        .iter()
-                        .map(|key| {
-                            state.storage_proof(
-                                WITHDRAWAL_CONTRACT,
-                                key.as_b256(),
-                                Default::default(),
-                            )
-                        })
-                        .collect::<Result<Vec<_>, _>>()
-                        .map_err(EthApiError::from_eth_err)?;
-                    let proof = AccountProof {
+
+                    let account_proof = AccountProof {
                         address,
-                        storage_root,
-                        storage_proofs,
+                        storage_root: proofs.root,
+                        storage_proofs: b256_keys
+                            .into_iter()
+                            .map(|k| proofs.storage_proof(k))
+                            .collect::<Result<_, _>>()
+                            .map_err(RethError::other)
+                            .map_err(EthApiError::Internal)?,
                         ..Default::default()
                     };
-                    Ok(from_primitive_account_proof(proof, keys))
+                    Ok(from_primitive_account_proof(account_proof, keys))
                 })
                 .await
                 .map_err(Into::into);

@@ -37,7 +37,8 @@ jobs:
           cargo nextest run \
             --locked \
             --workspace \
-            -E 'kind(test)'
+            -E 'kind(test)' \
+            --no-tests=warn
 
   integration-success:
     name: integration success

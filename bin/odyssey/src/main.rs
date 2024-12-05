@@ -24,7 +24,6 @@
 //! - `min-trace-logs`: Disables all logs below `trace` level.
 
 use alloy_network::{Ethereum, EthereumWallet, NetworkWallet};
-use alloy_primitives::Address;
 use alloy_signer_local::PrivateKeySigner;
 use clap::Parser;
 use eyre::Context;
@@ -91,21 +90,12 @@ fn main() {
 
                     // register odyssey wallet namespace
                     if let Some(wallet) = wallet {
-                        let raw_delegations = std::env::var("EXP1_WHITELIST")
-                            .wrap_err("No EXP0001 delegations specified")?;
-                        let valid_delegations: Vec<Address> = raw_delegations
-                            .split(',')
-                            .map(|addr| Address::parse_checksummed(addr, None))
-                            .collect::<Result<_, _>>()
-                            .wrap_err("No valid EXP0001 delegations specified")?;
-
                         ctx.modules.merge_configured(
                             OdysseyWallet::new(
                                 ctx.provider().clone(),
                                 wallet,
                                 ctx.registry.eth_api().clone(),
                                 ctx.config().chain.chain().id(),
-                                valid_delegations,
                             )
                             .into_rpc(),
                         )?;

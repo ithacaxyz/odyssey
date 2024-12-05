@@ -90,7 +90,6 @@ fn main() {
 
                     // register odyssey wallet namespace
                     if let Some(wallet) = wallet {
-
                         ctx.modules.merge_configured(
                             OdysseyWallet::new(
                                 ctx.provider().clone(),

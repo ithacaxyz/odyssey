@@ -2,8 +2,6 @@
 //!
 //! Implementations of a custom `wallet_` namespace for Odyssey experiment 1.
 //!
-//! - `wallet_getCapabilities` based on [EIP-5792][eip-5792], with the only capability being
-//!   `delegation`.
 //! - `odyssey_sendTransaction` that can perform sequencer-sponsored [EIP-7702][eip-7702]
 //!   delegations and send other sequencer-sponsored transactions on behalf of EOAs with delegated
 //!   code.

@@ -10,20 +10,20 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-alloy-eips.workspace = true
 alloy-network.workspace = true
 alloy-primitives.workspace = true
+alloy-provider.workspace = true
 alloy-rpc-types.workspace = true
+alloy-transport.workspace = true
 
-reth-storage-api.workspace = true
-reth-rpc-eth-api.workspace = true
 reth-optimism-rpc.workspace = true
-
-revm-primitives.workspace = true
+reth-rpc-eth-api.workspace = true
+reth-storage-api.workspace = true
 
 jsonrpsee = { workspace = true, features = ["server", "macros"] }
 serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true
+eyre.workspace = true
 tracing.workspace = true
 tokio = { workspace = true, features = ["sync"] }
 

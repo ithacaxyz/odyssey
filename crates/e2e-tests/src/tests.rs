@@ -83,7 +83,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-// This is new endpoint `odyssey_sendTransaction`, upper test will be deprecate in the future.
+// This is a new endpoint `odyssey_sendTransaction`, upper test will be deprecated in the future.
 #[tokio::test]
 async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
@@ -137,7 +137,7 @@ async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error:
         .await?;
     let block_number = BlockNumberOrTag::Number(block.header.number);
 
-    // Withdrawal contract will return an empty account proof, since it only handles storage proofs
+    // Withdrawal contract will return an empty account proof since it only handles storage proofs
     let withdrawal_contract_response: EIP1186AccountProofResponse = provider
         .client()
         .request(

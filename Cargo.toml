@@ -103,7 +103,7 @@ useless_let_if_seq = "warn"
 while_float = "warn"
 zero_sized_map_values = "warn"
 
-# These are nursery lints which have findings. Allow them for now. Some are not
+# These are nursery lints that have findings. Allow them for now. Some are not
 # quite mature enough for use in our codebase and some we don't really want.
 # Explicitly listing should make it easier to fix in the future.
 as_ptr_cast_mut = "allow"

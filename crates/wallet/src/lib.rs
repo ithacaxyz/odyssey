@@ -41,7 +41,7 @@ use tokio::sync::Mutex;
 
 /// The capability to perform [EIP-7702][eip-7702] delegations, sponsored by the sequencer.
 ///
-/// The sequencer will only perform delegations, and act on behalf of delegated accounts, if the
+/// The sequencer will only perform delegations, and act on behalf of delegated accounts if the
 /// account delegates to one of the addresses specified within this capability.
 ///
 /// [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
@@ -83,7 +83,7 @@ pub enum OdysseyWalletError {
     ValueNotZero,
     /// The from field is set on the transaction.
     ///
-    /// Requests with the from field are rejected, since it is implied that it will always be the
+    /// Requests with the from field are rejected since it is implied that it will always be the
     /// sequencer.
     #[error("tx from field is set")]
     FromSet,
@@ -107,7 +107,7 @@ pub enum OdysseyWalletError {
     InvalidTransactionRequest,
     /// The request was estimated to consume too much gas.
     ///
-    /// The gas usage by each request is limited to counteract draining the sequencers funds.
+    /// The gas usage by each request is limited to counteract draining the sequencer's funds.
     #[error("request would use too much gas: estimated {estimate}")]
     GasEstimateTooHigh {
         /// The amount of gas the request was estimated to consume.
@@ -269,7 +269,7 @@ where
         // all checks passed, increment the valid calls counter
         self.inner.metrics.valid_send_transaction_calls.increment(1);
 
-        // this uses the internal `OpEthApi` to either forward the tx to the sequencer, or add it to
+        // this uses the internal `OpEthApi` to either forward the tx to the sequencer or add it to
         // the txpool
         //
         // see: https://github.com/paradigmxyz/reth/blob/b67f004fbe8e1b7c05f84f314c4c9f2ed9be1891/crates/optimism/rpc/src/eth/transaction.rs#L35-L57

@@ -219,7 +219,7 @@ where
         pool: Pool,
     ) -> eyre::Result<NetworkHandle> {
         let mut network_config = self.inner.network_config(ctx)?;
-        // this is rolled with limited trusted peers and we want ignore any reputation slashing
+        // this is rolled with limited trusted peers and we want to ignore any reputation slashing
         network_config.peers_config.reputation_weights = ReputationChangeWeights::zero();
         network_config.peers_config.backoff_durations.low = Duration::from_secs(5);
         network_config.peers_config.backoff_durations.medium = Duration::from_secs(5);

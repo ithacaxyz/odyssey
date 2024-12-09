@@ -146,17 +146,18 @@ alloy = { version = "0.6.4", features = [
     "providers",
     "provider-http",
     "signers",
-] }
-alloy-consensus = "0.6.4"
-alloy-eips = "0.6.4"
-alloy-network = "0.6.4"
-alloy-primitives = "0.8.11"
-alloy-provider = "0.6.4"
+    "reqwest-rustls-tls",
+], default-features = false }
+alloy-consensus = { version = "0.6.4", default-features = false }
+alloy-eips = { version = "0.6.4", default-features = false }
+alloy-network = { version = "0.6.4", default-features = false }
+alloy-primitives = { version = "0.8.11", default-features = false }
+alloy-provider = { version = "0.6.4", default-features = false }
 alloy-rpc-client = { version = "0.6.4", default-features = false }
-alloy-rpc-types = "0.6.4"
-alloy-rpc-types-eth = "0.6.4"
+alloy-rpc-types = { version = "0.6.4", default-features = false }
+alloy-rpc-types-eth = { version = "0.6.4", default-features = false }
 alloy-signer-local = { version = "0.6.4", features = ["mnemonic"] }
-alloy-transport = "0.6.4"
+alloy-transport = { version = "0.6.4", default-features = false }
 alloy-transport-http = { version = "0.6.4", default-features = false, features = [
     "reqwest",
     "reqwest-rustls-tls",
@@ -167,7 +168,6 @@ reqwest = { version = "0.12.9", default-features = false, features = [
 
 # tokio
 tokio = { version = "1.21", default-features = false }
-
 
 reth-node-core = { git = "https://github.com/paradigmxyz/reth.git", rev = "38cf6c9", features = [
     "optimism",

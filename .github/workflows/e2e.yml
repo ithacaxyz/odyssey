@@ -7,7 +7,7 @@ on:
   merge_group:
   push:
     branches: [main]
-  
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -30,29 +30,29 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Install Kurtosis
-        run: | 
-            echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
-            sudo apt update
-            sudo apt install kurtosis-cli
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          sudo apt install kurtosis-cli
       - name: Build Odyssey
         run: |
-           cargo build --profile release --locked --bin odyssey &&
-           mkdir dist/ &&
-           cp ./target/release/odyssey dist/odyssey &&
-           docker buildx build . --load -f .github/assets/Dockerfile -t ghcr.io/ithacaxyz/odyssey:latest
+          cargo build --profile release --locked --bin odyssey &&
+          mkdir dist/ &&
+          cp ./target/release/odyssey dist/odyssey &&
+          docker buildx build . --load -f .github/assets/Dockerfile -t ghcr.io/ithacaxyz/odyssey:latest
       - name: Run enclave
         id: kurtosis
         run: |
-            kurtosis engine start
-            kurtosis run --enclave op-devnet github.com/ethpandaops/optimism-package --args-file ./etc/kurtosis.yaml
-            ENCLAVE_ID=$(curl http://127.0.0.1:9779/api/enclaves | jq --raw-output 'keys[0]')
-            SEQUENCER_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-1-op-reth-op-node-op-kurtosis".public_ports.rpc.number')
-            REPLICA_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-2-op-reth-op-node-op-kurtosis".public_ports.rpc.number')
-            echo "SEQUENCER_RPC=http://127.0.0.1:$SEQUENCER_EL_PORT" >> $GITHUB_ENV
-            echo "REPLICA_RPC=http://127.0.0.1:$REPLICA_EL_PORT" >> $GITHUB_ENV
+          kurtosis engine start
+          kurtosis run --enclave op-devnet github.com/ethpandaops/optimism-package --args-file ./etc/kurtosis.yaml
+          ENCLAVE_ID=$(curl http://127.0.0.1:9779/api/enclaves | jq --raw-output 'keys[0]')
+          SEQUENCER_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-1-op-reth-op-node-op-kurtosis".public_ports.rpc.number')
+          REPLICA_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-2-op-reth-op-node-op-kurtosis".public_ports.rpc.number')
+          echo "SEQUENCER_RPC=http://127.0.0.1:$SEQUENCER_EL_PORT" >> $GITHUB_ENV
+          echo "REPLICA_RPC=http://127.0.0.1:$REPLICA_EL_PORT" >> $GITHUB_ENV
       - name: Run E2E tests
         run: |
-            cargo nextest run \
-              --locked \
-              --workspace \
-              -E "package(odyssey-e2e-tests)"
+          cargo nextest run \
+            --locked \
+            --workspace \
+            -E "package(odyssey-e2e-tests)"

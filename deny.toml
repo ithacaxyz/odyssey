@@ -9,6 +9,7 @@ notice = "warn"
 multiple-versions = "warn"
 wildcards = "deny"
 highlight = "all"
+deny = [{ name = "openssl" }]
 
 [licenses]
 unlicensed = "deny"

@@ -294,13 +294,13 @@ impl From<OdysseyWalletError> for jsonrpsee::types::error::ErrorObject<'static> 
 
 /// Implementation of the Odyssey `wallet_` namespace.
 #[derive(Debug)]
-pub struct OdysseyWallet<Upstream> {
-    inner: Arc<OdysseyWalletInner<Upstream>>,
+pub struct OdysseyWallet<T> {
+    inner: Arc<OdysseyWalletInner<T>>,
 }
 
-impl<Upstream> OdysseyWallet<Upstream> {
+impl<T> OdysseyWallet<T> {
     /// Create a new Odyssey wallet module.
-    pub fn new(upstream: Upstream, chain_id: ChainId) -> Self {
+    pub fn new(upstream: T, chain_id: ChainId) -> Self {
         let inner = OdysseyWalletInner {
             upstream,
             chain_id,
@@ -316,9 +316,9 @@ impl<Upstream> OdysseyWallet<Upstream> {
 }
 
 #[async_trait]
-impl<N> OdysseyWalletApiServer for OdysseyWallet<N>
+impl<T> OdysseyWalletApiServer for OdysseyWallet<T>
 where
-    N: Upstream + Sync + Send + 'static,
+    T: Upstream + Sync + Send + 'static,
 {
     async fn send_transaction(&self, mut request: TransactionRequest) -> RpcResult<TxHash> {
         trace!(target: "rpc::wallet", ?request, "Serving odyssey_sendTransaction");
@@ -399,8 +399,8 @@ where
 
 /// Implementation of the Odyssey `wallet_` namespace.
 #[derive(Debug)]
-struct OdysseyWalletInner<Upstream> {
-    upstream: Upstream,
+struct OdysseyWalletInner<T> {
+    upstream: T,
     chain_id: ChainId,
     /// Used to guard tx signing
     permit: Mutex<()>,

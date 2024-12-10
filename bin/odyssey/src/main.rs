@@ -33,7 +33,7 @@ use odyssey_node::{
     node::OdysseyNode,
     rpc::{EthApiExt, EthApiOverrideServer},
 };
-use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer, RethNode};
+use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer, RethUpstream};
 use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher, NodeComponents};
 use reth_optimism_cli::Cli;
@@ -92,7 +92,7 @@ fn main() {
                     if let Some(wallet) = wallet {
                         ctx.modules.merge_configured(
                             OdysseyWallet::new(
-                                RethNode::new(
+                                RethUpstream::new(
                                     ctx.provider().clone(),
                                     ctx.registry.eth_api().clone(),
                                     wallet,

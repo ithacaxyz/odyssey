@@ -39,9 +39,10 @@ use tracing::{trace, warn};
 use reth_optimism_rpc as _;
 use tokio::sync::Mutex;
 
-/// A trait for any type capable of estimating, signing, and propagating sponsored transactions.
+/// An upstream is capable of estimating, signing, and propagating signed transactions for a
+/// specific chain.
 #[async_trait]
-pub trait Node {
+pub trait Upstream {
     /// Get the address of the account that sponsors transactions.
     fn default_signer_address(&self) -> Address;
 
@@ -54,26 +55,26 @@ pub trait Node {
         tx: &TransactionRequest,
     ) -> Result<(u64, Eip1559Estimation), OdysseyWalletError>;
 
-    /// Sign the transaction request and send it to the node.
+    /// Sign the transaction request and send it to the upstream.
     async fn sign_and_send(&self, tx: TransactionRequest) -> Result<TxHash, OdysseyWalletError>;
 }
 
 /// A wrapper around an Alloy provider for signing and sending sponsored transactions.
 #[derive(Debug)]
-pub struct AlloyNode<P, T> {
+pub struct AlloyUpstream<P, T> {
     provider: P,
     _transport: PhantomData<T>,
 }
 
-impl<P, T> AlloyNode<P, T> {
-    /// Create a new [`AlloyNode`]
+impl<P, T> AlloyUpstream<P, T> {
+    /// Create a new [`AlloyUpstream`]
     pub const fn new(provider: P) -> Self {
         Self { provider, _transport: PhantomData }
     }
 }
 
 #[async_trait]
-impl<P, T> Node for AlloyNode<P, T>
+impl<P, T> Upstream for AlloyUpstream<P, T>
 where
     P: Provider<T> + WalletProvider,
     T: Transport + Clone,
@@ -111,24 +112,24 @@ where
     }
 }
 
-/// A handle to a Reth node that signs transactions and injects them directly into the transaction
-/// pool.
+/// A handle to a Reth upstream that signs transactions and injects them directly into the
+/// transaction pool.
 #[derive(Debug)]
-pub struct RethNode<Provider, Eth> {
+pub struct RethUpstream<Provider, Eth> {
     provider: Provider,
     eth_api: Eth,
     wallet: EthereumWallet,
 }
 
-impl<Provider, Eth> RethNode<Provider, Eth> {
-    /// Create a new [`RethNode`].
+impl<Provider, Eth> RethUpstream<Provider, Eth> {
+    /// Create a new [`RethUpstream`].
     pub const fn new(provider: Provider, eth_api: Eth, wallet: EthereumWallet) -> Self {
         Self { provider, eth_api, wallet }
     }
 }
 
 #[async_trait]
-impl<Provider, Eth> Node for RethNode<Provider, Eth>
+impl<Provider, Eth> Upstream for RethUpstream<Provider, Eth>
 where
     Provider: StateProviderFactory + Send + Sync,
     Eth: FullEthApi + Send + Sync,
@@ -293,15 +294,15 @@ impl From<OdysseyWalletError> for jsonrpsee::types::error::ErrorObject<'static> 
 
 /// Implementation of the Odyssey `wallet_` namespace.
 #[derive(Debug)]
-pub struct OdysseyWallet<Node> {
-    inner: Arc<OdysseyWalletInner<Node>>,
+pub struct OdysseyWallet<Upstream> {
+    inner: Arc<OdysseyWalletInner<Upstream>>,
 }
 
-impl<Node> OdysseyWallet<Node> {
+impl<Upstream> OdysseyWallet<Upstream> {
     /// Create a new Odyssey wallet module.
-    pub fn new(node: Node, chain_id: ChainId) -> Self {
+    pub fn new(upstream: Upstream, chain_id: ChainId) -> Self {
         let inner = OdysseyWalletInner {
-            node,
+            upstream,
             chain_id,
             permit: Default::default(),
             metrics: WalletMetrics::default(),
@@ -317,7 +318,7 @@ impl<Node> OdysseyWallet<Node> {
 #[async_trait]
 impl<N> OdysseyWalletApiServer for OdysseyWallet<N>
 where
-    N: Node + Sync + Send + 'static,
+    N: Upstream + Sync + Send + 'static,
 {
     async fn send_transaction(&self, mut request: TransactionRequest) -> RpcResult<TxHash> {
         trace!(target: "rpc::wallet", ?request, "Serving odyssey_sendTransaction");
@@ -333,7 +334,7 @@ where
             // if this is an eip-1559 tx, ensure that it is an account that delegates to a
             // whitelisted address
             (false, Some(TxKind::Call(addr))) => {
-                let code = self.inner.node.get_code(addr).await?;
+                let code = self.inner.upstream.get_code(addr).await?;
                 match code.as_ref() {
                     // A valid EIP-7702 delegation
                     [0xef, 0x01, 0x00, address @ ..] => {
@@ -369,10 +370,10 @@ where
         // set gas limit
         // note: we also set the `from` field here to correctly estimate for contracts that use e.g.
         // `tx.origin`
-        request.from = Some(self.inner.node.default_signer_address());
+        request.from = Some(self.inner.upstream.default_signer_address());
         let (estimate, fee_estimate) = self
             .inner
-            .node
+            .upstream
             .estimate(&request)
             .await
             .inspect_err(|_| self.inner.metrics.invalid_send_transaction_calls.increment(1))?;
@@ -390,7 +391,7 @@ where
         // all checks passed, increment the valid calls counter
         self.inner.metrics.valid_send_transaction_calls.increment(1);
 
-        Ok(self.inner.node.sign_and_send(request).await.inspect_err(
+        Ok(self.inner.upstream.sign_and_send(request).await.inspect_err(
             |err| warn!(target: "rpc::wallet", ?err, "Error adding sponsored tx to pool"),
         )?)
     }
@@ -398,8 +399,8 @@ where
 
 /// Implementation of the Odyssey `wallet_` namespace.
 #[derive(Debug)]
-struct OdysseyWalletInner<Node> {
-    node: Node,
+struct OdysseyWalletInner<Upstream> {
+    upstream: Upstream,
     chain_id: ChainId,
     /// Used to guard tx signing
     permit: Mutex<()>,
@@ -441,33 +442,37 @@ mod tests {
     use crate::{validate_tx_request, OdysseyWalletError};
     use alloy_primitives::{Address, U256};
     use alloy_rpc_types::TransactionRequest;
+
     #[test]
     fn no_value_allowed() {
-        matches!(
+        assert!(matches!(
             validate_tx_request(&TransactionRequest::default().value(U256::from(1))),
             Err(OdysseyWalletError::ValueNotZero)
-        );
+        ));
 
-        matches!(validate_tx_request(&TransactionRequest::default().value(U256::from(0))), Ok(()));
+        assert!(matches!(
+            validate_tx_request(&TransactionRequest::default().value(U256::from(0))),
+            Ok(())
+        ));
     }
 
     #[test]
     fn no_from_allowed() {
-        matches!(
+        assert!(matches!(
             validate_tx_request(&TransactionRequest::default().from(Address::ZERO)),
             Err(OdysseyWalletError::FromSet)
-        );
+        ));
 
-        matches!(validate_tx_request(&TransactionRequest::default()), Ok(()));
+        assert!(matches!(validate_tx_request(&TransactionRequest::default()), Ok(())));
     }
 
     #[test]
     fn no_nonce_allowed() {
-        matches!(
+        assert!(matches!(
             validate_tx_request(&TransactionRequest::default().nonce(1)),
             Err(OdysseyWalletError::NonceSet)
-        );
+        ));
 
-        matches!(validate_tx_request(&TransactionRequest::default()), Ok(()));
+        assert!(matches!(validate_tx_request(&TransactionRequest::default()), Ok(())));
     }
 }

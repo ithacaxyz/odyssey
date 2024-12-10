@@ -8,7 +8,7 @@ use alloy_signer_local::PrivateKeySigner;
 use clap::Parser;
 use eyre::Context;
 use jsonrpsee::server::Server;
-use odyssey_wallet::{AlloyNode, OdysseyWallet, OdysseyWalletApiServer};
+use odyssey_wallet::{AlloyUpstream, OdysseyWallet, OdysseyWalletApiServer};
 use reth_tracing::Tracer;
 use std::net::{IpAddr, Ipv4Addr};
 use tracing::info;
@@ -48,7 +48,7 @@ impl Args {
         let chain_id = provider.get_chain_id().await?;
 
         // construct rpc module
-        let rpc = OdysseyWallet::new(AlloyNode::new(provider), chain_id).into_rpc();
+        let rpc = OdysseyWallet::new(AlloyUpstream::new(provider), chain_id).into_rpc();
 
         // start server
         let server = Server::builder().http_only().build((self.address, self.port)).await?;

@@ -32,31 +32,33 @@ struct Args {
     secret_key: String,
 }
 
-/// Run the relayer service.
-async fn run(args: Args) -> eyre::Result<()> {
-    let _guard = reth_tracing::RethTracer::new().init()?;
+impl Args {
+    /// Run the relayer service.
+    async fn run(self) -> eyre::Result<()> {
+        let _guard = reth_tracing::RethTracer::new().init()?;
 
-    // construct provider
-    let signer: PrivateKeySigner = args.secret_key.parse().wrap_err("Invalid signing key")?;
-    let wallet = EthereumWallet::from(signer);
-    let rpc_client = RpcClient::new_http(args.upstream).boxed();
-    let provider =
-        ProviderBuilder::new().with_recommended_fillers().wallet(wallet).on_client(rpc_client);
+        // construct provider
+        let signer: PrivateKeySigner = self.secret_key.parse().wrap_err("Invalid signing key")?;
+        let wallet = EthereumWallet::from(signer);
+        let rpc_client = RpcClient::new_http(self.upstream).boxed();
+        let provider =
+            ProviderBuilder::new().with_recommended_fillers().wallet(wallet).on_client(rpc_client);
 
-    // get chain id
-    let chain_id = provider.get_chain_id().await?;
+        // get chain id
+        let chain_id = provider.get_chain_id().await?;
 
-    // construct rpc module
-    let rpc = OdysseyWallet::new(AlloyNode::new(provider), chain_id).into_rpc();
+        // construct rpc module
+        let rpc = OdysseyWallet::new(AlloyNode::new(provider), chain_id).into_rpc();
 
-    // start server
-    let server = Server::builder().http_only().build((args.address, args.port)).await?;
-    info!(addr = ?server.local_addr().unwrap(), "Started relay service");
+        // start server
+        let server = Server::builder().http_only().build((self.address, self.port)).await?;
+        info!(addr = ?server.local_addr().unwrap(), "Started relay service");
 
-    let handle = server.start(rpc);
-    handle.stopped().await;
+        let handle = server.start(rpc);
+        handle.stopped().await;
 
-    Ok(())
+        Ok(())
+    }
 }
 
 #[doc(hidden)]
@@ -68,7 +70,7 @@ async fn main() {
     }
 
     let args = Args::parse();
-    if let Err(err) = run(args).await {
+    if let Err(err) = args.run().await {
         eprint!("Error: {err:?}");
         std::process::exit(1);
     }

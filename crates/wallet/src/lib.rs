@@ -17,7 +17,7 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_network::{
-    eip2718::Encodable2718, Ethereum, EthereumWallet, Network, NetworkWallet, TransactionBuilder,
+    eip2718::Encodable2718, Ethereum, EthereumWallet, NetworkWallet, TransactionBuilder,
 };
 use alloy_primitives::{Address, Bytes, ChainId, TxHash, TxKind, U256};
 use alloy_provider::{utils::Eip1559Estimation, Provider, WalletProvider};
@@ -41,10 +41,7 @@ use tokio::sync::Mutex;
 
 /// A trait for any type capable of estimating, signing, and propagating sponsored transactions.
 #[async_trait]
-pub trait Node<N>
-where
-    N: Network,
-{
+pub trait Node {
     /// Get the address of the account that sponsors transactions.
     fn default_signer_address(&self) -> Address;
 
@@ -54,34 +51,32 @@ where
     /// Estimate the transaction request's gas usage and fees.
     async fn estimate(
         &self,
-        tx: &N::TransactionRequest,
+        tx: &TransactionRequest,
     ) -> Result<(u64, Eip1559Estimation), OdysseyWalletError>;
 
     /// Sign the transaction request and send it to the node.
-    async fn sign_and_send(&self, tx: N::TransactionRequest) -> Result<TxHash, OdysseyWalletError>;
+    async fn sign_and_send(&self, tx: TransactionRequest) -> Result<TxHash, OdysseyWalletError>;
 }
 
 /// A wrapper around an Alloy provider for signing and sending sponsored transactions.
 #[derive(Debug)]
-pub struct AlloyNode<P, T, N> {
+pub struct AlloyNode<P, T> {
     provider: P,
     _transport: PhantomData<T>,
-    _network: PhantomData<N>,
 }
 
-impl<P, T, N> AlloyNode<P, T, N> {
+impl<P, T> AlloyNode<P, T> {
     /// Create a new [`AlloyNode`]
     pub const fn new(provider: P) -> Self {
-        Self { provider, _transport: PhantomData, _network: PhantomData }
+        Self { provider, _transport: PhantomData }
     }
 }
 
 #[async_trait]
-impl<P, T, N> Node<N> for AlloyNode<P, T, N>
+impl<P, T> Node for AlloyNode<P, T>
 where
-    P: Provider<T, N> + WalletProvider,
+    P: Provider<T> + WalletProvider,
     T: Transport + Clone,
-    N: Network,
 {
     fn default_signer_address(&self) -> Address {
         self.provider.default_signer_address()
@@ -96,7 +91,7 @@ where
 
     async fn estimate(
         &self,
-        tx: &N::TransactionRequest,
+        tx: &TransactionRequest,
     ) -> Result<(u64, Eip1559Estimation), OdysseyWalletError> {
         let (estimate, fee_estimate) =
             tokio::join!(self.provider.estimate_gas(tx), self.provider.estimate_eip1559_fees(None));
@@ -107,7 +102,7 @@ where
         ))
     }
 
-    async fn sign_and_send(&self, tx: N::TransactionRequest) -> Result<TxHash, OdysseyWalletError> {
+    async fn sign_and_send(&self, tx: TransactionRequest) -> Result<TxHash, OdysseyWalletError> {
         self.provider
             .send_transaction(tx)
             .await
@@ -133,7 +128,7 @@ impl<Provider, Eth> RethNode<Provider, Eth> {
 }
 
 #[async_trait]
-impl<Provider, Eth> Node<Ethereum> for RethNode<Provider, Eth>
+impl<Provider, Eth> Node for RethNode<Provider, Eth>
 where
     Provider: StateProviderFactory + Send + Sync,
     Eth: FullEthApi + Send + Sync,
@@ -322,7 +317,7 @@ impl<Node> OdysseyWallet<Node> {
 #[async_trait]
 impl<N> OdysseyWalletApiServer for OdysseyWallet<N>
 where
-    N: Node<Ethereum> + Sync + Send + 'static,
+    N: Node + Sync + Send + 'static,
 {
     async fn send_transaction(&self, mut request: TransactionRequest) -> RpcResult<TxHash> {
         trace!(target: "rpc::wallet", ?request, "Serving odyssey_sendTransaction");

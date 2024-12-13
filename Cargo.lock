@@ -108,7 +108,9 @@ dependencies = [
  "alloy-network",
  "alloy-provider",
  "alloy-rpc-client",
+ "alloy-rpc-types",
  "alloy-signer",
+ "alloy-signer-local",
  "alloy-transport",
  "alloy-transport-http",
 ]
@@ -633,8 +635,6 @@ dependencies = [
  "alloy-primitives",
  "alloy-signer",
  "async-trait",
- "coins-bip32",
- "coins-bip39",
  "k256",
  "rand",
  "thiserror 1.0.69",
@@ -1175,12 +1175,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
-name = "bech32"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
-
-[[package]]
 name = "bimap"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1469,7 +1463,6 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf88ba1141d185c399bee5288d850d63b8369520c1eafc32a0430b5b6c287bf4"
 dependencies = [
- "sha2 0.10.8",
  "tinyvec",
 ]
 
@@ -1715,57 +1708,6 @@ name = "clap_lex"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "afb84c814227b90d6895e01398aee0d8033c00e7466aca416fb6a8e0eb19d8a7"
-
-[[package]]
-name = "coins-bip32"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2073678591747aed4000dd468b97b14d7007f7936851d3f2f01846899f5ebf08"
-dependencies = [
- "bs58",
- "coins-core",
- "digest 0.10.7",
- "hmac 0.12.1",
- "k256",
- "serde",
- "sha2 0.10.8",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "coins-bip39"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74b169b26623ff17e9db37a539fe4f15342080df39f129ef7631df7683d6d9d4"
-dependencies = [
- "bitvec",
- "coins-bip32",
- "hmac 0.12.1",
- "once_cell",
- "pbkdf2",
- "rand",
- "sha2 0.10.8",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "coins-core"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62b962ad8545e43a28e14e87377812ba9ae748dd4fd963f4c10e9fcc6d13475b"
-dependencies = [
- "base64 0.21.7",
- "bech32",
- "bs58",
- "const-hex",
- "digest 0.10.7",
- "generic-array",
- "ripemd",
- "serde",
- "sha2 0.10.8",
- "sha3",
- "thiserror 1.0.69",
-]
 
 [[package]]
 name = "colorchoice"
@@ -4499,11 +4441,7 @@ dependencies = [
 name = "odyssey"
 version = "0.0.0"
 dependencies = [
- "alloy-network",
- "alloy-primitives",
- "alloy-provider",
- "alloy-rpc-client",
- "alloy-signer-local",
+ "alloy",
  "clap",
  "eyre",
  "odyssey-node",
@@ -4521,7 +4459,7 @@ dependencies = [
 name = "odyssey-common"
 version = "0.0.0"
 dependencies = [
- "alloy-primitives",
+ "alloy",
 ]
 
 [[package]]
@@ -4529,9 +4467,6 @@ name = "odyssey-e2e-tests"
 version = "0.0.0"
 dependencies = [
  "alloy",
- "alloy-network",
- "alloy-rpc-types",
- "alloy-signer-local",
  "ci_info",
  "odyssey-common",
  "reth-primitives-traits",
@@ -4544,11 +4479,7 @@ dependencies = [
 name = "odyssey-node"
 version = "0.0.0"
 dependencies = [
- "alloy-consensus",
- "alloy-eips",
- "alloy-primitives",
- "alloy-rpc-types",
- "alloy-rpc-types-eth",
+ "alloy",
  "eyre",
  "jsonrpsee",
  "odyssey-common",
@@ -4584,10 +4515,7 @@ dependencies = [
 name = "odyssey-relay"
 version = "0.0.0"
 dependencies = [
- "alloy-primitives",
- "alloy-provider",
- "alloy-rpc-client",
- "alloy-signer-local",
+ "alloy",
  "clap",
  "eyre",
  "jsonrpsee",
@@ -4602,11 +4530,7 @@ dependencies = [
 name = "odyssey-wallet"
 version = "0.0.0"
 dependencies = [
- "alloy-network",
- "alloy-primitives",
- "alloy-provider",
- "alloy-rpc-types",
- "alloy-transport",
+ "alloy",
  "eyre",
  "jsonrpsee",
  "metrics 0.23.0",
@@ -4851,16 +4775,6 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
-
-[[package]]
-name = "pbkdf2"
-version = "0.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8ed6a7761f76e3b9f92dfb0a60a6a6477c61024b775147ff0973a02653abaf2"
-dependencies = [
- "digest 0.10.7",
- "hmac 0.12.1",
-]
 
 [[package]]
 name = "pem"

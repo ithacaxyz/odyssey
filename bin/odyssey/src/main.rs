@@ -23,8 +23,10 @@
 //! - `min-debug-logs`: Disables all logs below `debug` level.
 //! - `min-trace-logs`: Disables all logs below `trace` level.
 
-use alloy_network::{Ethereum, EthereumWallet, NetworkWallet};
-use alloy_signer_local::PrivateKeySigner;
+use alloy::{
+    network::{Ethereum, EthereumWallet, NetworkWallet},
+    signers::local::PrivateKeySigner,
+};
 use clap::Parser;
 use eyre::Context;
 use odyssey_node::{

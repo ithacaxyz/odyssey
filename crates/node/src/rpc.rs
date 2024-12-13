@@ -5,10 +5,11 @@
 //! - `eth_getProof` will _ONLY_ return the storage proofs _WITHOUT_ an account proof _IF_ targeting
 //!   the withdrawal contract. Otherwise, it fallbacks to default behaviour.
 
-use alloy_eips::BlockId;
-use alloy_primitives::{Address, B256};
-use alloy_rpc_types::serde_helpers::JsonStorageKey;
-use alloy_rpc_types_eth::EIP1186AccountProofResponse;
+use alloy::{
+    eips::BlockId,
+    primitives::{Address, B256},
+    rpc::types::{eth::EIP1186AccountProofResponse, serde_helpers::JsonStorageKey},
+};
 use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,

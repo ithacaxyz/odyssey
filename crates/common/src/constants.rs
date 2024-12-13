@@ -1,6 +1,6 @@
 //! Odyssey constants.
 
-use alloy_primitives::{address, Address};
+use alloy::primitives::{address, Address};
 
 /// Withdrawal predeployed contract address.
 ///

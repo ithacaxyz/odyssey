@@ -1,6 +1,6 @@
 //! Sponsor periodic broadcaster
 
-use alloy_primitives::Address;
+use alloy::primitives::Address;
 use reth_network::transactions::TransactionsHandle;
 use reth_transaction_pool::TransactionPool;
 use std::time::Duration;

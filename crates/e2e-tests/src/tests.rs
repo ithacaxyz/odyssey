@@ -2,13 +2,12 @@ use std::{str::FromStr, sync::LazyLock};
 
 use alloy::{
     eips::eip7702::Authorization,
+    network::{TransactionBuilder, TransactionBuilder7702},
     primitives::{b256, Address, B256},
     providers::{PendingTransactionBuilder, Provider, ProviderBuilder},
-    signers::SignerSync,
+    rpc::types::{Block, BlockNumberOrTag, EIP1186AccountProofResponse, TransactionRequest},
+    signers::{local::PrivateKeySigner, SignerSync},
 };
-use alloy_network::{TransactionBuilder, TransactionBuilder7702};
-use alloy_rpc_types::{Block, BlockNumberOrTag, EIP1186AccountProofResponse, TransactionRequest};
-use alloy_signer_local::PrivateKeySigner;
 use reth_primitives_traits::Account;
 use reth_trie_common::{AccountProof, StorageProof};
 use url::Url;

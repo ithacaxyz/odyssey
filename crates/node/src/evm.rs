@@ -10,8 +10,10 @@
 //! This currently configures the instructions defined in [EIP3074-instructions](https://github.com/paradigmxyz/eip3074-instructions), and the
 //! precompiles defined by [`revm_precompile`].
 
-use alloy_consensus::Header;
-use alloy_primitives::{Address, Bytes, TxKind, U256};
+use alloy::{
+    consensus::Header,
+    primitives::{Address, Bytes, TxKind, U256},
+};
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
 use reth_optimism_chainspec::{DecodeError, OpChainSpec};

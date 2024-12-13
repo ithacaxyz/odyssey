@@ -12,11 +12,7 @@ default-run = "odyssey"
 workspace = true
 
 [dependencies]
-alloy-signer-local.workspace = true
-alloy-network.workspace = true
-alloy-primitives.workspace = true
-alloy-provider.workspace = true
-alloy-rpc-client.workspace = true
+alloy = { workspace = true, features = ["signers", "signer-local"] }
 odyssey-node.workspace = true
 odyssey-wallet.workspace = true
 odyssey-walltime.workspace = true

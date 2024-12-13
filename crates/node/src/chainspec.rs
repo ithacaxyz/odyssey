@@ -1,8 +1,10 @@
 //! Odyssey chainspec parsing logic.
 use std::sync::LazyLock;
 
-use alloy_eips::eip1559::ETHEREUM_BLOCK_GAS_LIMIT;
-use alloy_primitives::{b256, U256};
+use alloy::{
+    eips::eip1559::ETHEREUM_BLOCK_GAS_LIMIT,
+    primitives::{b256, U256},
+};
 use reth_chainspec::{
     once_cell_set, BaseFeeParams, BaseFeeParamsKind, Chain, ChainHardforks, ChainSpec,
     EthereumHardfork, ForkCondition, NamedChain,

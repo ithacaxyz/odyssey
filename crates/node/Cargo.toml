@@ -37,12 +37,7 @@ reth-trie-db.workspace = true
 reth-network.workspace = true
 reth-network-types.workspace = true
 
-alloy-consensus.workspace = true
-alloy-eips.workspace = true
-alloy-primitives.workspace = true
-alloy-rpc-types.workspace  = true
-alloy-rpc-types-eth.workspace  = true
-
+alloy.workspace = true
 
 serde_json.workspace = true
 tokio.workspace = true

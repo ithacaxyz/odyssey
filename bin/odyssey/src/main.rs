@@ -37,7 +37,7 @@ use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer, RethUpstream};
 use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher, NodeComponents};
 use reth_optimism_cli::Cli;
-use reth_optimism_node::{args::RollupArgs, node::OpAddOns};
+use reth_optimism_node::{args::RollupArgs, node::OpAddOnsBuilder};
 use reth_provider::{providers::BlockchainProvider2, CanonStateSubscriptions};
 use tracing::{info, warn};
 
@@ -63,7 +63,9 @@ fn main() {
             let node = builder
                 .with_types_and_provider::<OdysseyNode, BlockchainProvider2<_>>()
                 .with_components(OdysseyNode::components(&rollup_args))
-                .with_add_ons(OpAddOns::new(rollup_args.sequencer_http))
+                .with_add_ons(
+                    OpAddOnsBuilder::default().with_sequencer(rollup_args.sequencer_http).build(),
+                )
                 .on_component_initialized(move |ctx| {
                     if let Some(address) = address {
                         ctx.task_executor.spawn(async move {

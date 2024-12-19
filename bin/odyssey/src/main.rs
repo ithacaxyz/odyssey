@@ -30,6 +30,7 @@ use eyre::Context;
 use odyssey_node::{
     broadcaster::periodic_broadcaster,
     chainspec::OdysseyChainSpecParser,
+    forwarder::forward_raw_transactions,
     node::OdysseyNode,
     rpc::{EthApiExt, EthApiOverrideServer},
 };
@@ -60,7 +61,7 @@ fn main() {
                 .as_ref()
                 .map(<EthereumWallet as NetworkWallet<Ethereum>>::default_signer_address);
 
-            let node = builder
+            let handle = builder
                 .with_types_and_provider::<OdysseyNode, BlockchainProvider2<_>>()
                 .with_components(OdysseyNode::components(&rollup_args))
                 .with_add_ons(
@@ -124,7 +125,13 @@ fn main() {
                 })
                 .await?;
 
-            node.wait_for_node_exit().await
+            // spawn raw transaction forwarding
+            let txhandle = handle.node.network.transactions_handle().await.unwrap();
+            let raw_txs =
+                handle.node.add_ons_handle.eth_api().eth_api().subscribe_to_raw_transactions();
+            handle.node.task_executor.spawn(Box::pin(forward_raw_transactions(txhandle, raw_txs)));
+
+            handle.wait_for_node_exit().await
         })
     {
         eprintln!("Error: {err:?}");

@@ -12,9 +12,7 @@ categories.workspace = true
 [dependencies]
 odyssey-common.workspace = true
 
-revm-precompile.workspace = true
-revm-primitives.workspace = true
-
+reth-primitives-traits.workspace = true
 reth-cli.workspace = true
 reth-errors.workspace = true
 reth-node-api.workspace = true
@@ -44,6 +42,8 @@ alloy-rpc-types-eth.workspace  = true
 
 op-alloy-consensus.workspace = true
 
+revm-precompile.workspace = true
+revm-primitives.workspace = true
 
 serde_json.workspace = true
 tokio.workspace = true

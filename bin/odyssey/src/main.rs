@@ -30,6 +30,7 @@ use eyre::Context;
 use odyssey_node::{
     broadcaster::periodic_broadcaster,
     chainspec::OdysseyChainSpecParser,
+    forwarder::forward_raw_transactions,
     node::OdysseyNode,
     rpc::{EthApiExt, EthApiOverrideServer},
 };
@@ -123,6 +124,12 @@ fn main() {
                     builder.launch_with(launcher)
                 })
                 .await?;
+
+            // spawn raw transaction forwarding
+            let txhandle = node.node.network.transactions_handle().await.unwrap();
+            let raw_txs =
+                node.node.add_ons_handle.eth_api().eth_api().subscribe_to_raw_transactions();
+            node.node.task_executor.spawn(Box::pin(forward_raw_transactions(txhandle, raw_txs)));
 
             node.wait_for_node_exit().await
         })

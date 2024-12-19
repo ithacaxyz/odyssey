@@ -20,7 +20,6 @@ use reth_rpc_eth_api::{
     FromEthApiError,
 };
 use reth_rpc_eth_types::EthApiError;
-use reth_rpc_types_compat::proof::from_primitive_account_proof;
 use reth_trie_common::AccountProof;
 use tracing::trace;
 
@@ -96,7 +95,7 @@ where
                             .map_err(EthApiError::Internal)?,
                         ..Default::default()
                     };
-                    Ok(from_primitive_account_proof(account_proof, keys))
+                    Ok(account_proof.into_eip1186_response(keys))
                 })
                 .await
                 .map_err(Into::into);

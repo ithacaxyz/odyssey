@@ -4,13 +4,14 @@
 //! required for the optimism engine API.
 
 use crate::evm::OdysseyEvmConfig;
+use alloy_consensus::transaction::PooledTransaction;
 use reth_evm::execute::BasicBlockExecutorProvider;
 use reth_network::{
     transactions::{TransactionPropagationMode, TransactionsManagerConfig},
     NetworkHandle, NetworkManager, PeersInfo,
 };
 use reth_network_types::ReputationChangeWeights;
-use reth_node_api::{FullNodeTypes, NodeTypesWithEngine};
+use reth_node_api::{FullNodeTypes, NodeTypesWithEngine, TxTy};
 use reth_node_builder::{
     components::{
         ComponentsBuilder, ExecutorBuilder, NetworkBuilder, PayloadServiceBuilder,
@@ -24,11 +25,13 @@ use reth_optimism_node::{
     node::{
         OpAddOns, OpConsensusBuilder, OpNetworkBuilder, OpPayloadBuilder, OpPoolBuilder, OpStorage,
     },
-    OpEngineTypes, OpExecutionStrategyFactory,
+    OpEngineTypes, OpExecutionStrategyFactory, OpNetworkPrimitives,
 };
 use reth_optimism_primitives::OpPrimitives;
 use reth_payload_builder::PayloadBuilderHandle;
-use reth_transaction_pool::{SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER};
+use reth_transaction_pool::{
+    PoolTransaction, SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER,
+};
 use reth_trie_db::MerklePatriciaTrie;
 use std::time::Duration;
 use tracing::info;
@@ -128,7 +131,7 @@ where
     }
 
     fn add_ons(&self) -> Self::AddOns {
-        OpAddOns::new(self.args.sequencer_http.clone())
+        Self::AddOns::builder().with_sequencer(self.args.sequencer_http.clone()).build()
     }
 }
 
@@ -139,7 +142,7 @@ pub struct OdysseyExecutorBuilder;
 
 impl<Node> ExecutorBuilder<Node> for OdysseyExecutorBuilder
 where
-    Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec>>,
+    Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec, Primitives = OpPrimitives>>,
 {
     type EVM = OdysseyEvmConfig;
     type Executor = BasicBlockExecutorProvider<OpExecutionStrategyFactory<Self::EVM>>;
@@ -170,7 +173,7 @@ pub struct OdysseyPayloadBuilder {
 
 impl OdysseyPayloadBuilder {
     /// Create a new instance with the given `compute_pending_block` flag.
-    pub const fn new(compute_pending_block: bool) -> Self {
+    pub fn new(compute_pending_block: bool) -> Self {
         Self { inner: OpPayloadBuilder::new(compute_pending_block) }
     }
 }
@@ -184,7 +187,9 @@ where
             Primitives = OpPrimitives,
         >,
     >,
-    Pool: TransactionPool + Unpin + 'static,
+    Pool: TransactionPool<Transaction: PoolTransaction<Consensus = TxTy<Node::Types>>>
+        + Unpin
+        + 'static,
 {
     async fn spawn_payload_service(
         self,
@@ -211,13 +216,18 @@ impl OdysseyNetworkBuilder {
 impl<Node, Pool> NetworkBuilder<Node, Pool> for OdysseyNetworkBuilder
 where
     Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec, Primitives = OpPrimitives>>,
-    Pool: TransactionPool + Unpin + 'static,
+    Pool: TransactionPool<
+            Transaction: PoolTransaction<Consensus = TxTy<Node::Types>, Pooled = PooledTransaction>,
+        > + Unpin
+        + 'static,
 {
+    type Primitives = OpNetworkPrimitives;
+
     async fn build_network(
         self,
         ctx: &BuilderContext<Node>,
         pool: Pool,
-    ) -> eyre::Result<NetworkHandle> {
+    ) -> eyre::Result<NetworkHandle<OpNetworkPrimitives>> {
         let mut network_config = self.inner.network_config(ctx)?;
         // this is rolled with limited trusted peers and we want ignore any reputation slashing
         network_config.peers_config.reputation_weights = ReputationChangeWeights::zero();

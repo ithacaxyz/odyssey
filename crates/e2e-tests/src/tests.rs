@@ -1,8 +1,8 @@
-use std::{collections::BTreeMap, sync::LazyLock};
+use std::{str::FromStr, sync::LazyLock};
 
 use alloy::{
     eips::eip7702::Authorization,
-    primitives::{b256, Address, B256, U256},
+    primitives::{b256, Address, B256},
     providers::{PendingTransactionBuilder, Provider, ProviderBuilder},
     signers::SignerSync,
 };
@@ -54,14 +54,11 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
-    let capabilities: BTreeMap<U256, BTreeMap<String, BTreeMap<String, Vec<Address>>>> =
-        provider.client().request_noparams("wallet_getCapabilities").await?;
-
-    let chain_id = U256::from(provider.get_chain_id().await?);
-
-    let delegation_address =
-        capabilities.get(&chain_id).unwrap().get("delegation").unwrap().get("addresses").unwrap()
-            [0];
+    let delegation_address = Address::from_str(
+        &std::env::var("DELEGATION_ADDRESS")
+            .unwrap_or_else(|_| "0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
+    )
+    .unwrap();
 
     let auth = Authorization {
         chain_id: provider.get_chain_id().await?,
@@ -98,14 +95,11 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
 
-    let capabilities: BTreeMap<U256, BTreeMap<String, BTreeMap<String, Vec<Address>>>> =
-        provider.client().request_noparams("wallet_getCapabilities").await?;
-
-    let chain_id = U256::from(provider.get_chain_id().await?);
-
-    let delegation_address =
-        capabilities.get(&chain_id).unwrap().get("delegation").unwrap().get("addresses").unwrap()
-            [0];
+    let delegation_address = Address::from_str(
+        &std::env::var("DELEGATION_ADDRESS")
+            .unwrap_or_else(|_| "0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
+    )
+    .unwrap();
 
     let auth = Authorization {
         chain_id: provider.get_chain_id().await?,

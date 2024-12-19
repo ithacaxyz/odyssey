@@ -1,7 +1,4 @@
 //! Odyssey chainspec parsing logic.
-use std::sync::LazyLock;
-
-use alloy_eips::eip1559::ETHEREUM_BLOCK_GAS_LIMIT;
 use alloy_primitives::{b256, U256};
 use reth_chainspec::{
     once_cell_set, BaseFeeParams, BaseFeeParamsKind, Chain, ChainHardforks, ChainSpec,
@@ -10,7 +7,7 @@ use reth_chainspec::{
 use reth_cli::chainspec::{parse_genesis, ChainSpecParser};
 use reth_optimism_chainspec::OpChainSpec;
 use reth_optimism_forks::OpHardfork;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 /// Odyssey forks.
 pub static ODYSSEY_FORKS: LazyLock<ChainHardforks> = LazyLock::new(|| {
@@ -75,7 +72,6 @@ pub static ODYSSEY_MAINNET: LazyLock<Arc<OpChainSpec>> = LazyLock::new(|| {
             ]
             .into(),
         ),
-        max_gas_limit: ETHEREUM_BLOCK_GAS_LIMIT,
         prune_delete_limit: 10000,
         ..Default::default()
     })

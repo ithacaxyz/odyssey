@@ -12,9 +12,11 @@
 
 use alloy_consensus::Header;
 use alloy_primitives::{Address, Bytes, TxKind, U256};
+use op_alloy_consensus::EIP1559ParamError;
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
+use reth_evm::env::EvmEnv;
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
-use reth_optimism_chainspec::{DecodeError, OpChainSpec};
+use reth_optimism_chainspec::OpChainSpec;
 use reth_optimism_forks::OpHardfork;
 use reth_primitives::{transaction::FillTxEnv, TransactionSigned};
 use reth_revm::{
@@ -81,7 +83,8 @@ impl OdysseyEvmConfig {
 
 impl ConfigureEvmEnv for OdysseyEvmConfig {
     type Header = Header;
-    type Error = DecodeError;
+    type Transaction = TransactionSigned;
+    type Error = EIP1559ParamError;
 
     fn fill_tx_env(&self, tx_env: &mut TxEnv, transaction: &TransactionSigned, sender: Address) {
         transaction.fill_tx_env(tx_env, sender);
@@ -180,7 +183,7 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
         &self,
         parent: &Self::Header,
         attributes: NextBlockEnvAttributes,
-    ) -> Result<(CfgEnvWithHandlerCfg, BlockEnv), Self::Error> {
+    ) -> Result<EvmEnv, Self::Error> {
         // configure evm env based on parent block
         let cfg_env = CfgEnv::default().with_chain_id(self.chain_spec.chain().id());
 
@@ -226,7 +229,8 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
                 handler_cfg: HandlerCfg { spec_id, is_optimism: true },
             },
             block_env,
-        ))
+        )
+            .into())
     }
 }
 

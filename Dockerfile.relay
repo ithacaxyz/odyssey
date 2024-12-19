@@ -44,4 +44,5 @@ COPY --from=builder /app/relay /usr/local/bin
 # Copy licenses
 COPY LICENSE-* ./
 
+EXPOSE 9119
 ENTRYPOINT ["/usr/local/bin/relay"]

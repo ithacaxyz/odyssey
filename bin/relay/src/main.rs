@@ -1,6 +1,6 @@
 //! # Odyssey Relay
 //!
-//! TBD
+//! A relay service that sponsors transactions for EIP-7702 accounts.
 
 use alloy_provider::{network::EthereumWallet, Provider, ProviderBuilder};
 use alloy_rpc_client::RpcClient;
@@ -25,6 +25,7 @@ struct Args {
     #[arg(long = "http.port", value_name = "PORT", default_value_t = 9119)]
     port: u16,
     /// The RPC endpoint of the chain to send transactions to.
+    /// Must be a valid HTTP or HTTPS URL pointing to an Ethereum JSON-RPC endpoint.
     #[arg(long, value_name = "RPC_ENDPOINT")]
     upstream: Url,
     /// The secret key to sponsor transactions with.
@@ -71,7 +72,7 @@ async fn main() {
 
     let args = Args::parse();
     if let Err(err) = args.run().await {
-        eprint!("Error: {err:?}");
+        eprintln!("Error: {err:?}");
         std::process::exit(1);
     }
 }

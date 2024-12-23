@@ -255,7 +255,6 @@ where
         let mut network_config = self.inner.network_config(ctx)?;
         // this is rolled with limited trusted peers and we want ignore any reputation slashing
         
-        // Reset reputation weights for trusted peers
         network_config.peers_config.reputation_weights = ReputationChangeWeights::zero();
         
         // Configure backoff settings

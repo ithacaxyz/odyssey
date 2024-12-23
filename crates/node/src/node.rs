@@ -36,7 +36,27 @@ use reth_trie_db::MerklePatriciaTrie;
 use std::time::Duration;
 use tracing::info;
 
+/// Default backoff duration for network reconnection attempts
+const DEFAULT_BACKOFF_DURATION: Duration = Duration::from_secs(5);
+/// Default session buffer size for network communications
+const DEFAULT_SESSION_BUFFER_SIZE: usize = 750;
+
 /// Type configuration for a regular Odyssey node.
+/// 
+/// This struct implements the core node configuration for Odyssey, including:
+/// - Transaction pool settings
+/// - Network configuration
+/// - Execution environment
+/// - Consensus parameters
+/// 
+/// # Example
+/// ```
+/// use odyssey_node::OdysseyNode;
+/// use reth_optimism_node::args::RollupArgs;
+/// 
+/// let args = RollupArgs::default();
+/// let node = OdysseyNode::new(args);
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct OdysseyNode {
     /// Additional Optimism args
@@ -69,6 +89,14 @@ impl OdysseyNode {
             >,
         >,
     {
+        if let Some(endpoint) = &args.sequencer_http {
+            info!(
+                target: "reth::cli",
+                endpoint = %endpoint,
+                "Configuring node with sequencer endpoint"
+            );
+        }
+
         ComponentsBuilder::default()
             .node_types::<Node>()
             .pool(OpPoolBuilder {
@@ -230,21 +258,35 @@ where
     ) -> eyre::Result<NetworkHandle<OpNetworkPrimitives>> {
         let mut network_config = self.inner.network_config(ctx)?;
         // this is rolled with limited trusted peers and we want ignore any reputation slashing
+        
         network_config.peers_config.reputation_weights = ReputationChangeWeights::zero();
-        network_config.peers_config.backoff_durations.low = Duration::from_secs(5);
-        network_config.peers_config.backoff_durations.medium = Duration::from_secs(5);
-        network_config.peers_config.backoff_durations.high = Duration::from_secs(5);
+        
+        // Configure backoff settings
+        network_config.peers_config.backoff_durations.low = DEFAULT_BACKOFF_DURATION;
+        network_config.peers_config.backoff_durations.medium = DEFAULT_BACKOFF_DURATION;
+        network_config.peers_config.backoff_durations.high = DEFAULT_BACKOFF_DURATION;
         network_config.peers_config.max_backoff_count = u8::MAX;
-        network_config.sessions_config.session_command_buffer = 750;
-        network_config.sessions_config.session_event_buffer = 750;
+        
+        // Configure session buffers
+        network_config.sessions_config.session_command_buffer = DEFAULT_SESSION_BUFFER_SIZE;
+        network_config.sessions_config.session_event_buffer = DEFAULT_SESSION_BUFFER_SIZE;
 
+        // Configure transaction propagation
         let txconfig = TransactionsManagerConfig {
             propagation_mode: TransactionPropagationMode::All,
             ..network_config.transactions_manager_config.clone()
         };
+
+        // Initialize and start network
         let network = NetworkManager::builder(network_config).await?;
         let handle = ctx.start_network_with(network, pool, txconfig);
-        info!(target: "reth::cli", enode=%handle.local_node_record(), "P2P networking initialized");
+        
+        info!(
+            target: "reth::cli",
+            enode = %handle.local_node_record(),
+            "P2P networking initialized"
+        );
+        
         Ok(handle)
     }
 }

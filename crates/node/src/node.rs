@@ -89,8 +89,12 @@ impl OdysseyNode {
             >,
         >,
     {
-        if args.sequencer_http.is_some() {
-            info!(target: "reth::cli", "Configuring node with sequencer endpoint");
+        if let Some(endpoint) = &args.sequencer_http {
+            info!(
+                target: "reth::cli",
+                endpoint = %endpoint,
+                "Configuring node with sequencer endpoint"
+            );
         }
 
         ComponentsBuilder::default()

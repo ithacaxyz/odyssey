@@ -89,7 +89,6 @@ impl OdysseyNode {
             >,
         >,
     {
-        // Validate arguments
         if args.sequencer_http.is_some() {
             info!(target: "reth::cli", "Configuring node with sequencer endpoint");
         }

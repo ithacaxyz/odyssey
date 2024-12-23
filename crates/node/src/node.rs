@@ -281,7 +281,7 @@ where
         info!(
             target: "reth::cli",
             enode = %handle.local_node_record(),
-            "P2P networking initialized successfully"
+            "P2P networking initialized"
         );
         
         Ok(handle)

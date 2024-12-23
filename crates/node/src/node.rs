@@ -59,7 +59,7 @@ const DEFAULT_SESSION_BUFFER_SIZE: usize = 750;
 /// ```
 #[derive(Debug, Clone, Default)]
 pub struct OdysseyNode {
-    /// Additional Optimism args for rollup configuration
+    /// Additional Optimism args
     pub args: RollupArgs,
 }
 

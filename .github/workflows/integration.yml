@@ -37,7 +37,6 @@ jobs:
           cargo nextest run \
             --locked \
             --workspace \
-            --profile ci \
             -E 'kind(test)' \
             --no-capture
 

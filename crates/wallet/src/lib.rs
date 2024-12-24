@@ -8,11 +8,18 @@
 //! # Restrictions
 //!
 //! `odyssey_sendTransaction` has additional verifications in place to prevent some
-//! rudimentary abuse of the service's funds. For example, transactions cannot contain any
-//! `value`.
+//! rudimentary abuse of the service's funds:
+//! - Transactions cannot contain any `value`
+//! - Gas usage is limited to 350,000 units per transaction
+//! - Only EIP-7702 delegated transactions are allowed
+//! - Transactions must be EIP-1559 compatible
 //!
-//! [eip-5792]: https://eips.ethereum.org/EIPS/eip-5792
+//! # References
+//! - [EIP-7702: Smart Contract Delegation][eip-7702]
+//! - [EIP-1559: Fee Market Change][eip-1559]
+//!
 //! [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
+//! [eip-1559]: https://eips.ethereum.org/EIPS/eip-1559
 
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
@@ -223,14 +230,24 @@ pub trait OdysseyWalletApi {
     ///
     /// The transaction will only be processed if:
     ///
-    /// - The transaction is an [EIP-7702][eip-7702] transaction.
+    /// - The transaction is an [EIP-7702][eip-7702] transaction
     /// - The transaction is an [EIP-1559][eip-1559] transaction to an EOA that is currently
     ///   delegated to one of the addresses above
-    /// - The value in the transaction is exactly 0.
+    /// - The value in the transaction is exactly 0
+    /// - The estimated gas usage is below 350,000 units
     ///
     /// The service will sign the transaction and inject it into the transaction pool, provided it
     /// is valid. The nonce is managed by the service.
     ///
+    /// # Errors
+    /// 
+    /// Returns error if:
+    /// - Transaction contains non-zero value
+    /// - Transaction has 'from' field set
+    /// - Transaction has nonce field set
+    /// - Destination is not a valid delegated account
+    /// - Estimated gas usage exceeds 350,000 units
+    /// 
     /// [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
     /// [eip-1559]: https://eips.ethereum.org/EIPS/eip-1559
     #[method(name = "sendTransaction", aliases = ["odyssey_sendTransaction"])]
@@ -436,6 +453,9 @@ struct WalletMetrics {
     /// Number of valid calls to `odyssey_sendTransaction`
     valid_send_transaction_calls: Counter,
 }
+
+/// Maximum gas limit for sponsored transactions
+pub const MAX_SPONSORED_TX_GAS: u64 = 350_000;
 
 #[cfg(test)]
 mod tests {

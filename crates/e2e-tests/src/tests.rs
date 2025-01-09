@@ -30,7 +30,8 @@ static SEQUENCER_RPC: LazyLock<Url> = LazyLock::new(|| {
 });
 
 /// Test account private key
-const TEST_PRIVATE_KEY: &str = "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
+const TEST_PRIVATE_KEY: B256 =
+    b256!("59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d");
 
 /// Default delegation address for testing
 const DEFAULT_DELEGATION_ADDRESS: &str = "0x90f79bf6eb2c4f870365e785982e1f101e93b906";
@@ -43,12 +44,12 @@ async fn assert_chain_advances() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let provider = ProviderBuilder::new().on_http(SEQUENCER_RPC.clone());
-    
+
     let initial_block = provider.get_block_number().await?;
-    
+
     // Wait for new block
     tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-    
+
     let new_block = provider.get_block_number().await?;
 
     assert!(
@@ -67,10 +68,11 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
-    let signer = PrivateKeySigner::from_bytes(&b256!(TEST_PRIVATE_KEY))?;
+    let signer = PrivateKeySigner::from_bytes(&TEST_PRIVATE_KEY)?;
 
     let delegation_address = Address::from_str(
-        &std::env::var("DELEGATION_ADDRESS").unwrap_or_else(|_| DEFAULT_DELEGATION_ADDRESS.to_string()),
+        &std::env::var("DELEGATION_ADDRESS")
+            .unwrap_or_else(|_| DEFAULT_DELEGATION_ADDRESS.to_string()),
     )?;
 
     // Create and sign authorization
@@ -84,16 +86,13 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     let auth = auth.into_signed(signature);
 
     // Prepare and send transaction
-    let tx = TransactionRequest::default()
-        .with_authorization_list(vec![auth])
-        .with_to(signer.address());
+    let tx =
+        TransactionRequest::default().with_authorization_list(vec![auth]).with_to(signer.address());
 
     let tx_hash: B256 = provider.client().request("wallet_sendTransaction", vec![tx]).await?;
 
     // Wait for and verify transaction receipt
-    let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash)
-        .get_receipt()
-        .await?;
+    let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash).get_receipt().await?;
 
     assert!(receipt.status(), "Transaction failed");
     assert!(!provider.get_code_at(signer.address()).await?.is_empty(), "No code at signer address");
@@ -150,7 +149,7 @@ async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error:
     }
 
     let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
-    
+
     // Get latest block for proof verification
     let block: Block = provider
         .client()

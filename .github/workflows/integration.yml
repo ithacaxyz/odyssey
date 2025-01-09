@@ -38,6 +38,7 @@ jobs:
             --locked \
             --workspace \
             -E 'kind(test)' \
+            --no-tests=warn \
             --no-capture
 
   integration-success:

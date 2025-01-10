@@ -221,6 +221,8 @@ metrics = "0.23.0"
 metrics-derive = "0.1.0"
 
 # rpc
+tower = "0.4"
+tower-http = { version = "0.6", features = ["cors"] }
 jsonrpsee = "0.24"
 
 # misc

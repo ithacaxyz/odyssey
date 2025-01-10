@@ -358,7 +358,7 @@ mod tests {
             .build();
 
         let precompiles = evm.context.evm.precompiles;
-        assert!(precompiles.contains(P256VERIFY.address()));
-        assert!(precompiles.contains(REVM_P256VERIFY.address()));
+        assert!(precompiles.contains(&u64_to_address(0x14)));
+        assert!(precompiles.contains(&u64_to_address(0x100)));
     }
 }

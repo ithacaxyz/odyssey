@@ -357,7 +357,8 @@ mod tests {
             .append_handler_register(OdysseyEvmConfig::set_precompiles)
             .build();
 
-        let precompiles = evm.context.evm.precompiles;
+        // loading the precompiles from pre execution instead of the evm context directly, as they are only set pre-execution in the context
+        let precompiles = evm.handler.pre_execution().load_precompiles();
         assert!(precompiles.contains(&u64_to_address(0x14)));
         assert!(precompiles.contains(&u64_to_address(0x100)));
     }

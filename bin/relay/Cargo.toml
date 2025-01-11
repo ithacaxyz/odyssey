@@ -23,6 +23,8 @@ reth-tracing.workspace = true
 clap = { workspace = true, features = ["derive", "env"] }
 url.workspace = true
 tokio = { workspace = true, features = ["rt", "macros"] }
+tower.workspace = true
+tower-http.workspace = true
 
 [features]
 default = []

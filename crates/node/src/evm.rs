@@ -29,7 +29,10 @@ use reth_revm::{
     },
     ContextPrecompiles, Database, Evm, EvmBuilder, GetInspector,
 };
-use revm_precompile::{secp256r1::p256_verify, u64_to_address, PrecompileWithAddress};
+use revm_precompile::{
+    secp256r1::{p256_verify, P256VERIFY as REVM_P256VERIFY},
+    u64_to_address, PrecompileWithAddress,
+};
 use revm_primitives::{CfgEnvWithHandlerCfg, Precompile, TxEnv};
 use std::sync::Arc;
 
@@ -53,7 +56,7 @@ impl OdysseyEvmConfig {
     }
 
     fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
-        [P256VERIFY].into_iter()
+        [P256VERIFY, REVM_P256VERIFY].into_iter()
     }
 
     /// Sets the precompiles to the EVM handler
@@ -343,5 +346,20 @@ mod tests {
         );
 
         assert_eq!(cfg_env.chain_id, chain_spec.chain().id());
+    }
+
+    #[test]
+    fn test_p256verify_precompile_availability() {
+        let evm = EvmBuilder::default()
+            .with_empty_db()
+            .optimism()
+            // add additional precompiles
+            .append_handler_register(OdysseyEvmConfig::set_precompiles)
+            .build();
+
+        // loading the precompiles from pre execution instead of the evm context directly, as they are only set pre-execution in the context
+        let precompiles = evm.handler.pre_execution().load_precompiles();
+        assert!(precompiles.contains(&u64_to_address(0x14)));
+        assert!(precompiles.contains(&u64_to_address(0x100)));
     }
 }

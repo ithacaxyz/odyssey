@@ -13,36 +13,54 @@ use reth_primitives_traits::Account;
 use reth_trie_common::{AccountProof, StorageProof};
 use url::Url;
 
+/// RPC endpoint URL for the replica node
 static REPLICA_RPC: LazyLock<Url> = LazyLock::new(|| {
     std::env::var("REPLICA_RPC")
-        .expect("failed to get REPLICA_RPC env var")
+        .expect("REPLICA_RPC environment variable is not set")
         .parse()
-        .expect("failed to parse REPLICA_RPC env var")
+        .expect("REPLICA_RPC environment variable contains invalid URL")
 });
 
+/// RPC endpoint URL for the sequencer node
 static SEQUENCER_RPC: LazyLock<Url> = LazyLock::new(|| {
     std::env::var("SEQUENCER_RPC")
-        .expect("failed to get SEQUENCER_RPC env var")
+        .expect("SEQUENCER_RPC environment variable is not set")
         .parse()
-        .expect("failed to parse SEQUENCER_RPC env var")
+        .expect("SEQUENCER_RPC environment variable contains invalid URL")
 });
 
+/// Test account private key
+const TEST_PRIVATE_KEY: &str = "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
+
+/// Default delegation address for testing
+const DEFAULT_DELEGATION_ADDRESS: &str = "0x90f79bf6eb2c4f870365e785982e1f101e93b906";
+
+/// Tests if the chain is advancing by checking block numbers
 #[tokio::test]
 async fn assert_chain_advances() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
         return Ok(());
     }
 
-    let block = ProviderBuilder::new().on_http(SEQUENCER_RPC.clone()).get_block_number().await?;
+    let provider = ProviderBuilder::new().on_http(SEQUENCER_RPC.clone());
+    
+    let initial_block = provider.get_block_number().await?;
+    
+    // Wait for new block
     tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-    let new_block =
-        ProviderBuilder::new().on_http(SEQUENCER_RPC.clone()).get_block_number().await?;
+    
+    let new_block = provider.get_block_number().await?;
 
-    assert!(new_block > block);
+    assert!(
+        new_block > initial_block,
+        "Chain did not advance: initial block {initial_block}, current block {new_block}"
+    );
 
     Ok(())
 }
 
+/// Tests the wallet API functionality with EIP-7702 delegation
+#[deprecated(since = "0.1.0", note = "Use test_new_wallet_api instead. This test will be removed in a future version.")]
 #[tokio::test]
 async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
@@ -50,16 +68,13 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
-    let signer = PrivateKeySigner::from_bytes(&b256!(
-        "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
-    ))?;
+    let signer = PrivateKeySigner::from_bytes(&b256!(TEST_PRIVATE_KEY))?;
 
     let delegation_address = Address::from_str(
-        &std::env::var("DELEGATION_ADDRESS")
-            .unwrap_or_else(|_| "0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
-    )
-    .unwrap();
+        &std::env::var("DELEGATION_ADDRESS").unwrap_or_else(|_| DEFAULT_DELEGATION_ADDRESS.to_string()),
+    )?;
 
+    // Create and sign authorization
     let auth = Authorization {
         chain_id: provider.get_chain_id().await?,
         address: delegation_address,
@@ -69,21 +84,25 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     let signature = signer.sign_hash_sync(&auth.signature_hash())?;
     let auth = auth.into_signed(signature);
 
-    let tx =
-        TransactionRequest::default().with_authorization_list(vec![auth]).with_to(signer.address());
+    // Prepare and send transaction
+    let tx = TransactionRequest::default()
+        .with_authorization_list(vec![auth])
+        .with_to(signer.address());
 
     let tx_hash: B256 = provider.client().request("wallet_sendTransaction", vec![tx]).await?;
 
-    let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash).get_receipt().await?;
+    // Wait for and verify transaction receipt
+    let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash)
+        .get_receipt()
+        .await?;
 
-    assert!(receipt.status());
-
-    assert!(!provider.get_code_at(signer.address()).await?.is_empty());
+    assert!(receipt.status(), "Transaction failed");
+    assert!(!provider.get_code_at(signer.address()).await?.is_empty(), "No code at signer address");
 
     Ok(())
 }
 
-// This is new endpoint `odyssey_sendTransaction`, upper test will be deprecate in the future.
+// This is the new endpoint `odyssey_sendTransaction` that replaces the deprecated wallet_sendTransaction
 #[tokio::test]
 async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
@@ -124,6 +143,7 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Tests withdrawal proof functionality with fallback behavior
 #[tokio::test]
 async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error::Error>> {
     if !ci_info::is_ci() {
@@ -131,6 +151,8 @@ async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error:
     }
 
     let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
+    
+    // Get latest block for proof verification
     let block: Block = provider
         .client()
         .request("eth_getBlockByNumber", (BlockNumberOrTag::Latest, false))

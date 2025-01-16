@@ -7,12 +7,13 @@ use alloy_rpc_client::RpcClient;
 use alloy_signer_local::PrivateKeySigner;
 use clap::Parser;
 use eyre::Context;
+use hyper::Method;
 use jsonrpsee::server::Server;
 use odyssey_wallet::{AlloyUpstream, OdysseyWallet, OdysseyWalletApiServer};
 use reth_tracing::Tracer;
 use std::net::{IpAddr, Ipv4Addr};
 use tower::ServiceBuilder;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 use url::Url;
 
@@ -54,9 +55,13 @@ impl Args {
         let rpc = OdysseyWallet::new(AlloyUpstream::new(provider), chain_id).into_rpc();
 
         // start server
+        let cors = CorsLayer::new()
+            .allow_methods([Method::POST])
+            .allow_origin(Any)
+            .allow_headers([hyper::header::CONTENT_TYPE]);
         let server = Server::builder()
             .http_only()
-            .set_http_middleware(ServiceBuilder::new().layer(CorsLayer::permissive()))
+            .set_http_middleware(ServiceBuilder::new().layer(cors))
             .build((self.address, self.port))
             .await?;
         info!(addr = ?server.local_addr().unwrap(), "Started relay service");

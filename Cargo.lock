@@ -4676,6 +4676,7 @@ dependencies = [
  "alloy-signer-local",
  "clap",
  "eyre",
+ "hyper",
  "jsonrpsee",
  "odyssey-wallet",
  "reth-tracing",

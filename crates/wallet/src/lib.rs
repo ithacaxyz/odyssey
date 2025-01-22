@@ -310,7 +310,7 @@ impl<T> OdysseyWallet<T> {
         Self { inner: Arc::new(inner) }
     }
 
-    fn chain_id(&self) -> ChainId {
+    const fn chain_id(&self) -> ChainId {
         self.inner.chain_id
     }
 }

@@ -16,7 +16,7 @@ use std::{
 };
 
 /// Delay into the slot
-pub const MAX_DELAY_INTO_SLOT: Duration = Duration::from_millis(500);
+pub const MAX_DELAY_INTO_SLOT: Duration = Duration::from_millis(300);
 
 /// The getpayload fn we want to delay
 pub const GET_PAYLOAD_V3: &str = "engine_getPayloadV3";
@@ -61,7 +61,7 @@ impl DelayedResolver {
         if offset < self.inner.max_delay_into_slot {
             // if we received the request before the max delay exceeded we can delay the request to
             // give the payload builder more time to build the payload.
-            let delay = self.inner.max_delay_into_slot - offset;
+            let delay = self.inner.max_delay_into_slot.saturating_sub(offset);
             tokio::time::sleep(delay).await;
         }
 

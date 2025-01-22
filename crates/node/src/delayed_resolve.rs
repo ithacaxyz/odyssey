@@ -16,7 +16,7 @@ use std::{
 };
 
 /// Delay into the slot
-pub const MAX_DELAY_INTO_SLOT: Duration = Duration::from_millis(300);
+pub const MAX_DELAY_INTO_SLOT: Duration = Duration::from_millis(500);
 
 /// The getpayload fn we want to delay
 pub const GET_PAYLOAD_V3: &str = "engine_getPayloadV3";
@@ -52,7 +52,7 @@ impl DelayedResolver {
         });
     }
 
-    async fn call(&self, params: Params<'static>) -> Result<String, MethodsError> {
+    async fn call(&self, params: Params<'static>) -> Result<serde_json::Value, MethodsError> {
         let last = *self.inner.last_block_time.lock();
         let now = Instant::now();
         // how far we're into the slot
@@ -117,24 +117,30 @@ mod tests {
     use super::*;
     use alloy_rpc_types::engine::PayloadId;
 
+    /// Mocked payload object
+    #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
+    struct Payload {
+        attributes: serde_json::Value,
+        header: serde_json::Value,
+    }
+
     #[tokio::test]
     async fn test_delayed_forward() {
         use jsonrpsee::{core::RpcResult, RpcModule};
 
         let mut module = RpcModule::new(());
         module
-            .register_method::<RpcResult<PayloadId>, _>(GET_PAYLOAD_V3, |params, _, _| {
-                params.one::<PayloadId>()
+            .register_method::<RpcResult<Payload>, _>(GET_PAYLOAD_V3, |params, _, _| {
+                params.one::<PayloadId>()?;
+                Ok(Payload::default())
             })
             .unwrap();
 
         let id = PayloadId::default();
 
-        let echo: PayloadId = module.call(GET_PAYLOAD_V3, [id]).await.unwrap();
-        assert_eq!(echo, id);
+        let _echo: Payload = module.call(GET_PAYLOAD_V3, [id]).await.unwrap();
 
         let delayer = DelayedResolver::new(module, MAX_DELAY_INTO_SLOT).into_rpc_module();
-        let echo: PayloadId = delayer.call(GET_PAYLOAD_V3, [id]).await.unwrap();
-        assert_eq!(echo, id);
+        let _echo: Payload = delayer.call(GET_PAYLOAD_V3, [id]).await.unwrap();
     }
 }

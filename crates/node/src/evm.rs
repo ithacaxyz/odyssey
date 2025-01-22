@@ -39,7 +39,7 @@ use std::sync::Arc;
 /// P256 verify precompile address.
 pub const P256VERIFY_ADDRESS: u64 = 0x14;
 
-/// [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212#specification) secp256r1 precompile.
+/// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), Precompile::Standard(p256_verify));
 

@@ -30,6 +30,7 @@ use eyre::Context;
 use odyssey_node::{
     broadcaster::periodic_broadcaster,
     chainspec::OdysseyChainSpecParser,
+    delayed_resolve::{DelayedResolver, MAX_DELAY_INTO_SLOT},
     forwarder::forward_raw_transactions,
     node::OdysseyNode,
     rpc::{EthApiExt, EthApiOverrideServer},
@@ -40,6 +41,7 @@ use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher, Node
 use reth_optimism_cli::Cli;
 use reth_optimism_node::{args::RollupArgs, node::OpAddOnsBuilder};
 use reth_provider::{providers::BlockchainProvider2, CanonStateSubscriptions};
+use std::time::Duration;
 use tracing::{info, warn};
 
 #[global_allocator]
@@ -109,6 +111,18 @@ fn main() {
                     let walltime = OdysseyWallTime::spawn(ctx.provider().canonical_state_stream());
                     ctx.modules.merge_configured(walltime.into_rpc())?;
                     info!(target: "reth::cli", "Walltime configured");
+
+                    // wrap the getPayloadV3 method in a delay
+                    let engine_module = ctx.auth_module.module_mut().clone();
+                    let delay_into_slot = std::env::var("MAX_PAYLOAD_DELAY")
+                        .ok()
+                        .and_then(|val| val.parse::<u64>().map(Duration::from_millis).ok())
+                        .unwrap_or(MAX_DELAY_INTO_SLOT);
+
+                    let delayed_payload = DelayedResolver::new(engine_module, delay_into_slot);
+                    delayed_payload.clone().spawn(ctx.provider().canonical_state_stream());
+                    ctx.auth_module.replace_auth_methods(delayed_payload.into_rpc_module())?;
+                    info!(target: "reth::cli", "Configured payload delay");
 
                     Ok(())
                 })

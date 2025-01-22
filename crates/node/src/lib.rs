@@ -17,6 +17,7 @@
 
 pub mod broadcaster;
 pub mod chainspec;
+pub mod delayed_resolve;
 pub mod evm;
 pub mod forwarder;
 pub mod node;

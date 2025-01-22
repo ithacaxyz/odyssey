@@ -33,6 +33,7 @@ reth-trie-common.workspace = true
 reth-trie-db.workspace = true
 reth-network.workspace = true
 reth-network-types.workspace = true
+reth-chain-state.workspace = true
 
 alloy-consensus.workspace = true
 alloy-eips.workspace = true
@@ -50,6 +51,9 @@ tokio.workspace = true
 tracing.workspace = true
 eyre.workspace = true
 jsonrpsee.workspace = true
+futures.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
 
 [lints]
 workspace = true

@@ -310,6 +310,7 @@ impl<T> OdysseyWallet<T> {
         Self { inner: Arc::new(inner) }
     }
 
+    #[allow(clippy::missing_const_for_fn)]
     fn chain_id(&self) -> ChainId {
         self.inner.chain_id
     }

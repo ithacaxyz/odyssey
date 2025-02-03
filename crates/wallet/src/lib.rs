@@ -236,15 +236,15 @@ pub struct DelegationCapability {
 /// 3. It MUST have exactly 0 value transfer
 /// 4. It MUST NOT exceed the gas usage limit
 /// 
-/// # Error Codes
+/// # Error Cases
 /// 
-/// The API returns specific error codes in the following cases:
-/// - `ValueNotZero` (-32000): Transaction attempted to transfer non-zero value
-/// - `FromSet` (-32001): Transaction specified a from address
-/// - `NonceSet` (-32002): Transaction specified a nonce value
-/// - `IllegalDestination` (-32003): Invalid destination address
-/// - `GasEstimateTooHigh` (-32004): Gas estimate exceeds limit
-/// - `InvalidTransactionRequest` (-32005): General transaction validation failure
+/// The API returns an INVALID_PARAMS error (-32602) with descriptive messages for the following cases:
+/// - Transaction attempted to transfer non-zero value
+/// - Transaction specified a from address
+/// - Transaction specified a nonce value
+/// - Invalid destination address (not a valid delegated account)
+/// - Gas estimate exceeds limit (over 350,000 units)
+/// - General transaction validation failure
 /// 
 /// # Examples
 /// 
@@ -268,11 +268,11 @@ pub struct DelegationCapability {
 /// # Recovery
 /// 
 /// When encountering errors:
-/// 1. For `ValueNotZero`: Remove the value field or set to 0
-/// 2. For `FromSet`: Remove the from field
-/// 3. For `NonceSet`: Remove the nonce field
-/// 4. For `IllegalDestination`: Verify the destination is properly delegated
-/// 5. For `GasEstimateTooHigh`: Optimize the transaction or split into smaller ones
+/// 1. For value not zero: Remove the value field or set to 0
+/// 2. For from field set: Remove the from field
+/// 3. For nonce field set: Remove the nonce field
+/// 4. For illegal destination: Verify the destination is properly delegated
+/// 5. For gas estimate too high: Optimize the transaction or split into smaller ones
 #[cfg_attr(not(test), rpc(server, namespace = "wallet"))]
 #[cfg_attr(test, rpc(server, client, namespace = "wallet"))]
 pub trait OdysseyWalletApi {

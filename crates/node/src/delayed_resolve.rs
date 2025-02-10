@@ -73,25 +73,26 @@ impl DelayedResolver {
     }
 
     /// Converts this type into a new [`RpcModule`] that delegates the get payload call.
-    pub fn into_rpc_module(self) -> RpcModule<()> {
+    /// 
+    /// # Errors
+    /// Returns error if failed to register the RPC method.
+    pub fn into_rpc_module(self) -> Result<RpcModule<()>, jsonrpsee::core::Error> {
         let mut module = RpcModule::new(());
-        module
-            .register_async_method(GET_PAYLOAD_V3, move |params, _ctx, _| {
-                let value = self.clone();
-                async move {
-                    value.call(params).await.map_err(|err| match err {
-                        MethodsError::JsonRpc(err) => err,
-                        err => ErrorObject::owned(
-                            INVALID_PARAMS_CODE,
-                            format!("invalid payload call: {:?}", err),
-                            None::<()>,
-                        ),
-                    })
-                }
-            })
-            .unwrap();
+        module.register_async_method(GET_PAYLOAD_V3, move |params, _ctx, _| {
+            let value = self.clone();
+            async move {
+                value.call(params).await.map_err(|err| match err {
+                    MethodsError::JsonRpc(err) => err,
+                    err => ErrorObject::owned(
+                        INVALID_PARAMS_CODE,
+                        format!("invalid payload call: {:?}", err),
+                        None::<()>,
+                    ),
+                })
+            }
+        })?;
 
-        module
+        Ok(module)
     }
 }
 
@@ -125,7 +126,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_delayed_forward() {
+    async fn test_delayed_forward() -> Result<(), Box<dyn std::error::Error>> {
         use jsonrpsee::{core::RpcResult, RpcModule};
 
         let mut module = RpcModule::new(());
@@ -133,14 +134,15 @@ mod tests {
             .register_method::<RpcResult<Payload>, _>(GET_PAYLOAD_V3, |params, _, _| {
                 params.one::<PayloadId>()?;
                 Ok(Payload::default())
-            })
-            .unwrap();
+            })?;
 
         let id = PayloadId::default();
 
-        let _echo: Payload = module.call(GET_PAYLOAD_V3, [id]).await.unwrap();
+        let _echo: Payload = module.call(GET_PAYLOAD_V3, [id]).await?;
 
-        let delayer = DelayedResolver::new(module, MAX_DELAY_INTO_SLOT).into_rpc_module();
-        let _echo: Payload = delayer.call(GET_PAYLOAD_V3, [id]).await.unwrap();
+        let delayer = DelayedResolver::new(module, MAX_DELAY_INTO_SLOT).into_rpc_module()?;
+        let _echo: Payload = delayer.call(GET_PAYLOAD_V3, [id]).await?;
+        
+        Ok(())
     }
 }

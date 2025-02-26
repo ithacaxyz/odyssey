@@ -16,6 +16,7 @@ reth-primitives-traits.workspace = true
 reth-trie-common.workspace = true
 
 alloy.workspace = true
+alloy-primitives.workspace = true
 alloy-network.workspace = true
 alloy-rpc-types.workspace = true
 alloy-signer-local.workspace = true

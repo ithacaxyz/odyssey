@@ -16,13 +16,14 @@
 
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
+use alloy_json_rpc::RpcObject;
 use alloy_network::{
-    eip2718::Encodable2718, Ethereum, EthereumWallet, NetworkWallet, TransactionBuilder,
+    eip2718::Encodable2718, Ethereum, EthereumWallet, Network, NetworkWallet, TransactionBuilder,
+    TransactionBuilder7702,
 };
 use alloy_primitives::{Address, Bytes, ChainId, TxHash, TxKind, U256};
 use alloy_provider::{utils::Eip1559Estimation, Provider, WalletProvider};
 use alloy_rpc_types::{BlockId, TransactionRequest};
-use alloy_transport::Transport;
 use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
@@ -33,7 +34,7 @@ use metrics_derive::Metrics;
 use reth_rpc_eth_api::helpers::{EthCall, EthTransactions, FullEthApi, LoadFee, LoadState};
 use reth_storage_api::StateProviderFactory;
 use serde::{Deserialize, Serialize};
-use std::{marker::PhantomData, sync::Arc};
+use std::{fmt::Debug, marker::PhantomData, sync::Arc};
 use tracing::{trace, warn};
 
 use reth_optimism_rpc as _;
@@ -43,6 +44,9 @@ use tokio::sync::Mutex;
 /// specific chain.
 #[async_trait]
 pub trait Upstream {
+    /// The transaction request type.
+    type TxRequest;
+
     /// Get the address of the account that sponsors transactions.
     fn default_signer_address(&self) -> Address;
 
@@ -52,33 +56,35 @@ pub trait Upstream {
     /// Estimate the transaction request's gas usage and fees.
     async fn estimate(
         &self,
-        tx: &TransactionRequest,
+        tx: &Self::TxRequest,
     ) -> Result<(u64, Eip1559Estimation), OdysseyWalletError>;
 
     /// Sign the transaction request and send it to the upstream.
-    async fn sign_and_send(&self, tx: TransactionRequest) -> Result<TxHash, OdysseyWalletError>;
+    async fn sign_and_send(&self, tx: Self::TxRequest) -> Result<TxHash, OdysseyWalletError>;
 }
 
 /// A wrapper around an Alloy provider for signing and sending sponsored transactions.
 #[derive(Debug)]
-pub struct AlloyUpstream<P, T> {
+pub struct AlloyUpstream<P, N> {
     provider: P,
-    _transport: PhantomData<T>,
+    _network: PhantomData<N>,
 }
 
-impl<P, T> AlloyUpstream<P, T> {
+impl<P, N> AlloyUpstream<P, N> {
     /// Create a new [`AlloyUpstream`]
     pub const fn new(provider: P) -> Self {
-        Self { provider, _transport: PhantomData }
+        Self { provider, _network: PhantomData }
     }
 }
 
 #[async_trait]
-impl<P, T> Upstream for AlloyUpstream<P, T>
+impl<P, N> Upstream for AlloyUpstream<P, N>
 where
-    P: Provider<T> + WalletProvider,
-    T: Transport + Clone,
+    P: Provider<N> + WalletProvider,
+    N: Network,
 {
+    type TxRequest = <N as Network>::TransactionRequest;
+
     fn default_signer_address(&self) -> Address {
         self.provider.default_signer_address()
     }
@@ -92,7 +98,7 @@ where
 
     async fn estimate(
         &self,
-        tx: &TransactionRequest,
+        tx: &Self::TxRequest,
     ) -> Result<(u64, Eip1559Estimation), OdysseyWalletError> {
         let (estimate, fee_estimate) =
             tokio::join!(self.provider.estimate_gas(tx), self.provider.estimate_eip1559_fees(None));
@@ -103,7 +109,7 @@ where
         ))
     }
 
-    async fn sign_and_send(&self, tx: TransactionRequest) -> Result<TxHash, OdysseyWalletError> {
+    async fn sign_and_send(&self, tx: Self::TxRequest) -> Result<TxHash, OdysseyWalletError> {
         self.provider
             .send_transaction(tx)
             .await
@@ -134,6 +140,8 @@ where
     Provider: StateProviderFactory + Send + Sync,
     Eth: FullEthApi + Send + Sync,
 {
+    type TxRequest = TransactionRequest;
+
     fn default_signer_address(&self) -> Address {
         NetworkWallet::<Ethereum>::default_signer_address(&self.wallet)
     }
@@ -143,7 +151,7 @@ where
             self.provider.latest().map_err(|err| OdysseyWalletError::InternalError(err.into()))?;
 
         Ok(state
-            .account_code(address)
+            .account_code(&address)
             .ok()
             .flatten()
             .map(|code| code.0.bytes())
@@ -218,7 +226,7 @@ pub struct DelegationCapability {
 /// Odyssey `wallet_` RPC namespace.
 #[cfg_attr(not(test), rpc(server, namespace = "wallet"))]
 #[cfg_attr(test, rpc(server, client, namespace = "wallet"))]
-pub trait OdysseyWalletApi {
+pub trait OdysseyWalletApi<Request: RpcObject> {
     /// Send a sponsored transaction.
     ///
     /// The transaction will only be processed if:
@@ -234,7 +242,7 @@ pub trait OdysseyWalletApi {
     /// [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
     /// [eip-1559]: https://eips.ethereum.org/EIPS/eip-1559
     #[method(name = "sendTransaction", aliases = ["odyssey_sendTransaction"])]
-    async fn send_transaction(&self, request: TransactionRequest) -> RpcResult<TxHash>;
+    async fn send_transaction(&self, request: Request) -> RpcResult<TxHash>;
 }
 
 /// Errors returned by the wallet API.
@@ -317,11 +325,12 @@ impl<T> OdysseyWallet<T> {
 }
 
 #[async_trait]
-impl<T> OdysseyWalletApiServer for OdysseyWallet<T>
+impl<T, Request> OdysseyWalletApiServer<Request> for OdysseyWallet<T>
 where
-    T: Upstream + Sync + Send + 'static,
+    T: Upstream<TxRequest = Request> + Sync + Send + 'static,
+    Request: Debug + TransactionBuilder<Ethereum> + TransactionBuilder7702 + RpcObject,
 {
-    async fn send_transaction(&self, mut request: TransactionRequest) -> RpcResult<TxHash> {
+    async fn send_transaction(&self, mut request: Request) -> RpcResult<TxHash> {
         trace!(target: "rpc::wallet", ?request, "Serving odyssey_sendTransaction");
 
         // validate fields common to eip-7702 and eip-1559
@@ -331,7 +340,7 @@ where
         }
 
         // validate destination
-        match (request.authorization_list.is_some(), request.to) {
+        match (request.authorization_list().is_some(), request.kind()) {
             // if this is an eip-1559 tx, ensure that it is an account that delegates to a
             // whitelisted address
             (false, Some(TxKind::Call(addr))) => {
@@ -366,12 +375,12 @@ where
         let _permit = self.inner.permit.lock().await;
 
         // set chain id
-        request.chain_id = Some(self.chain_id());
+        request.set_chain_id(self.chain_id());
 
         // set gas limit
         // note: we also set the `from` field here to correctly estimate for contracts that use e.g.
         // `tx.origin`
-        request.from = Some(self.inner.upstream.default_signer_address());
+        request.set_from(self.inner.upstream.default_signer_address());
         let (estimate, fee_estimate) = self
             .inner
             .upstream
@@ -382,12 +391,11 @@ where
             self.inner.metrics.invalid_send_transaction_calls.increment(1);
             return Err(OdysseyWalletError::GasEstimateTooHigh { estimate }.into());
         }
-        request.gas = Some(estimate);
+        request.set_gas_limit(estimate);
 
         // set gas price
-        request.max_fee_per_gas = Some(fee_estimate.max_fee_per_gas);
-        request.max_priority_fee_per_gas = Some(fee_estimate.max_priority_fee_per_gas);
-        request.gas_price = None;
+        request.set_max_fee_per_gas(fee_estimate.max_fee_per_gas);
+        request.set_max_priority_fee_per_gas(fee_estimate.max_priority_fee_per_gas);
 
         // all checks passed, increment the valid calls counter
         self.inner.metrics.valid_send_transaction_calls.increment(1);
@@ -409,19 +417,21 @@ struct OdysseyWalletInner<T> {
     metrics: WalletMetrics,
 }
 
-fn validate_tx_request(request: &TransactionRequest) -> Result<(), OdysseyWalletError> {
+fn validate_tx_request<N: Network, Request: TransactionBuilder<N>>(
+    request: &Request,
+) -> Result<(), OdysseyWalletError> {
     // reject transactions that have a non-zero value to prevent draining the service.
-    if request.value.is_some_and(|val| val > U256::ZERO) {
+    if request.value().is_some_and(|val| val > U256::ZERO) {
         return Err(OdysseyWalletError::ValueNotZero);
     }
 
     // reject transactions that have from set, as this will be the service.
-    if request.from.is_some() {
+    if request.from().is_some() {
         return Err(OdysseyWalletError::FromSet);
     }
 
     // reject transaction requests that have nonce set, as this is managed by the service.
-    if request.nonce.is_some() {
+    if request.nonce().is_some() {
         return Err(OdysseyWalletError::NonceSet);
     }
 

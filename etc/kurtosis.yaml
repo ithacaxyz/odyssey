@@ -2,8 +2,23 @@ ethereum_package:
   participants:
     - el_type: reth
       el_extra_params:
-        - "--rpc.eth-proof-window 100"
+        - "--rpc.eth-proof-window=100"
       cl_type: lighthouse
+      cl_image: sigp/lighthouse:v7.0.0-beta.0
+
+  network_params:
+    seconds_per_slot: 1
+    deneb_fork_epoch: 0
+    electra_fork_epoch: 1
+    additional_preloaded_contracts: |
+      {
+        "0x4e59b44847b379578588920cA78FbF26c0B4956C": {
+          "balance": "0ETH",
+          "code": "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3",
+          "storage": {},
+          "nonce": "1"
+        }
+      }
 optimism_package:
   chains:
     - participants:

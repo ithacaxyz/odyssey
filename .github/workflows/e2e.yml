@@ -50,6 +50,9 @@ jobs:
           REPLICA_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-2-op-reth-op-node-op-kurtosis".public_ports.rpc.number')
           echo "SEQUENCER_RPC=http://127.0.0.1:$SEQUENCER_EL_PORT" >> $GITHUB_ENV
           echo "REPLICA_RPC=http://127.0.0.1:$REPLICA_EL_PORT" >> $GITHUB_ENV
+      - name: Wait for pectra
+        run: |
+          while true; do sleep 5; current_head=$(cast bn --rpc-url=$REPLICA_RPC); echo "L1 Execution is starting up, head is $current_head"; if [ "$current_head" -ge "32" ]; then echo "L1 Execution is post-pectra!"; break; fi; done
       - name: Run E2E tests
         run: |
           cargo nextest run \

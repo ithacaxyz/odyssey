@@ -36,6 +36,7 @@ use serde::{Deserialize, Serialize};
 use std::{marker::PhantomData, sync::Arc};
 use tracing::{trace, warn};
 
+use reth_optimism_primitives as _;
 use reth_optimism_rpc as _;
 use tokio::sync::Mutex;
 
@@ -143,7 +144,7 @@ where
             self.provider.latest().map_err(|err| OdysseyWalletError::InternalError(err.into()))?;
 
         Ok(state
-            .account_code(address)
+            .account_code(&address)
             .ok()
             .flatten()
             .map(|code| code.0.bytes())

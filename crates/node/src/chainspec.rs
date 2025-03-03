@@ -25,7 +25,11 @@ pub static ODYSSEY_FORKS: LazyLock<ChainHardforks> = LazyLock::new(|| {
         (EthereumHardfork::London.boxed(), ForkCondition::Block(0)),
         (
             EthereumHardfork::Paris.boxed(),
-            ForkCondition::TTD { fork_block: None, total_difficulty: U256::ZERO },
+            ForkCondition::TTD {
+                fork_block: None,
+                total_difficulty: U256::ZERO,
+                activation_block_number: 0,
+            },
         ),
         (EthereumHardfork::Shanghai.boxed(), ForkCondition::Timestamp(0)),
         (EthereumHardfork::Cancun.boxed(), ForkCondition::Timestamp(0)),

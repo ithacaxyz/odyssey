@@ -13,12 +13,13 @@
 use alloy_consensus::Header;
 use alloy_primitives::{Address, Bytes, TxKind, U256};
 use op_alloy_consensus::EIP1559ParamError;
-use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
+use reth_chainspec::{ChainSpec, EthereumHardfork};
 use reth_evm::env::EvmEnv;
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
 use reth_optimism_chainspec::OpChainSpec;
 use reth_optimism_forks::OpHardfork;
-use reth_primitives::{transaction::FillTxEnv, TransactionSigned};
+use reth_optimism_primitives::OpTransactionSigned;
+use reth_primitives::transaction::FillTxEnv;
 use reth_revm::{
     handler::register::EvmHandler,
     inspector_handle_register,
@@ -86,10 +87,10 @@ impl OdysseyEvmConfig {
 
 impl ConfigureEvmEnv for OdysseyEvmConfig {
     type Header = Header;
-    type Transaction = TransactionSigned;
+    type Transaction = OpTransactionSigned;
     type Error = EIP1559ParamError;
 
-    fn fill_tx_env(&self, tx_env: &mut TxEnv, transaction: &TransactionSigned, sender: Address) {
+    fn fill_tx_env(&self, tx_env: &mut TxEnv, transaction: &OpTransactionSigned, sender: Address) {
         transaction.fill_tx_env(tx_env, sender);
     }
 
@@ -138,22 +139,8 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
         env.block.basefee = U256::ZERO;
     }
 
-    fn fill_cfg_env(
-        &self,
-        cfg_env: &mut CfgEnvWithHandlerCfg,
-        header: &Header,
-        total_difficulty: U256,
-    ) {
-        let spec_id = revm_spec(
-            &self.chain_spec,
-            &Head {
-                number: header.number,
-                timestamp: header.timestamp,
-                difficulty: header.difficulty,
-                total_difficulty,
-                hash: Default::default(),
-            },
-        );
+    fn fill_cfg_env(&self, cfg_env: &mut CfgEnvWithHandlerCfg, header: &Header) {
+        let spec_id = revm_spec(&self.chain_spec, header);
 
         cfg_env.chain_id = self.chain_spec.chain().id();
         cfg_env.perf_analyse_created_bytecodes = AnalysisKind::Analyse;
@@ -191,14 +178,7 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
         let cfg_env = CfgEnv::default().with_chain_id(self.chain_spec.chain().id());
 
         // ensure we're not missing any timestamp based hardforks
-        let spec_id = revm_spec(
-            &self.chain_spec,
-            &Head {
-                number: parent.number + 1,
-                timestamp: attributes.timestamp,
-                ..Default::default()
-            },
-        );
+        let spec_id = revm_spec(&self.chain_spec, parent);
 
         // if the parent block did not have excess blob gas (i.e. it was pre-cancun), but it is
         // cancun now, we need to set the excess blob gas to the default value
@@ -268,46 +248,91 @@ impl ConfigureEvm for OdysseyEvmConfig {
 }
 
 /// Determine the revm spec ID from the current block and reth chainspec.
-fn revm_spec(chain_spec: &ChainSpec, block: &Head) -> reth_revm::primitives::SpecId {
-    if chain_spec.fork(EthereumHardfork::Prague).active_at_head(block) {
+fn revm_spec(chain_spec: &ChainSpec, header: &Header) -> reth_revm::primitives::SpecId {
+    let timestamp = header.timestamp;
+    let number = header.number;
+    if chain_spec.fork(EthereumHardfork::Prague).active_at_timestamp_or_number(timestamp, number) {
         reth_revm::primitives::OSAKA
-    } else if chain_spec.fork(OpHardfork::Granite).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Granite).active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::GRANITE
-    } else if chain_spec.fork(OpHardfork::Fjord).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Fjord).active_at_timestamp_or_number(timestamp, number) {
         reth_revm::primitives::FJORD
-    } else if chain_spec.fork(OpHardfork::Ecotone).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Ecotone).active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::ECOTONE
-    } else if chain_spec.fork(OpHardfork::Canyon).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Canyon).active_at_timestamp_or_number(timestamp, number) {
         reth_revm::primitives::CANYON
-    } else if chain_spec.fork(OpHardfork::Regolith).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Regolith).active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::REGOLITH
-    } else if chain_spec.fork(OpHardfork::Bedrock).active_at_head(block) {
+    } else if chain_spec.fork(OpHardfork::Bedrock).active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::BEDROCK
-    } else if chain_spec.fork(EthereumHardfork::Prague).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Prague)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::PRAGUE
-    } else if chain_spec.fork(EthereumHardfork::Cancun).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Cancun)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::CANCUN
-    } else if chain_spec.fork(EthereumHardfork::Shanghai).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Shanghai)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::SHANGHAI
-    } else if chain_spec.fork(EthereumHardfork::Paris).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Paris)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::MERGE
-    } else if chain_spec.fork(EthereumHardfork::London).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::London)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::LONDON
-    } else if chain_spec.fork(EthereumHardfork::Berlin).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Berlin)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::BERLIN
-    } else if chain_spec.fork(EthereumHardfork::Istanbul).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Istanbul)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::ISTANBUL
-    } else if chain_spec.fork(EthereumHardfork::Petersburg).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Petersburg)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::PETERSBURG
-    } else if chain_spec.fork(EthereumHardfork::Byzantium).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Byzantium)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::BYZANTIUM
-    } else if chain_spec.fork(EthereumHardfork::SpuriousDragon).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::SpuriousDragon)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::SPURIOUS_DRAGON
-    } else if chain_spec.fork(EthereumHardfork::Tangerine).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Tangerine)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::TANGERINE
-    } else if chain_spec.fork(EthereumHardfork::Homestead).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Homestead)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::HOMESTEAD
-    } else if chain_spec.fork(EthereumHardfork::Frontier).active_at_head(block) {
+    } else if chain_spec
+        .fork(EthereumHardfork::Frontier)
+        .active_at_timestamp_or_number(timestamp, number)
+    {
         reth_revm::primitives::FRONTIER
     } else {
         panic!(
@@ -336,13 +361,11 @@ mod tests {
                 .with_fork(EthereumHardfork::Frontier, ForkCondition::Block(0))
                 .build(),
         ));
-        let total_difficulty = U256::ZERO;
 
         OdysseyEvmConfig::new(chain_spec.clone()).fill_cfg_and_block_env(
             &mut cfg_env,
             &mut block_env,
             &header,
-            total_difficulty,
         );
 
         assert_eq!(cfg_env.chain_id, chain_spec.chain().id());

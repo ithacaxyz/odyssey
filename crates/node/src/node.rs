@@ -4,7 +4,7 @@
 //! required for the optimism engine API.
 
 use crate::evm::OdysseyEvmConfig;
-use alloy_consensus::transaction::PooledTransaction;
+use op_alloy_consensus::OpPooledTransaction;
 use reth_evm::execute::BasicBlockExecutorProvider;
 use reth_network::{
     transactions::{TransactionPropagationMode, TransactionsManagerConfig},
@@ -217,7 +217,10 @@ impl<Node, Pool> NetworkBuilder<Node, Pool> for OdysseyNetworkBuilder
 where
     Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec, Primitives = OpPrimitives>>,
     Pool: TransactionPool<
-            Transaction: PoolTransaction<Consensus = TxTy<Node::Types>, Pooled = PooledTransaction>,
+            Transaction: PoolTransaction<
+                Consensus = TxTy<Node::Types>,
+                Pooled = OpPooledTransaction,
+            >,
         > + Unpin
         + 'static,
 {

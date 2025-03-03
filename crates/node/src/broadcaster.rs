@@ -1,7 +1,7 @@
 //! Sponsor periodic broadcaster
 
 use alloy_primitives::Address;
-use reth_network::transactions::TransactionsHandle;
+use reth_network::{transactions::TransactionsHandle, NetworkPrimitives};
 use reth_transaction_pool::TransactionPool;
 use std::time::Duration;
 
@@ -10,14 +10,15 @@ use std::time::Duration;
 /// `p2p` broadcasting can potentially be flaky, and due to the p2p rules, some txs may never make
 /// it to the sequencer, this can happen if a message is dropped internally when channel bounds are
 /// enforced for example. So, we re-broadcast them every 10 minutes.
-pub async fn periodic_broadcaster<P>(
+pub async fn periodic_broadcaster<P, N>(
     address: Address,
     pool: P,
-    transactions_handle: TransactionsHandle,
+    transactions_handle: TransactionsHandle<N>,
 ) where
     P: TransactionPool,
+    N: NetworkPrimitives,
 {
-    let mut interval_timer = tokio::time::interval(Duration::from_secs(60));
+    let mut interval_timer = tokio::time::interval(Duration::from_secs(600));
 
     loop {
         let transactions =

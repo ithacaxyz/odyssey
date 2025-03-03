@@ -8,15 +8,6 @@
 //! # Restrictions
 //!
 //! `odyssey_sendTransaction` has additional verifications in place to prevent some
-//! rudimentary abuse of the service's funds:
-//! - Transactions cannot contain any `value`
-//! - Gas usage is limited to 350,000 units per transaction
-//! - Only EIP-7702 delegated transactions are allowed
-//! - Transactions must be EIP-1559 compatible
-//!
-//! # References
-//! - [EIP-7702: Smart Contract Delegation][eip-7702]
-//! - [EIP-1559: Fee Market Change][eip-1559]
 //!
 //! [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
 //! [eip-1559]: https://eips.ethereum.org/EIPS/eip-1559
@@ -377,6 +368,7 @@ impl<T> OdysseyWallet<T> {
         Self { inner: Arc::new(inner) }
     }
 
+    #[allow(clippy::missing_const_for_fn)]
     fn chain_id(&self) -> ChainId {
         self.inner.chain_id
     }

@@ -30,15 +30,18 @@ use eyre::Context;
 use odyssey_node::{
     broadcaster::periodic_broadcaster,
     chainspec::OdysseyChainSpecParser,
+    delayed_resolve::{DelayedResolver, MAX_DELAY_INTO_SLOT},
+    forwarder::forward_raw_transactions,
     node::OdysseyNode,
     rpc::{EthApiExt, EthApiOverrideServer},
 };
-use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer};
+use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer, RethUpstream};
 use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
 use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher, NodeComponents};
 use reth_optimism_cli::Cli;
-use reth_optimism_node::{args::RollupArgs, node::OpAddOns};
+use reth_optimism_node::{args::RollupArgs, node::OpAddOnsBuilder};
 use reth_provider::{providers::BlockchainProvider2, CanonStateSubscriptions};
+use std::time::Duration;
 use tracing::{info, warn};
 
 #[global_allocator]
@@ -60,10 +63,12 @@ fn main() {
                 .as_ref()
                 .map(<EthereumWallet as NetworkWallet<Ethereum>>::default_signer_address);
 
-            let node = builder
+            let handle = builder
                 .with_types_and_provider::<OdysseyNode, BlockchainProvider2<_>>()
                 .with_components(OdysseyNode::components(&rollup_args))
-                .with_add_ons(OpAddOns::new(rollup_args.sequencer_http))
+                .with_add_ons(
+                    OpAddOnsBuilder::default().with_sequencer(rollup_args.sequencer_http).build(),
+                )
                 .on_component_initialized(move |ctx| {
                     if let Some(address) = address {
                         ctx.task_executor.spawn(async move {
@@ -92,9 +97,11 @@ fn main() {
                     if let Some(wallet) = wallet {
                         ctx.modules.merge_configured(
                             OdysseyWallet::new(
-                                ctx.provider().clone(),
-                                wallet,
-                                ctx.registry.eth_api().clone(),
+                                RethUpstream::new(
+                                    ctx.provider().clone(),
+                                    ctx.registry.eth_api().clone(),
+                                    wallet,
+                                ),
                                 ctx.config().chain.chain().id(),
                             )
                             .into_rpc(),
@@ -104,6 +111,18 @@ fn main() {
                     let walltime = OdysseyWallTime::spawn(ctx.provider().canonical_state_stream());
                     ctx.modules.merge_configured(walltime.into_rpc())?;
                     info!(target: "reth::cli", "Walltime configured");
+
+                    // wrap the getPayloadV3 method in a delay
+                    let engine_module = ctx.auth_module.module_mut().clone();
+                    let delay_into_slot = std::env::var("MAX_PAYLOAD_DELAY")
+                        .ok()
+                        .and_then(|val| val.parse::<u64>().map(Duration::from_millis).ok())
+                        .unwrap_or(MAX_DELAY_INTO_SLOT);
+
+                    let delayed_payload = DelayedResolver::new(engine_module, delay_into_slot);
+                    delayed_payload.clone().spawn(ctx.provider().canonical_state_stream());
+                    ctx.auth_module.replace_auth_methods(delayed_payload.into_rpc_module())?;
+                    info!(target: "reth::cli", "Configured payload delay");
 
                     Ok(())
                 })
@@ -120,7 +139,13 @@ fn main() {
                 })
                 .await?;
 
-            node.wait_for_node_exit().await
+            // spawn raw transaction forwarding
+            let txhandle = handle.node.network.transactions_handle().await.unwrap();
+            let raw_txs =
+                handle.node.add_ons_handle.eth_api().eth_api().subscribe_to_raw_transactions();
+            handle.node.task_executor.spawn(Box::pin(forward_raw_transactions(txhandle, raw_txs)));
+
+            handle.wait_for_node_exit().await
         })
     {
         eprintln!("Error: {err:?}");

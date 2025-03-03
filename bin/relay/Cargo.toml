@@ -1,0 +1,40 @@
+[package]
+name = "odyssey-relay"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Odyssey Relay is an EIP-7702 native transaction batcher and sponsor."
+
+[lints]
+workspace = true
+
+[dependencies]
+alloy-primitives.workspace = true
+alloy-provider.workspace = true
+alloy-rpc-client.workspace = true
+alloy-signer-local.workspace = true
+clap = { workspace = true, features = ["derive", "env"] }
+eyre.workspace = true
+hyper.workspace = true
+jsonrpsee = { workspace = true, features = ["server"] }
+odyssey-wallet.workspace = true
+reth-tracing.workspace = true
+tokio = { workspace = true, features = ["rt", "macros"] }
+tower-http.workspace = true
+tower.workspace = true
+tracing.workspace = true
+url.workspace = true
+
+[features]
+default = []
+min-error-logs = ["tracing/release_max_level_error"]
+min-warn-logs = ["tracing/release_max_level_warn"]
+min-info-logs = ["tracing/release_max_level_info"]
+min-debug-logs = ["tracing/release_max_level_debug"]
+min-trace-logs = ["tracing/release_max_level_trace"]
+
+[[bin]]
+name = "relay"
+path = "src/main.rs"

@@ -15,6 +15,9 @@ workspace = true
 alloy-signer-local.workspace = true
 alloy-network.workspace = true
 alloy-primitives.workspace = true
+alloy-provider.workspace = true
+alloy-rpc-client.workspace = true
+clap = { workspace = true, features = ["derive"] }
 odyssey-node.workspace = true
 odyssey-wallet.workspace = true
 odyssey-walltime.workspace = true
@@ -22,10 +25,9 @@ eyre.workspace = true
 tracing.workspace = true
 reth-cli-util.workspace = true
 reth-node-builder.workspace = true
-reth-optimism-node.workspace = true
+reth-optimism-node = { workspace = true, features = ["js-tracer"] }
 reth-optimism-cli.workspace = true
 reth-provider.workspace = true
-clap = { workspace = true, features = ["derive"] }
 
 [features]
 default = ["jemalloc"]

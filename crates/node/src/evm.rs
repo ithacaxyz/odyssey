@@ -12,9 +12,11 @@
 
 use alloy_consensus::Header;
 use alloy_primitives::{Address, Bytes, TxKind, U256};
+use op_alloy_consensus::EIP1559ParamError;
 use reth_chainspec::{ChainSpec, EthereumHardfork, Head};
+use reth_evm::env::EvmEnv;
 use reth_node_api::{ConfigureEvm, ConfigureEvmEnv, NextBlockEnvAttributes};
-use reth_optimism_chainspec::{DecodeError, OpChainSpec};
+use reth_optimism_chainspec::OpChainSpec;
 use reth_optimism_forks::OpHardfork;
 use reth_primitives::{transaction::FillTxEnv, TransactionSigned};
 use reth_revm::{
@@ -27,14 +29,17 @@ use reth_revm::{
     },
     ContextPrecompiles, Database, Evm, EvmBuilder, GetInspector,
 };
-use revm_precompile::{secp256r1::p256_verify, u64_to_address, PrecompileWithAddress};
+use revm_precompile::{
+    secp256r1::{p256_verify, P256VERIFY as REVM_P256VERIFY},
+    u64_to_address, PrecompileWithAddress,
+};
 use revm_primitives::{CfgEnvWithHandlerCfg, Precompile, TxEnv};
 use std::sync::Arc;
 
 /// P256 verify precompile address.
 pub const P256VERIFY_ADDRESS: u64 = 0x14;
 
-/// [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212#specification) secp256r1 precompile.
+/// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), Precompile::Standard(p256_verify));
 
@@ -51,7 +56,7 @@ impl OdysseyEvmConfig {
     }
 
     fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
-        [P256VERIFY].into_iter()
+        [P256VERIFY, REVM_P256VERIFY].into_iter()
     }
 
     /// Sets the precompiles to the EVM handler
@@ -81,7 +86,8 @@ impl OdysseyEvmConfig {
 
 impl ConfigureEvmEnv for OdysseyEvmConfig {
     type Header = Header;
-    type Error = DecodeError;
+    type Transaction = TransactionSigned;
+    type Error = EIP1559ParamError;
 
     fn fill_tx_env(&self, tx_env: &mut TxEnv, transaction: &TransactionSigned, sender: Address) {
         transaction.fill_tx_env(tx_env, sender);
@@ -180,7 +186,7 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
         &self,
         parent: &Self::Header,
         attributes: NextBlockEnvAttributes,
-    ) -> Result<(CfgEnvWithHandlerCfg, BlockEnv), Self::Error> {
+    ) -> Result<EvmEnv, Self::Error> {
         // configure evm env based on parent block
         let cfg_env = CfgEnv::default().with_chain_id(self.chain_spec.chain().id());
 
@@ -226,7 +232,8 @@ impl ConfigureEvmEnv for OdysseyEvmConfig {
                 handler_cfg: HandlerCfg { spec_id, is_optimism: true },
             },
             block_env,
-        ))
+        )
+            .into())
     }
 }
 
@@ -339,5 +346,21 @@ mod tests {
         );
 
         assert_eq!(cfg_env.chain_id, chain_spec.chain().id());
+    }
+
+    #[test]
+    fn test_p256verify_precompile_availability() {
+        let evm = EvmBuilder::default()
+            .with_empty_db()
+            .optimism()
+            // add additional precompiles
+            .append_handler_register(OdysseyEvmConfig::set_precompiles)
+            .build();
+
+        // loading the precompiles from pre execution instead of the evm context directly, as they
+        // are only set pre-execution in the context
+        let precompiles = evm.handler.pre_execution().load_precompiles();
+        assert!(precompiles.contains(&u64_to_address(0x14)));
+        assert!(precompiles.contains(&u64_to_address(0x100)));
     }
 }

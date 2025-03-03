@@ -44,9 +44,8 @@ impl Args {
         // construct provider
         let signer: PrivateKeySigner = self.secret_key.parse().wrap_err("Invalid signing key")?;
         let wallet = EthereumWallet::from(signer);
-        let rpc_client = RpcClient::new_http(self.upstream).boxed();
-        let provider =
-            ProviderBuilder::new().with_recommended_fillers().wallet(wallet).on_client(rpc_client);
+        let rpc_client = RpcClient::new_http(self.upstream);
+        let provider = ProviderBuilder::new().wallet(wallet).on_client(rpc_client);
 
         // get chain id
         let chain_id = provider.get_chain_id().await?;

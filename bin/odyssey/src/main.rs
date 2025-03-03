@@ -37,10 +37,10 @@ use odyssey_node::{
 };
 use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer, RethUpstream};
 use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
-use reth_node_builder::{engine_tree_config::TreeConfig, EngineNodeLauncher, NodeComponents};
+use reth_node_builder::NodeComponents;
 use reth_optimism_cli::Cli;
 use reth_optimism_node::{args::RollupArgs, node::OpAddOnsBuilder};
-use reth_provider::{providers::BlockchainProvider2, CanonStateSubscriptions};
+use reth_provider::{providers::BlockchainProvider, CanonStateSubscriptions};
 use std::time::Duration;
 use tracing::{info, warn};
 
@@ -64,8 +64,8 @@ fn main() {
                 .map(<EthereumWallet as NetworkWallet<Ethereum>>::default_signer_address);
 
             let handle = builder
-                .with_types_and_provider::<OdysseyNode, BlockchainProvider2<_>>()
-                .with_components(OdysseyNode::components(&rollup_args))
+                .with_types_and_provider::<OdysseyNode, BlockchainProvider<_>>()
+                .with_components(OdysseyNode::new(rollup_args.clone()).components())
                 .with_add_ons(
                     OpAddOnsBuilder::default().with_sequencer(rollup_args.sequencer_http).build(),
                 )
@@ -126,17 +126,7 @@ fn main() {
 
                     Ok(())
                 })
-                .launch_with_fn(|builder| {
-                    let engine_tree_config = TreeConfig::default()
-                        .with_persistence_threshold(rollup_args.persistence_threshold)
-                        .with_memory_block_buffer_target(rollup_args.memory_block_buffer_target);
-                    let launcher = EngineNodeLauncher::new(
-                        builder.task_executor().clone(),
-                        builder.config().datadir(),
-                        engine_tree_config,
-                    );
-                    builder.launch_with(launcher)
-                })
+                .launch()
                 .await?;
 
             // spawn raw transaction forwarding

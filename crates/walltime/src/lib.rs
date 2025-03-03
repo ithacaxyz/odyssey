@@ -11,6 +11,7 @@ use jsonrpsee::{
     types::{error::INTERNAL_ERROR_CODE, ErrorObject},
 };
 use reth_chain_state::CanonStateNotification;
+use reth_optimism_primitives::OpPrimitives;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -25,7 +26,7 @@ impl OdysseyWallTime {
     /// Creates a new instance with the connected stream.
     pub fn spawn<St>(mut st: St) -> Self
     where
-        St: Stream<Item = CanonStateNotification> + Send + Unpin + 'static,
+        St: Stream<Item = CanonStateNotification<OpPrimitives>> + Send + Unpin + 'static,
     {
         let walltime = Self { inner: Default::default() };
         let listener = walltime.clone();

@@ -95,7 +95,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash).get_receipt().await?;
 
     assert!(receipt.status(), "Transaction failed");
-    assert!(!provider.get_code_at(signer.address()).await?.is_empty(), "No code at signer address");
+    assert!(!provider.get_code_at(signer.address()).await?.unwrap_or_default().is_empty(), "No code at signer address");
 
     Ok(())
 }

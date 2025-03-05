@@ -270,11 +270,6 @@ fn revm_spec(chain_spec: &ChainSpec, header: &Header) -> reth_revm::primitives::
     {
         reth_revm::primitives::BEDROCK
     } else if chain_spec
-        .fork(EthereumHardfork::Prague)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::PRAGUE
-    } else if chain_spec
         .fork(EthereumHardfork::Cancun)
         .active_at_timestamp_or_number(timestamp, number)
     {

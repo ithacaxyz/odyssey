@@ -11,7 +11,6 @@
 //! rudimentary abuse of the service's funds. For example, transactions cannot contain any
 //! `value`.
 //!
-//! [eip-5792]: https://eips.ethereum.org/EIPS/eip-5792
 //! [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
 
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]

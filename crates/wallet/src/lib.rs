@@ -37,6 +37,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, marker::PhantomData, sync::Arc};
 use tracing::{trace, warn};
 
+use reth_optimism_primitives as _;
 use reth_optimism_rpc as _;
 use tokio::sync::Mutex;
 

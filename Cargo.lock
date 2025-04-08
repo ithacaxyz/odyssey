@@ -5224,6 +5224,7 @@ dependencies = [
  "jsonrpsee",
  "metrics",
  "metrics-derive",
+ "reth-optimism-primitives",
  "reth-optimism-rpc",
  "reth-rpc-eth-api",
  "reth-storage-api",

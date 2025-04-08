@@ -16,6 +16,11 @@ alloy-provider.workspace = true
 alloy-json-rpc.workspace = true
 alloy-rpc-types.workspace = true
 
+
+reth-optimism-primitives = { workspace = true, features = [
+    "serde-bincode-compat",
+    "reth-codec",
+] }
 reth-optimism-rpc.workspace = true
 reth-rpc-eth-api.workspace = true
 reth-storage-api.workspace = true

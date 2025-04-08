@@ -16,7 +16,7 @@ Odyssey implements traits provided by the [reth node builder API](https://paradi
 Specifically, Odyssey currently implements the following EIPs:
 
 - [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702): Set EOA account code.
-- [RIP-7212](https://ethereum-magicians.org/t/eip-7212-precompiled-for-secp256r1-curve-support/14789): Precompile for secp256r1 curve support.
+- [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md): Precompile for secp256r1 curve support.
 - [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537): Precompiles for BLS12-381 curve operations.
 
 Odyssey also implements the EIPs for EOF, or [The EVM Object Format](https://evmobjectformat.org/).

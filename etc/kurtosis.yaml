@@ -39,3 +39,5 @@ optimism_package:
       network_params:
         network_id: "41144114"
         seconds_per_slot: 1
+        holocene_time_offset: 0
+        isthmus_time_offset: 0

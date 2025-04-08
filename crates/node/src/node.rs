@@ -8,7 +8,7 @@ use op_alloy_consensus::OpPooledTransaction;
 use reth_evm::execute::BasicBlockExecutorProvider;
 use reth_network::{
     transactions::{TransactionPropagationMode, TransactionsManagerConfig},
-    NetworkHandle, NetworkManager, PeersInfo,
+    NetworkHandle, NetworkManager,
 };
 use reth_network_types::ReputationChangeWeights;
 use reth_node_api::{FullNodeTypes, NodeTypesWithEngine, TxTy};
@@ -39,7 +39,6 @@ use tracing::info;
 /// Type configuration for a regular Odyssey node.
 #[derive(Debug, Clone, Default)]
 pub struct OdysseyNode {
-    /// Additional Optimism args
     pub args: RollupArgs,
 }
 
@@ -50,36 +49,21 @@ impl OdysseyNode {
     }
 
     /// Returns the components for the given [`RollupArgs`].
-    pub fn components<Node>(
-        args: &RollupArgs,
-    ) -> ComponentsBuilder<
-        Node,
-        OpPoolBuilder,
-        OdysseyPayloadBuilder,
-        OdysseyNetworkBuilder,
-        OdysseyExecutorBuilder,
-        OpConsensusBuilder,
-    >
+    pub fn components<Node>(args: &RollupArgs) -> ComponentsBuilder<Node, OpPoolBuilder, OdysseyPayloadBuilder, OdysseyNetworkBuilder, OdysseyExecutorBuilder, OpConsensusBuilder>
     where
-        Node: FullNodeTypes<
-            Types: NodeTypesWithEngine<
-                Engine = OpEngineTypes,
-                ChainSpec = OpChainSpec,
-                Primitives = OpPrimitives,
-            >,
-        >,
+        Node: FullNodeTypes<Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec, Primitives = OpPrimitives>>,
     {
+        let pool_config = PoolBuilderConfigOverrides {
+            queued_limit: Some(SubPoolLimit::default() * 2),
+            pending_limit: Some(SubPoolLimit::default() * 2),
+            basefee_limit: Some(SubPoolLimit::default() * 2),
+            max_account_slots: Some(TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER * 2),
+            ..Default::default()
+        };
+
         ComponentsBuilder::default()
             .node_types::<Node>()
-            .pool(OpPoolBuilder {
-                pool_config_overrides: PoolBuilderConfigOverrides {
-                    queued_limit: Some(SubPoolLimit::default() * 2),
-                    pending_limit: Some(SubPoolLimit::default() * 2),
-                    basefee_limit: Some(SubPoolLimit::default() * 2),
-                    max_account_slots: Some(TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER * 2),
-                    ..Default::default()
-                },
-            })
+            .pool(OpPoolBuilder { pool_config_overrides: pool_config })
             .payload(OdysseyPayloadBuilder::new(args.compute_pending_block))
             .network(OdysseyNetworkBuilder::new(OpNetworkBuilder {
                 disable_txpool_gossip: args.disable_txpool_gossip,
@@ -90,7 +74,6 @@ impl OdysseyNode {
     }
 }
 
-/// Configure the node types
 impl NodeTypes for OdysseyNode {
     type Primitives = OpPrimitives;
     type ChainSpec = OpChainSpec;
@@ -104,30 +87,13 @@ impl NodeTypesWithEngine for OdysseyNode {
 
 impl<N> Node<N> for OdysseyNode
 where
-    N: FullNodeTypes<
-        Types: NodeTypesWithEngine<
-            Engine = OpEngineTypes,
-            ChainSpec = OpChainSpec,
-            Primitives = OpPrimitives,
-            Storage = OpStorage,
-        >,
-    >,
+    N: FullNodeTypes<Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec, Primitives = OpPrimitives, Storage = OpStorage>>,
 {
-    type ComponentsBuilder = ComponentsBuilder<
-        N,
-        OpPoolBuilder,
-        OdysseyPayloadBuilder,
-        OdysseyNetworkBuilder,
-        OdysseyExecutorBuilder,
-        OpConsensusBuilder,
-    >;
-
-    type AddOns =
-        OpAddOns<NodeAdapter<N, <Self::ComponentsBuilder as NodeComponentsBuilder<N>>::Components>>;
+    type ComponentsBuilder = ComponentsBuilder<N, OpPoolBuilder, OdysseyPayloadBuilder, OdysseyNetworkBuilder, OdysseyExecutorBuilder, OpConsensusBuilder>;
+    type AddOns = OpAddOns<NodeAdapter<N, <Self::ComponentsBuilder as NodeComponentsBuilder<N>>::Components>>;
 
     fn components_builder(&self) -> Self::ComponentsBuilder {
-        let Self { args } = self;
-        Self::components(args)
+        Self::components(&self.args)
     }
 
     fn add_ons(&self) -> Self::AddOns {
@@ -135,7 +101,6 @@ where
     }
 }
 
-/// The Odyssey evm and executor builder.
 #[derive(Debug, Default, Clone, Copy)]
 #[non_exhaustive]
 pub struct OdysseyExecutorBuilder;
@@ -147,32 +112,19 @@ where
     type EVM = OdysseyEvmConfig;
     type Executor = BasicBlockExecutorProvider<OpExecutionStrategyFactory<Self::EVM>>;
 
-    async fn build_evm(
-        self,
-        ctx: &BuilderContext<Node>,
-    ) -> eyre::Result<(Self::EVM, Self::Executor)> {
-        let chain_spec = ctx.chain_spec();
-        let evm_config = OdysseyEvmConfig::new(chain_spec);
-        let strategy_factory =
-            OpExecutionStrategyFactory::new(ctx.chain_spec(), evm_config.clone());
-        let executor = BasicBlockExecutorProvider::new(strategy_factory);
-
+    async fn build_evm(self, ctx: &BuilderContext<Node>) -> eyre::Result<(Self::EVM, Self::Executor)> {
+        let evm_config = OdysseyEvmConfig::new(ctx.chain_spec());
+        let executor = BasicBlockExecutorProvider::new(OpExecutionStrategyFactory::new(ctx.chain_spec(), evm_config.clone()));
         Ok((evm_config, executor))
     }
 }
 
-/// The Odyssey payload service builder.
-///
-/// This service wraps the default Optimism payload builder, but replaces the default evm config
-/// with Odyssey's own.
 #[derive(Debug, Default, Clone)]
 pub struct OdysseyPayloadBuilder {
-    /// Inner Optimism payload builder service.
     inner: OpPayloadBuilder,
 }
 
 impl OdysseyPayloadBuilder {
-    /// Create a new instance with the given `compute_pending_block` flag.
     pub fn new(compute_pending_block: bool) -> Self {
         Self { inner: OpPayloadBuilder::new(compute_pending_block) }
     }
@@ -180,34 +132,20 @@ impl OdysseyPayloadBuilder {
 
 impl<Node, Pool> PayloadServiceBuilder<Node, Pool> for OdysseyPayloadBuilder
 where
-    Node: FullNodeTypes<
-        Types: NodeTypesWithEngine<
-            Engine = OpEngineTypes,
-            ChainSpec = OpChainSpec,
-            Primitives = OpPrimitives,
-        >,
-    >,
-    Pool: TransactionPool<Transaction: PoolTransaction<Consensus = TxTy<Node::Types>>>
-        + Unpin
-        + 'static,
+    Node: FullNodeTypes<Types: NodeTypesWithEngine<Engine = OpEngineTypes, ChainSpec = OpChainSpec, Primitives = OpPrimitives>>,
+    Pool: TransactionPool<Transaction: PoolTransaction<Consensus = TxTy<Node::Types>>> + Unpin + 'static,
 {
-    async fn spawn_payload_service(
-        self,
-        ctx: &BuilderContext<Node>,
-        pool: Pool,
-    ) -> eyre::Result<PayloadBuilderHandle<OpEngineTypes>> {
+    async fn spawn_payload_service(self, ctx: &BuilderContext<Node>, pool: Pool) -> eyre::Result<PayloadBuilderHandle<OpEngineTypes>> {
         self.inner.spawn(OdysseyEvmConfig::new(ctx.chain_spec()), ctx, pool)
     }
 }
 
-/// The default odyssey network builder.
 #[derive(Debug, Default, Clone)]
 pub struct OdysseyNetworkBuilder {
     inner: OpNetworkBuilder,
 }
 
 impl OdysseyNetworkBuilder {
-    /// Create a new instance based on the given op builder
     pub const fn new(network: OpNetworkBuilder) -> Self {
         Self { inner: network }
     }
@@ -216,37 +154,20 @@ impl OdysseyNetworkBuilder {
 impl<Node, Pool> NetworkBuilder<Node, Pool> for OdysseyNetworkBuilder
 where
     Node: FullNodeTypes<Types: NodeTypes<ChainSpec = OpChainSpec, Primitives = OpPrimitives>>,
-    Pool: TransactionPool<
-            Transaction: PoolTransaction<
-                Consensus = TxTy<Node::Types>,
-                Pooled = OpPooledTransaction,
-            >,
-        > + Unpin
-        + 'static,
+    Pool: TransactionPool<Transaction: PoolTransaction<Consensus = TxTy<Node::Types>, Pooled = OpPooledTransaction>> + Unpin + 'static,
 {
     type Primitives = OpNetworkPrimitives;
 
-    async fn build_network(
-        self,
-        ctx: &BuilderContext<Node>,
-        pool: Pool,
-    ) -> eyre::Result<NetworkHandle<OpNetworkPrimitives>> {
+    async fn build_network(self, ctx: &BuilderContext<Node>, pool: Pool) -> eyre::Result<NetworkHandle<OpNetworkPrimitives>> {
         let mut network_config = self.inner.network_config(ctx)?;
-        // this is rolled with limited trusted peers and we want ignore any reputation slashing
         network_config.peers_config.reputation_weights = ReputationChangeWeights::zero();
-        network_config.peers_config.backoff_durations.low = Duration::from_secs(5);
-        network_config.peers_config.backoff_durations.medium = Duration::from_secs(5);
-        network_config.peers_config.backoff_durations.high = Duration::from_secs(5);
+        let backoff_time = Duration::from_secs(5);
+        network_config.peers_config.backoff_durations.low = backoff_time;
+        network_config.peers_config.backoff_durations.medium = backoff_time;
+        network_config.peers_config.backoff_durations.high = backoff_time;
         network_config.peers_config.max_backoff_count = u8::MAX;
-        network_config.sessions_config.session_command_buffer = 750;
-        network_config.sessions_config.session_event_buffer = 750;
-
-        let txconfig = TransactionsManagerConfig {
-            propagation_mode: TransactionPropagationMode::All,
-            ..network_config.transactions_manager_config.clone()
-        };
         let network = NetworkManager::builder(network_config).await?;
-        let handle = ctx.start_network_with(network, pool, txconfig);
+        let handle = ctx.start_network_with(network, pool, TransactionsManagerConfig { propagation_mode: TransactionPropagationMode::All, ..network_config.transactions_manager_config.clone() });
         info!(target: "reth::cli", enode=%handle.local_node_record(), "P2P networking initialized");
         Ok(handle)
     }

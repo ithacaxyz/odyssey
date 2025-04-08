@@ -251,90 +251,42 @@ impl ConfigureEvm for OdysseyEvmConfig {
 fn revm_spec(chain_spec: &ChainSpec, header: &Header) -> reth_revm::primitives::SpecId {
     let timestamp = header.timestamp;
     let number = header.number;
-    if chain_spec.fork(EthereumHardfork::Prague).active_at_timestamp_or_number(timestamp, number) {
-        reth_revm::primitives::OSAKA
-    } else if chain_spec.fork(OpHardfork::Granite).active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::GRANITE
-    } else if chain_spec.fork(OpHardfork::Fjord).active_at_timestamp_or_number(timestamp, number) {
-        reth_revm::primitives::FJORD
-    } else if chain_spec.fork(OpHardfork::Ecotone).active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::ECOTONE
-    } else if chain_spec.fork(OpHardfork::Canyon).active_at_timestamp_or_number(timestamp, number) {
-        reth_revm::primitives::CANYON
-    } else if chain_spec.fork(OpHardfork::Regolith).active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::REGOLITH
-    } else if chain_spec.fork(OpHardfork::Bedrock).active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::BEDROCK
-    } else if chain_spec
-        .fork(EthereumHardfork::Cancun)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::CANCUN
-    } else if chain_spec
-        .fork(EthereumHardfork::Shanghai)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::SHANGHAI
-    } else if chain_spec
-        .fork(EthereumHardfork::Paris)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::MERGE
-    } else if chain_spec
-        .fork(EthereumHardfork::London)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::LONDON
-    } else if chain_spec
-        .fork(EthereumHardfork::Berlin)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::BERLIN
-    } else if chain_spec
-        .fork(EthereumHardfork::Istanbul)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::ISTANBUL
-    } else if chain_spec
-        .fork(EthereumHardfork::Petersburg)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::PETERSBURG
-    } else if chain_spec
-        .fork(EthereumHardfork::Byzantium)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::BYZANTIUM
-    } else if chain_spec
-        .fork(EthereumHardfork::SpuriousDragon)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::SPURIOUS_DRAGON
-    } else if chain_spec
-        .fork(EthereumHardfork::Tangerine)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::TANGERINE
-    } else if chain_spec
-        .fork(EthereumHardfork::Homestead)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::HOMESTEAD
-    } else if chain_spec
-        .fork(EthereumHardfork::Frontier)
-        .active_at_timestamp_or_number(timestamp, number)
-    {
-        reth_revm::primitives::FRONTIER
-    } else {
-        panic!(
-            "invalid hardfork chainspec: expected at least one hardfork, got {:?}",
-            chain_spec.hardforks
-        )
+    
+    // Define hardforks in order from newest to oldest with their corresponding SpecId
+    let hardfork_specs = [
+        (EthereumHardfork::Prague, reth_revm::primitives::OSAKA),
+        (OpHardfork::Granite, reth_revm::primitives::GRANITE),
+        (OpHardfork::Fjord, reth_revm::primitives::FJORD),
+        (OpHardfork::Ecotone, reth_revm::primitives::ECOTONE),
+        (OpHardfork::Canyon, reth_revm::primitives::CANYON),
+        (OpHardfork::Regolith, reth_revm::primitives::REGOLITH),
+        (OpHardfork::Bedrock, reth_revm::primitives::BEDROCK),
+        (EthereumHardfork::Cancun, reth_revm::primitives::CANCUN),
+        (EthereumHardfork::Shanghai, reth_revm::primitives::SHANGHAI),
+        (EthereumHardfork::Paris, reth_revm::primitives::MERGE),
+        (EthereumHardfork::London, reth_revm::primitives::LONDON),
+        (EthereumHardfork::Berlin, reth_revm::primitives::BERLIN),
+        (EthereumHardfork::Istanbul, reth_revm::primitives::ISTANBUL),
+        (EthereumHardfork::Petersburg, reth_revm::primitives::PETERSBURG),
+        (EthereumHardfork::Byzantium, reth_revm::primitives::BYZANTIUM),
+        (EthereumHardfork::SpuriousDragon, reth_revm::primitives::SPURIOUS_DRAGON),
+        (EthereumHardfork::Tangerine, reth_revm::primitives::TANGERINE),
+        (EthereumHardfork::Homestead, reth_revm::primitives::HOMESTEAD),
+        (EthereumHardfork::Frontier, reth_revm::primitives::FRONTIER),
+    ];
+
+    // Find the first active hardfork
+    for (hardfork, spec_id) in hardfork_specs {
+        if chain_spec.fork(hardfork).active_at_timestamp_or_number(timestamp, number) {
+            return spec_id;
+        }
     }
+
+    // Panic if no hardforks are active (should not happen with proper chainspec)
+    panic!(
+        "invalid hardfork chainspec: expected at least one hardfork, got {:?}",
+        chain_spec.hardforks
+    )
 }
 
 #[cfg(test)]

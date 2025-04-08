@@ -9,7 +9,7 @@ use reth_network::{
     NetworkHandle, NetworkManager, PeersInfo,
 };
 use reth_network_types::ReputationChangeWeights;
-use reth_node_api::{FullNodeTypes, NodeTypesWithEngine, TxTy};
+use reth_node_api::{FullNodeTypes, TxTy};
 use reth_node_builder::{
     components::{
         BasicPayloadServiceBuilder, ComponentsBuilder, NetworkBuilder, PoolBuilderConfigOverrides,
@@ -73,8 +73,8 @@ impl OdysseyNode {
     >
     where
         Node: FullNodeTypes<
-            Types: NodeTypesWithEngine<
-                Engine = OpEngineTypes,
+            Types: NodeTypes<
+                Payload = OpEngineTypes,
                 ChainSpec = OpChainSpec,
                 Primitives = OpPrimitives,
             >,
@@ -114,17 +114,14 @@ impl NodeTypes for OdysseyNode {
     type ChainSpec = OpChainSpec;
     type StateCommitment = MerklePatriciaTrie;
     type Storage = OpStorage;
-}
-
-impl NodeTypesWithEngine for OdysseyNode {
-    type Engine = OpEngineTypes;
+    type Payload = OpEngineTypes;
 }
 
 impl<N> Node<N> for OdysseyNode
 where
     N: FullNodeTypes<
-        Types: NodeTypesWithEngine<
-            Engine = OpEngineTypes,
+        Types: NodeTypes<
+            Payload = OpEngineTypes,
             ChainSpec = OpChainSpec,
             Primitives = OpPrimitives,
             Storage = OpStorage,

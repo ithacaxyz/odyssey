@@ -100,8 +100,10 @@ where
         &self,
         tx: &Self::TxRequest,
     ) -> Result<(u64, Eip1559Estimation), OdysseyWalletError> {
-        let (estimate, fee_estimate) =
-            tokio::join!(self.provider.estimate_gas(tx), self.provider.estimate_eip1559_fees(None));
+        let (estimate, fee_estimate) = tokio::join!(
+            self.provider.estimate_gas(tx.clone()),
+            self.provider.estimate_eip1559_fees()
+        );
 
         Ok((
             estimate.map_err(|err| OdysseyWalletError::InternalError(err.into()))?,

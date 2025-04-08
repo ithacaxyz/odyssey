@@ -8,7 +8,7 @@ use jsonrpsee::{
 };
 use parking_lot::Mutex;
 use reth_chain_state::CanonStateNotification;
-use reth_node_api::NodePrimitives;
+use reth_optimism_primitives::OpPrimitives;
 use serde::de::Error;
 use serde_json::value::RawValue;
 use std::{
@@ -42,10 +42,9 @@ impl DelayedResolver {
     }
 
     /// Listen for new blocks and track the local timestamp.
-    pub fn spawn<St, N>(self, mut st: St)
+    pub fn spawn<St>(self, mut st: St)
     where
-        St: Stream<Item = CanonStateNotification<N>> + Send + Unpin + 'static,
-        N: NodePrimitives,
+        St: Stream<Item = CanonStateNotification<OpPrimitives>> + Send + Unpin + 'static,
     {
         tokio::task::spawn(async move {
             while st.next().await.is_some() {

@@ -4,7 +4,6 @@
 
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
-use alloy_consensus::BlockHeader;
 use futures::{Stream, StreamExt};
 use jsonrpsee::{
     core::{async_trait, RpcResult},
@@ -12,7 +11,7 @@ use jsonrpsee::{
     types::{error::INTERNAL_ERROR_CODE, ErrorObject},
 };
 use reth_chain_state::CanonStateNotification;
-use reth_node_api::NodePrimitives;
+use reth_optimism_primitives::OpPrimitives;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -25,10 +24,9 @@ pub struct OdysseyWallTime {
 
 impl OdysseyWallTime {
     /// Creates a new instance with the connected stream.
-    pub fn spawn<St, N>(mut st: St) -> Self
+    pub fn spawn<St>(mut st: St) -> Self
     where
-        St: Stream<Item = CanonStateNotification<N>> + Send + Unpin + 'static,
-        N: NodePrimitives,
+        St: Stream<Item = CanonStateNotification<OpPrimitives>> + Send + Unpin + 'static,
     {
         let walltime = Self { inner: Default::default() };
         let listener = walltime.clone();
@@ -36,7 +34,7 @@ impl OdysseyWallTime {
             while let Some(notification) = st.next().await {
                 let tip = BlockTimeData {
                     wall_time_ms: unix_epoch_ms(),
-                    block_timestamp: notification.tip().header().timestamp(),
+                    block_timestamp: notification.tip().timestamp,
                 };
                 *listener.inner.block_time_data.write().await = Some(tip);
             }

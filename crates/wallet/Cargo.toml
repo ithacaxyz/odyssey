@@ -13,8 +13,8 @@ categories.workspace = true
 alloy-network.workspace = true
 alloy-primitives.workspace = true
 alloy-provider.workspace = true
+alloy-json-rpc.workspace = true
 alloy-rpc-types.workspace = true
-alloy-transport.workspace = true
 
 
 reth-optimism-primitives = { workspace = true, features = [

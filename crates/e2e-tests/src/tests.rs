@@ -7,6 +7,7 @@ use alloy::{
     signers::SignerSync,
 };
 use alloy_network::{TransactionBuilder, TransactionBuilder7702};
+use alloy_primitives::U256;
 use alloy_rpc_types::{Block, BlockNumberOrTag, EIP1186AccountProofResponse, TransactionRequest};
 use alloy_signer_local::PrivateKeySigner;
 use reth_primitives_traits::Account;
@@ -77,7 +78,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create and sign authorization
     let auth = Authorization {
-        chain_id: provider.get_chain_id().await?,
+        chain_id: U256::from(provider.get_chain_id().await?),
         address: delegation_address,
         nonce: provider.get_transaction_count(signer.address()).await?,
     };
@@ -92,10 +93,11 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     let tx_hash: B256 = provider.client().request("wallet_sendTransaction", vec![tx]).await?;
 
     // Wait for and verify transaction receipt
-    let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash).get_receipt().await?;
+    let receipt =
+        PendingTransactionBuilder::new(provider.root().clone(), tx_hash).get_receipt().await?;
 
     assert!(receipt.status(), "Transaction failed");
-    assert!(!provider.get_code_at(signer.address()).await?.unwrap_or_default().is_empty(), "No code at signer address");
+    assert!(!provider.get_code_at(signer.address()).await?.is_empty(), "No code at signer address");
 
     Ok(())
 }
@@ -119,7 +121,7 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     .unwrap();
 
     let auth = Authorization {
-        chain_id: provider.get_chain_id().await?,
+        chain_id: U256::from(provider.get_chain_id().await?),
         address: delegation_address,
         nonce: provider.get_transaction_count(signer.address()).await?,
     };
@@ -132,7 +134,8 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
 
     let tx_hash: B256 = provider.client().request("odyssey_sendTransaction", vec![tx]).await?;
 
-    let receipt = PendingTransactionBuilder::new(provider.clone(), tx_hash).get_receipt().await?;
+    let receipt =
+        PendingTransactionBuilder::new(provider.root().clone(), tx_hash).get_receipt().await?;
 
     assert!(receipt.status());
 

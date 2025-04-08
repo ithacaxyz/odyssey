@@ -67,11 +67,10 @@ impl DelayedResolver {
             tokio::time::sleep(delay).await;
         }
 
-        let params = params
-            .as_str()
-            .ok_or_else(|| MethodsError::Parse(serde_json::Error::missing_field("payload id")))?;
+        let payload_id: alloy_rpc_types::engine::PayloadId = params.one()?;
+        let payload_param = PayloadParam(serde_json::to_string(&payload_id)?);
 
-        self.inner.engine_module.call(GET_PAYLOAD_V3, PayloadParam(params.to_string())).await
+        self.inner.engine_module.call(GET_PAYLOAD_V3, payload_param).await
     }
 
     /// Converts this type into a new [`RpcModule`] that delegates the get payload call.

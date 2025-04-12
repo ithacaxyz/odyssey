@@ -11,6 +11,11 @@
 //! rudimentary abuse of the service's funds. For example, transactions cannot contain any
 //! `value`.
 //!
+//! # Architecture
+//!
+//! Transaction requests go through preliminary validation in the API and then are sent
+//! to a queue for signing and broadcasting, which allows for transaction batching in the future.
+//!
 //! [eip-5792]: https://eips.ethereum.org/EIPS/eip-5792
 //! [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
 
@@ -24,6 +29,7 @@ use alloy_network::{
 use alloy_primitives::{Address, Bytes, ChainId, TxHash, TxKind, U256};
 use alloy_provider::{utils::Eip1559Estimation, Provider, WalletProvider};
 use alloy_rpc_types::{BlockId, TransactionRequest};
+use eyre;
 use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
@@ -35,16 +41,86 @@ use reth_rpc_eth_api::helpers::{EthCall, EthTransactions, FullEthApi, LoadFee, L
 use reth_storage_api::StateProviderFactory;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, marker::PhantomData, sync::Arc};
-use tracing::{trace, warn};
+use tracing::{debug, error, trace, warn};
 
 use reth_optimism_primitives as _;
 use reth_optimism_rpc as _;
-use tokio::sync::Mutex;
+use tokio::sync::{mpsc, Mutex};
+
+// For supporting the inspect_err method
+use std::ops::ControlFlow;
+trait ResultExt<T, E> {
+    fn inspect_err<F: FnOnce(&E)>(self, f: F) -> Self;
+}
+
+impl<T, E> ResultExt<T, E> for Result<T, E> {
+    fn inspect_err<F: FnOnce(&E)>(self, f: F) -> Self {
+        if let Err(ref e) = self {
+            f(e);
+        }
+        self
+    }
+}
+
+mod queue;
+use queue::TransactionQueue;
+
+/// Wrapper for Upstream with Default support
+#[derive(Debug, Clone)]
+struct UpstreamWrapper<T>(Option<T>);
+
+impl<T> Default for UpstreamWrapper<T> {
+    fn default() -> Self {
+        Self(None)
+    }
+}
+
+impl<T> UpstreamWrapper<T> {
+    pub fn new(upstream: T) -> Self {
+        Self(Some(upstream))
+    }
+}
+
+#[async_trait]
+impl<T: Upstream + Send + Sync> Upstream for UpstreamWrapper<T> {
+    type TxRequest = T::TxRequest;
+
+    fn default_signer_address(&self) -> Address {
+        match &self.0 {
+            Some(upstream) => upstream.default_signer_address(),
+            None => Address::ZERO,
+        }
+    }
+
+    async fn get_code(&self, address: Address) -> Result<Bytes, OdysseyWalletError> {
+        match &self.0 {
+            Some(upstream) => upstream.get_code(address).await,
+            None => Err(OdysseyWalletError::InternalError(eyre::eyre!("No upstream available"))),
+        }
+    }
+
+    async fn estimate(
+        &self,
+        tx: &Self::TxRequest,
+    ) -> Result<(u64, Eip1559Estimation), OdysseyWalletError> {
+        match &self.0 {
+            Some(upstream) => upstream.estimate(tx).await,
+            None => Err(OdysseyWalletError::InternalError(eyre::eyre!("No upstream available"))),
+        }
+    }
+
+    async fn sign_and_send(&self, tx: Self::TxRequest) -> Result<TxHash, OdysseyWalletError> {
+        match &self.0 {
+            Some(upstream) => upstream.sign_and_send(tx).await,
+            None => Err(OdysseyWalletError::InternalError(eyre::eyre!("No upstream available"))),
+        }
+    }
+}
 
 /// An upstream is capable of estimating, signing, and propagating signed transactions for a
 /// specific chain.
 #[async_trait]
-pub trait Upstream {
+pub trait Upstream: Clone {
     /// The transaction request type.
     type TxRequest;
 
@@ -65,7 +141,7 @@ pub trait Upstream {
 }
 
 /// A wrapper around an Alloy provider for signing and sending sponsored transactions.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AlloyUpstream<P, N> {
     provider: P,
     _network: PhantomData<N>,
@@ -123,7 +199,7 @@ where
 
 /// A handle to a Reth upstream that signs transactions and injects them directly into the
 /// transaction pool.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RethUpstream<Provider, Eth> {
     provider: Provider,
     eth_api: Eth,
@@ -305,24 +381,33 @@ impl From<OdysseyWalletError> for jsonrpsee::types::error::ErrorObject<'static> 
 
 /// Implementation of the Odyssey `wallet_` namespace.
 #[derive(Debug)]
-pub struct OdysseyWallet<T> {
+pub struct OdysseyWallet<T>
+where
+    T: Upstream + Sync + Send + 'static,
+{
     inner: Arc<OdysseyWalletInner<T>>,
 }
 
-impl<T> OdysseyWallet<T> {
-    /// Create a new Odyssey wallet module.
+impl<T> OdysseyWallet<T>
+where
+    T: Upstream + Sync + Send + 'static,
+{
+    /// Create a new [`OdysseyWallet`].
     pub fn new(upstream: T, chain_id: ChainId) -> Self {
+        let upstream_arc = Arc::new(Mutex::new(upstream.clone()));
+        let upstream_wrapper = UpstreamWrapper::new(upstream);
         let inner = OdysseyWalletInner {
-            upstream,
+            upstream: upstream_wrapper,
             chain_id,
             permit: Default::default(),
+            tx_queue: TransactionQueue::new(upstream_arc),
             metrics: WalletMetrics::default(),
         };
         Self { inner: Arc::new(inner) }
     }
 
-    #[allow(clippy::missing_const_for_fn)]
-    fn chain_id(&self) -> ChainId {
+    /// Get the chain ID for the wallet.
+    pub fn chain_id(&self) -> ChainId {
         self.inner.chain_id
     }
 }
@@ -331,7 +416,8 @@ impl<T> OdysseyWallet<T> {
 impl<T, Request> OdysseyWalletApiServer<Request> for OdysseyWallet<T>
 where
     T: Upstream<TxRequest = Request> + Sync + Send + 'static,
-    Request: Debug + TransactionBuilder<Ethereum> + TransactionBuilder7702 + RpcObject,
+    Request:
+        Debug + TransactionBuilder<Ethereum> + TransactionBuilder7702 + RpcObject + Send + 'static,
 {
     async fn send_transaction(&self, mut request: Request) -> RpcResult<TxHash> {
         trace!(target: "rpc::wallet", ?request, "Serving odyssey_sendTransaction");
@@ -374,9 +460,6 @@ where
             }
         }
 
-        // we acquire the permit here so that all following operations are performed exclusively
-        let _permit = self.inner.permit.lock().await;
-
         // set chain id
         request.set_chain_id(self.chain_id());
 
@@ -403,19 +486,20 @@ where
         // all checks passed, increment the valid calls counter
         self.inner.metrics.valid_send_transaction_calls.increment(1);
 
-        Ok(self.inner.upstream.sign_and_send(request).await.inspect_err(
-            |err| warn!(target: "rpc::wallet", ?err, "Error adding sponsored tx to pool"),
-        )?)
+        // send the transaction to the queue for further processing
+        self.inner.tx_queue.send_transaction(request).await
     }
 }
 
 /// Implementation of the Odyssey `wallet_` namespace.
 #[derive(Debug)]
 struct OdysseyWalletInner<T> {
-    upstream: T,
+    upstream: UpstreamWrapper<T>,
     chain_id: ChainId,
     /// Used to guard tx signing
     permit: Mutex<()>,
+    /// Queue for transaction processing
+    tx_queue: TransactionQueue<T::TxRequest>,
     /// Metrics for the `wallet_` RPC namespace.
     metrics: WalletMetrics,
 }

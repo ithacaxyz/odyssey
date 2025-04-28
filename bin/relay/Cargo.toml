@@ -11,10 +11,8 @@ description = "Odyssey Relay is an EIP-7702 native transaction batcher and spons
 workspace = true
 
 [dependencies]
-alloy-primitives.workspace = true
 alloy-provider.workspace = true
 alloy-rpc-client.workspace = true
-alloy-rpc-types.workspace = true
 alloy-signer-local.workspace = true
 clap = { workspace = true, features = ["derive", "env"] }
 eyre.workspace = true

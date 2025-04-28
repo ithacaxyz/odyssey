@@ -34,8 +34,8 @@ reth-chain-state.workspace = true
 
 alloy-eips.workspace = true
 alloy-primitives.workspace = true
-alloy-rpc-types.workspace  = true
-alloy-rpc-types-eth.workspace  = true
+alloy-rpc-types.workspace = true
+alloy-rpc-types-eth.workspace = true
 
 op-alloy-consensus.workspace = true
 
@@ -47,6 +47,9 @@ jsonrpsee.workspace = true
 futures.workspace = true
 parking_lot.workspace = true
 serde.workspace = true
+
+[dev-dependencies]
+alloy-rpc-types-engine.workspace = true
 
 [lints]
 workspace = true

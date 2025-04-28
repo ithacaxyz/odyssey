@@ -45,7 +45,7 @@ impl Args {
         let signer: PrivateKeySigner = self.secret_key.parse().wrap_err("Invalid signing key")?;
         let wallet = EthereumWallet::from(signer);
         let rpc_client = RpcClient::new_http(self.upstream);
-        let provider = ProviderBuilder::new().wallet(wallet).on_client(rpc_client);
+        let provider = ProviderBuilder::new().wallet(wallet).connect_client(rpc_client);
 
         // get chain id
         let chain_id = provider.get_chain_id().await?;
@@ -63,7 +63,7 @@ impl Args {
             .set_http_middleware(ServiceBuilder::new().layer(cors))
             .build((self.address, self.port))
             .await?;
-        info!(addr = ?server.local_addr().unwrap(), "Started relay service");
+        info!(addr = ?server.local_addr()?, "Started relay service");
 
         let handle = server.start(rpc);
         handle.stopped().await;
@@ -77,7 +77,9 @@ impl Args {
 async fn main() {
     // Enable backtraces unless a RUST_BACKTRACE value has already been explicitly provided.
     if std::env::var_os("RUST_BACKTRACE").is_none() {
-        std::env::set_var("RUST_BACKTRACE", "1");
+        unsafe {
+            std::env::set_var("RUST_BACKTRACE", "1");
+        }
     }
 
     let args = Args::parse();

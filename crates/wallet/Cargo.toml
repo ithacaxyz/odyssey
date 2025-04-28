@@ -10,12 +10,12 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+alloy-eips.workspace = true
 alloy-network.workspace = true
 alloy-primitives.workspace = true
 alloy-provider.workspace = true
 alloy-json-rpc.workspace = true
-alloy-rpc-types.workspace = true
-
+alloy-rpc-types-eth.workspace = true
 
 reth-optimism-primitives = { workspace = true, features = [
     "serde-bincode-compat",

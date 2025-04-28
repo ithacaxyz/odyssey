@@ -14,9 +14,6 @@ workspace = true
 [dependencies]
 alloy-signer-local.workspace = true
 alloy-network.workspace = true
-alloy-primitives.workspace = true
-alloy-provider.workspace = true
-alloy-rpc-client.workspace = true
 clap = { workspace = true, features = ["derive"] }
 odyssey-node.workspace = true
 odyssey-wallet.workspace = true

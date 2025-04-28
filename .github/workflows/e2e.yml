@@ -47,6 +47,7 @@ jobs:
           kurtosis run --enclave op-devnet github.com/ethpandaops/optimism-package --args-file ./etc/kurtosis.yaml
           ENCLAVE_ID=$(curl http://127.0.0.1:9779/api/enclaves | jq --raw-output 'keys[0]')
           SEQUENCER_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-1-op-reth-op-node-op-kurtosis".public_ports.rpc.number')
+          curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '.'
           REPLICA_EL_PORT=$(curl "http://127.0.0.1:9779/api/enclaves/$ENCLAVE_ID/services" | jq '."op-el-2-op-reth-op-node-op-kurtosis".public_ports.rpc.number')
           echo "SEQUENCER_RPC=http://127.0.0.1:$SEQUENCER_EL_PORT" >> $GITHUB_ENV
           echo "REPLICA_RPC=http://127.0.0.1:$REPLICA_EL_PORT" >> $GITHUB_ENV

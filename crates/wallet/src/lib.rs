@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
+use alloy_eips::BlockId;
 use alloy_json_rpc::RpcObject;
 use alloy_network::{
     eip2718::Encodable2718, Ethereum, EthereumWallet, Network, NetworkWallet, TransactionBuilder,
@@ -23,7 +24,7 @@ use alloy_network::{
 };
 use alloy_primitives::{Address, Bytes, ChainId, TxHash, TxKind, U256};
 use alloy_provider::{utils::Eip1559Estimation, Provider, WalletProvider};
-use alloy_rpc_types::{BlockId, TransactionRequest};
+use alloy_rpc_types_eth::TransactionRequest;
 use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
@@ -455,7 +456,7 @@ struct WalletMetrics {
 mod tests {
     use crate::{validate_tx_request, OdysseyWalletError};
     use alloy_primitives::{Address, U256};
-    use alloy_rpc_types::TransactionRequest;
+    use alloy_rpc_types_eth::TransactionRequest;
 
     #[test]
     fn no_value_allowed() {

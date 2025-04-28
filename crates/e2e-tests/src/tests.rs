@@ -8,7 +8,9 @@ use alloy::{
 };
 use alloy_network::{TransactionBuilder, TransactionBuilder7702};
 use alloy_primitives::U256;
-use alloy_rpc_types::{Block, BlockNumberOrTag, EIP1186AccountProofResponse, TransactionRequest};
+use alloy_rpc_types_eth::{
+    Block, BlockNumberOrTag, EIP1186AccountProofResponse, TransactionRequest,
+};
 use alloy_signer_local::PrivateKeySigner;
 use reth_primitives_traits::Account;
 use reth_trie_common::{AccountProof, StorageProof};
@@ -44,7 +46,7 @@ async fn assert_chain_advances() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let provider = ProviderBuilder::new().on_http(SEQUENCER_RPC.clone());
+    let provider = ProviderBuilder::new().connect_http(SEQUENCER_RPC.clone());
 
     let initial_block = provider.get_block_number().await?;
 
@@ -68,7 +70,7 @@ async fn test_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
+    let provider = ProviderBuilder::new().connect_http(REPLICA_RPC.clone());
     let signer = PrivateKeySigner::from_bytes(&TEST_PRIVATE_KEY)?;
 
     let delegation_address = Address::from_str(
@@ -109,7 +111,7 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
+    let provider = ProviderBuilder::new().connect_http(REPLICA_RPC.clone());
     let signer = PrivateKeySigner::from_bytes(&b256!(
         "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
     ))?;
@@ -151,7 +153,7 @@ async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error:
         return Ok(());
     }
 
-    let provider = ProviderBuilder::new().on_http(REPLICA_RPC.clone());
+    let provider = ProviderBuilder::new().connect_http(REPLICA_RPC.clone());
 
     // Get latest block for proof verification
     let block: Block = provider

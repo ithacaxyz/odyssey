@@ -84,7 +84,7 @@ impl DelayedResolver {
                         MethodsError::JsonRpc(err) => err,
                         err => ErrorObject::owned(
                             INVALID_PARAMS_CODE,
-                            format!("invalid payload call: {:?}", err),
+                            format!("invalid payload call: {err:?}"),
                             None::<()>,
                         ),
                     })
@@ -116,7 +116,7 @@ impl ToRpcParams for PayloadParam {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloy_rpc_types::engine::PayloadId;
+    use alloy_rpc_types_engine::PayloadId;
 
     /// Mocked payload object
     #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]

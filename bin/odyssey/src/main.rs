@@ -53,7 +53,9 @@ fn main() {
 
     // Enable backtraces unless a RUST_BACKTRACE value has already been explicitly provided.
     if std::env::var_os("RUST_BACKTRACE").is_none() {
-        std::env::set_var("RUST_BACKTRACE", "1");
+        unsafe {
+            std::env::set_var("RUST_BACKTRACE", "1");
+        }
     }
 
     if let Err(err) =
@@ -67,7 +69,7 @@ fn main() {
                 .with_types_and_provider::<OdysseyNode, BlockchainProvider<_>>()
                 .with_components(OdysseyNode::new(rollup_args.clone()).components())
                 .with_add_ons(
-                    OpAddOnsBuilder::default().with_sequencer(rollup_args.sequencer_http).build(),
+                    OpAddOnsBuilder::default().with_sequencer(rollup_args.sequencer).build(),
                 )
                 .on_component_initialized(move |ctx| {
                     if let Some(address) = address {

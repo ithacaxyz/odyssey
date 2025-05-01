@@ -8,11 +8,9 @@
 //! # Restrictions
 //!
 //! `odyssey_sendTransaction` has additional verifications in place to prevent some
-//! rudimentary abuse of the service's funds. For example, transactions cannot contain any
-//! `value`.
 //!
-//! [eip-5792]: https://eips.ethereum.org/EIPS/eip-5792
 //! [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
+//! [eip-1559]: https://eips.ethereum.org/EIPS/eip-1559
 
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
@@ -228,6 +226,56 @@ pub struct DelegationCapability {
 }
 
 /// Odyssey `wallet_` RPC namespace.
+/// 
+/// This API provides functionality for sending sponsored transactions in the Odyssey network.
+/// All transactions are validated against a set of rules to prevent abuse and ensure
+/// proper delegation according to EIP-7702.
+/// 
+/// # Transaction Requirements
+/// 
+/// For a transaction to be accepted and processed:
+/// 1. It MUST be an EIP-7702 delegation transaction or to a delegated EOA
+/// 2. It MUST use EIP-1559 fee mechanism
+/// 3. It MUST have exactly 0 value transfer
+/// 4. It MUST NOT exceed the gas usage limit
+/// 
+/// # Error Cases
+/// 
+/// The API returns an INVALID_PARAMS error (-32602) with descriptive messages for the following cases:
+/// - Transaction attempted to transfer non-zero value
+/// - Transaction specified a from address
+/// - Transaction specified a nonce value
+/// - Invalid destination address (not a valid delegated account)
+/// - Gas estimate exceeds limit (over 350,000 units)
+/// - General transaction validation failure
+/// 
+/// # Examples
+/// 
+/// ```javascript
+/// // Valid transaction request
+/// const tx = {
+///   to: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",  // Valid delegated account
+///   data: "0x...",  // Transaction data
+///   maxFeePerGas: "0x...",
+///   maxPriorityFeePerGas: "0x..."
+/// };
+/// 
+/// // Invalid transaction (has value)
+/// const invalidTx = {
+///   to: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+///   value: "0x1",  // Will be rejected
+///   data: "0x..."
+/// };
+/// ```
+/// 
+/// # Recovery
+/// 
+/// When encountering errors:
+/// 1. For value not zero: Remove the value field or set to 0
+/// 2. For from field set: Remove the from field
+/// 3. For nonce field set: Remove the nonce field
+/// 4. For illegal destination: Verify the destination is properly delegated
+/// 5. For gas estimate too high: Optimize the transaction or split into smaller ones
 #[cfg_attr(not(test), rpc(server, namespace = "wallet"))]
 #[cfg_attr(test, rpc(server, client, namespace = "wallet"))]
 pub trait OdysseyWalletApi<Request: RpcObject> {
@@ -235,14 +283,24 @@ pub trait OdysseyWalletApi<Request: RpcObject> {
     ///
     /// The transaction will only be processed if:
     ///
-    /// - The transaction is an [EIP-7702][eip-7702] transaction.
+    /// - The transaction is an [EIP-7702][eip-7702] transaction
     /// - The transaction is an [EIP-1559][eip-1559] transaction to an EOA that is currently
     ///   delegated to one of the addresses above
-    /// - The value in the transaction is exactly 0.
+    /// - The value in the transaction is exactly 0
+    /// - The estimated gas usage is below 350,000 units
     ///
     /// The service will sign the transaction and inject it into the transaction pool, provided it
     /// is valid. The nonce is managed by the service.
     ///
+    /// # Errors
+    /// 
+    /// Returns error if:
+    /// - Transaction contains non-zero value
+    /// - Transaction has 'from' field set
+    /// - Transaction has nonce field set
+    /// - Destination is not a valid delegated account
+    /// - Estimated gas usage exceeds 350,000 units
+    /// 
     /// [eip-7702]: https://eips.ethereum.org/EIPS/eip-7702
     /// [eip-1559]: https://eips.ethereum.org/EIPS/eip-1559
     #[method(name = "sendTransaction", aliases = ["odyssey_sendTransaction"])]
@@ -451,6 +509,27 @@ struct WalletMetrics {
     /// Number of valid calls to `odyssey_sendTransaction`
     valid_send_transaction_calls: Counter,
 }
+
+/// Maximum gas limit for sponsored transactions.
+/// 
+/// This limit is set to 350,000 gas units to allow for common operations while preventing
+/// excessive resource consumption. This limit enables:
+/// 
+/// - Basic token transfers (~21,000 gas)
+/// - ERC20 token operations (~50,000 gas)
+/// - Simple smart contract interactions (~100,000-200,000 gas)
+/// - Basic NFT operations (~200,000 gas)
+/// 
+/// Operations that typically exceed this limit:
+/// - Complex DeFi operations
+/// - Batch transfers
+/// - NFT minting with complex logic
+/// 
+/// For operations exceeding this limit, consider:
+/// 1. Optimizing the transaction logic
+/// 2. Breaking down into multiple smaller transactions
+/// 3. Using alternative non-sponsored transaction methods
+pub const MAX_SPONSORED_TX_GAS: u64 = 350_000;
 
 #[cfg(test)]
 mod tests {

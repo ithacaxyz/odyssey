@@ -180,13 +180,13 @@ where
         > + Unpin
         + 'static,
 {
-    type Primitives = OpNetworkPrimitives;
+    type Network = NetworkHandle<OpNetworkPrimitives>;
 
     async fn build_network(
         self,
         ctx: &BuilderContext<Node>,
         pool: Pool,
-    ) -> eyre::Result<NetworkHandle<Self::Primitives>> {
+    ) -> eyre::Result<Self::Network> {
         let mut network_config = self.inner.network_config(ctx)?;
         // this is rolled with limited trusted peers, and we want to ignore any reputation slashing
         network_config.peers_config.reputation_weights = ReputationChangeWeights::zero();
@@ -202,7 +202,7 @@ where
             ..network_config.transactions_manager_config.clone()
         };
         let network = NetworkManager::<OpNetworkPrimitives>::builder(network_config).await?;
-        let handle =
+        let handle: NetworkHandle<OpNetworkPrimitives> =
             ctx.start_network_with(network, pool, tx_config, TransactionPropagationKind::default());
         info!(target: "reth::cli", enode=%handle.local_node_record(), "P2P networking initialized");
         Ok(handle)

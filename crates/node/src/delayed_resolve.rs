@@ -8,7 +8,7 @@ use jsonrpsee::{
 };
 use parking_lot::Mutex;
 use reth_chain_state::CanonStateNotification;
-use reth_optimism_primitives::OpPrimitives;
+use reth_op::OpPrimitives;
 use serde::de::Error;
 use serde_json::value::RawValue;
 use std::{

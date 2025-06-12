@@ -12,25 +12,20 @@ categories.workspace = true
 [dependencies]
 odyssey-common.workspace = true
 
-reth-primitives-traits.workspace = true
+# Use reth-op with full and cli features to reduce individual dependencies
+reth-op = { workspace = true, features = ["full", "cli"] }
+
+# These still need to be imported separately as they're not fully re-exported by reth-op
 reth-cli.workspace = true
 reth-errors.workspace = true
-reth-node-api.workspace = true
-reth-node-builder.workspace = true
-reth-optimism-node.workspace = true
-reth-optimism-forks.workspace = true
-reth-optimism-chainspec.workspace = true
-reth-optimism-primitives.workspace = true
-reth-optimism-payload-builder.workspace = true
-reth-optimism-rpc.workspace = true
-reth-chainspec.workspace = true
 reth-rpc-eth-api.workspace = true
 reth-rpc-eth-types.workspace = true
-reth-transaction-pool.workspace = true
 reth-trie-common.workspace = true
 reth-trie-db.workspace = true
-reth-network.workspace = true
+reth-optimism-forks.workspace = true
 reth-network-types.workspace = true
+reth-optimism-payload-builder.workspace = true
+reth-optimism-rpc.workspace = true
 reth-chain-state.workspace = true
 
 alloy-eips.workspace = true

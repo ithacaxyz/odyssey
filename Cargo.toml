@@ -149,7 +149,6 @@ alloy = { version = "1.0.9", features = [
     "signers",
     "reqwest-rustls-tls",
 ], default-features = false }
-alloy-consensus = { version = "1.0.9", default-features = false }
 alloy-eips = { version = "1.0.9", default-features = false }
 alloy-network = { version = "1.0.9", default-features = false }
 alloy-provider = { version = "1.0.9", default-features = false }
@@ -159,30 +158,20 @@ alloy-json-rpc = { version = "1.0.9", default-features = false }
 alloy-rpc-types-eth = { version = "1.0.9", default-features = false }
 alloy-rpc-types-engine = { version = "1.0.9", default-features = false }
 alloy-signer-local = { version = "1.0.9", features = ["mnemonic"] }
-alloy-transport = { version = "1.0.9", default-features = false }
-alloy-transport-http = { version = "1.0.9", default-features = false, features = [
-    "reqwest",
-    "reqwest-rustls-tls",
-] }
 alloy-primitives = { version = "1.1.0", default-features = false }
-
-reqwest = { version = "0.12.9", default-features = false, features = [
-    "rustls-tls",
-] }
 
 # tokio
 tokio = { version = "1.21", default-features = false }
 
-# Updated to Reth 1.4.8
-reth = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
+reth-op = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
+
+# Individual reth crates still needed (not included in reth-op)
 reth-chainspec = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-cli = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-cli-util = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-evm = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-rpc-eth-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-node-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-node-builder = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-node-core = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-errors = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-optimism-node = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
@@ -193,12 +182,9 @@ reth-optimism-payload-builder = { git = "https://github.com/paradigmxyz/reth.git
 reth-optimism-primitives = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-trie-db = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-trie-common = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-payload-builder = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-rpc-eth-types = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-primitives = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-provider = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-revm = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-storage-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-tracing = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
@@ -206,24 +192,8 @@ reth-network = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4
 reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 reth-chain-state = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
 
-# alloy-evm - updated to match Reth 1.4.8
-alloy-evm = { version = "0.10", default-features = false }
-alloy-op-evm = { version = "0.10", default-features = false }
-
-# revm-optimism - updated to match Reth 1.4.8
-op-revm = { version = "5.0.0", default-features = false }
-
 # op-alloy - updated to match Reth 1.4.8
 op-alloy-consensus = { version = "0.17.2", default-features = false }
-op-alloy-rpc-types = { version = "0.17.2", default-features = false }
-op-alloy-network = { version = "0.17.2", default-features = false }
-
-# Updated revm to match Reth 1.4.8
-revm = { version = "24.0.1", default-features = false }
-revm-primitives = { version = "19.0.0" }
-revm-interpreter = { version = "20.0.0", default-features = false }
-revm-precompile = { version = "22.0.0", default-features = false, features = ["secp256r1"] }
-revm-inspectors = { version = "0.23.0", default-features = false }
 
 # metrics
 metrics = "0.24.0"
@@ -246,8 +216,6 @@ futures = "0.3"
 url = "2.5"
 parking_lot = "0.12"
 
-# misc-testing
-rstest = "0.18.2"
 
 ## TODO(dan): remove this when reth removes
 #[patch.crates-io]

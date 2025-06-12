@@ -20,11 +20,12 @@ odyssey-wallet.workspace = true
 odyssey-walltime.workspace = true
 eyre.workspace = true
 tracing.workspace = true
+reth-op = { workspace = true, features = ["node", "cli"] }
 reth-cli-util.workspace = true
 reth-node-builder.workspace = true
+reth-provider.workspace = true
 reth-optimism-node = { workspace = true, features = ["js-tracer"] }
 reth-optimism-cli.workspace = true
-reth-provider.workspace = true
 
 [features]
 default = ["jemalloc"]

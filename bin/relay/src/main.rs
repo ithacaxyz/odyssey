@@ -12,7 +12,6 @@ use jsonrpsee::server::Server;
 use odyssey_wallet::{AlloyUpstream, OdysseyWallet, OdysseyWalletApiServer};
 use reth_tracing::Tracer;
 use std::net::{IpAddr, Ipv4Addr};
-use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 use url::Url;
@@ -58,9 +57,9 @@ impl Args {
             .allow_methods([Method::POST])
             .allow_origin(Any)
             .allow_headers([hyper::header::CONTENT_TYPE]);
+        let middleware = tower::ServiceBuilder::new().layer(cors);
         let server = Server::builder()
-            .http_only()
-            .set_http_middleware(ServiceBuilder::new().layer(cors))
+            .set_http_middleware(middleware)
             .build((self.address, self.port))
             .await?;
         info!(addr = ?server.local_addr()?, "Started relay service");

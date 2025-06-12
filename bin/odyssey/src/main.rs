@@ -37,9 +37,9 @@ use odyssey_node::{
 };
 use odyssey_wallet::{OdysseyWallet, OdysseyWalletApiServer, RethUpstream};
 use odyssey_walltime::{OdysseyWallTime, OdysseyWallTimeRpcApiServer};
-use reth_node_builder::NodeComponents;
+use reth_node_builder::{Node, NodeComponents};
 use reth_optimism_cli::Cli;
-use reth_optimism_node::{args::RollupArgs, node::OpAddOnsBuilder};
+use reth_optimism_node::args::RollupArgs;
 use reth_provider::{providers::BlockchainProvider, CanonStateSubscriptions};
 use std::time::Duration;
 use tracing::{info, warn};
@@ -65,12 +65,11 @@ fn main() {
                 .as_ref()
                 .map(<EthereumWallet as NetworkWallet<Ethereum>>::default_signer_address);
 
+            let odyssey_node = OdysseyNode::new(rollup_args.clone());
             let handle = builder
                 .with_types_and_provider::<OdysseyNode, BlockchainProvider<_>>()
-                .with_components(OdysseyNode::new(rollup_args.clone()).components())
-                .with_add_ons(
-                    OpAddOnsBuilder::default().with_sequencer(rollup_args.sequencer).build(),
-                )
+                .with_components(odyssey_node.components())
+                .with_add_ons(odyssey_node.add_ons())
                 .on_component_initialized(move |ctx| {
                     if let Some(address) = address {
                         ctx.task_executor.spawn(async move {

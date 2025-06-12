@@ -1,8 +1,10 @@
 //! Sponsor periodic broadcaster
 
 use alloy_primitives::Address;
-use reth_network::{transactions::TransactionsHandle, NetworkPrimitives};
-use reth_transaction_pool::TransactionPool;
+use reth_op::{
+    network::{transactions::TransactionsHandle, NetworkPrimitives},
+    pool::TransactionPool,
+};
 use std::time::Duration;
 
 /// Periodically broadcasts sponsored transactions from the transaction pool.

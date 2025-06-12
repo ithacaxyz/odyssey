@@ -1,13 +1,15 @@
 //! Odyssey chainspec parsing logic.
 use alloy_primitives::U256;
-use reth_chainspec::{
-    BaseFeeParams, BaseFeeParamsKind, Chain, ChainHardforks, ChainSpec, EthereumHardfork,
-    ForkCondition, Hardfork, NamedChain,
+use reth_op::{
+    chainspec::{
+        make_op_genesis_header, BaseFeeParams, BaseFeeParamsKind, Chain, ChainHardforks, ChainSpec,
+        EthereumHardfork, ForkCondition, Hardfork, NamedChain, OpChainSpec,
+    },
+    primitives::SealedHeader,
 };
+// OpHardfork needs to be imported directly
 use reth_cli::chainspec::{parse_genesis, ChainSpecParser};
-use reth_optimism_chainspec::{make_op_genesis_header, OpChainSpec};
 use reth_optimism_forks::OpHardfork;
-use reth_primitives_traits::SealedHeader;
 use std::sync::{Arc, LazyLock};
 
 /// Odyssey forks.
@@ -111,8 +113,8 @@ mod tests {
     use std::path::PathBuf;
 
     use super::OdysseyChainSpecParser;
-    use reth_chainspec::EthereumHardforks;
     use reth_cli::chainspec::ChainSpecParser;
+    use reth_op::chainspec::EthereumHardforks;
     use reth_optimism_forks::OpHardforks;
 
     #[test]

@@ -2,8 +2,10 @@
 
 use alloy_eips::eip2718::Decodable2718;
 use alloy_primitives::Bytes;
-use reth_network::{transactions::TransactionsHandle, NetworkPrimitives};
-use reth_primitives_traits::transaction::signed::SignedTransaction;
+use reth_op::{
+    network::{transactions::TransactionsHandle, NetworkPrimitives},
+    primitives::transaction::signed::SignedTransaction,
+};
 use tokio::sync::broadcast::Receiver;
 use tracing::trace;
 

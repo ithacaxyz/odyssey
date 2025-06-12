@@ -4,36 +4,38 @@
 //! required for the optimism engine API.
 
 use op_alloy_consensus::OpPooledTransaction;
-use reth_network::{
-    transactions::{
-        config::TransactionPropagationKind, TransactionPropagationMode, TransactionsManagerConfig,
-    },
-    NetworkHandle, NetworkManager, PeersInfo,
-};
 use reth_network_types::ReputationChangeWeights;
-use reth_node_api::{FullNodeTypes, TxTy};
-use reth_node_builder::{
-    components::{
-        BasicPayloadServiceBuilder, ComponentsBuilder, NetworkBuilder, PoolBuilderConfigOverrides,
+use reth_op::{
+    chainspec::OpChainSpec,
+    network::{
+        transactions::{
+            config::TransactionPropagationKind, TransactionPropagationMode,
+            TransactionsManagerConfig,
+        },
+        NetworkHandle, NetworkManager, PeersInfo,
     },
-    BuilderContext, Node, NodeAdapter, NodeComponentsBuilder, NodeTypes,
-};
-use reth_optimism_chainspec::OpChainSpec;
-use reth_optimism_node::{
-    args::RollupArgs,
     node::{
-        OpAddOns, OpConsensusBuilder, OpExecutorBuilder, OpNetworkBuilder, OpPayloadBuilder,
-        OpPoolBuilder,
+        api::{FullNodeTypes, TxTy},
+        args::RollupArgs,
+        builder::{
+            components::{
+                BasicPayloadServiceBuilder, ComponentsBuilder, NetworkBuilder,
+                PoolBuilderConfigOverrides,
+            },
+            BuilderContext, Node, NodeAdapter, NodeComponentsBuilder, NodeTypes,
+        },
+        node::{
+            OpAddOns, OpConsensusBuilder, OpExecutorBuilder, OpNetworkBuilder, OpPayloadBuilder,
+            OpPoolBuilder,
+        },
+        rpc::OpEngineApiBuilder,
+        OpEngineTypes, OpEngineValidatorBuilder, OpNetworkPrimitives, OpStorage,
     },
-    rpc::OpEngineApiBuilder,
-    OpEngineTypes, OpEngineValidatorBuilder, OpNetworkPrimitives, OpStorage,
+    pool::{PoolTransaction, SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER},
+    OpPrimitives,
 };
 use reth_optimism_payload_builder::config::OpDAConfig;
-use reth_optimism_primitives::OpPrimitives;
 use reth_optimism_rpc::eth::OpEthApiBuilder;
-use reth_transaction_pool::{
-    PoolTransaction, SubPoolLimit, TransactionPool, TXPOOL_MAX_ACCOUNT_SLOTS_PER_SENDER,
-};
 use reth_trie_db::MerklePatriciaTrie;
 use std::time::Duration;
 use tracing::info;

@@ -13,8 +13,8 @@ categories.workspace = true
 workspace = true
 
 [dependencies]
-reth-chain-state.workspace = true
 reth-optimism-primitives.workspace = true
+reth-chain-state.workspace = true
 
 jsonrpsee = { workspace = true, features = ["server", "macros"] }
 serde = { workspace = true, features = ["derive"] }

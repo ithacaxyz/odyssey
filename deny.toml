@@ -29,7 +29,7 @@ allow = [
     "MPL-2.0",
     # https://github.com/briansmith/ring/issues/902
     "LicenseRef-ring",
-    # https://github.com/briansmith/webpki/issues/148
+    # https://github.com/briansmith/webpki/blob/main/LICENSE
     "LicenseRef-webpki",
 ]
 

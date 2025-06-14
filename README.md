@@ -168,4 +168,4 @@ shall be dual licensed as above, without any additional terms or conditions.
 [apache-url]: LICENSE-APACHE
 [actions-badge]: https://github.com/ithacaxyz/odyssey/workflows/unit/badge.svg
 [actions-url]: https://github.com/ithacaxyz/odyssey/actions?query=workflow%3ACI+branch%3Amain
-[foundry-odyssey]: https://github.com/ithacaxyz/foundry-odyssey
+[forge-eof]: https://github.com/paradigmxyz/forge-eof

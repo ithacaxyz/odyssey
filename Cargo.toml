@@ -141,67 +141,67 @@ odyssey-node = { path = "crates/node" }
 odyssey-wallet = { path = "crates/wallet" }
 odyssey-walltime = { path = "crates/walltime" }
 
-# Updated to match Reth 1.4.8's alloy dependencies
-alloy = { version = "1.0.9", features = [
+# Updated to match Reth 1.5.0's alloy dependencies
+alloy = { version = "1.0.13", features = [
     "contract",
     "providers",
     "provider-http",
     "signers",
     "reqwest-rustls-tls",
 ], default-features = false }
-alloy-eips = { version = "1.0.9", default-features = false }
-alloy-network = { version = "1.0.9", default-features = false }
-alloy-provider = { version = "1.0.9", default-features = false }
-alloy-rpc-client = { version = "1.0.9", default-features = false }
-alloy-rpc-types = { version = "1.0.9", default-features = false }
-alloy-json-rpc = { version = "1.0.9", default-features = false }
-alloy-rpc-types-eth = { version = "1.0.9", default-features = false }
-alloy-rpc-types-engine = { version = "1.0.9", default-features = false }
-alloy-signer-local = { version = "1.0.9", features = ["mnemonic"] }
-alloy-primitives = { version = "1.1.0", default-features = false }
+alloy-eips = { version = "1.0.13", default-features = false }
+alloy-network = { version = "1.0.13", default-features = false }
+alloy-provider = { version = "1.0.13", default-features = false }
+alloy-rpc-client = { version = "1.0.13", default-features = false }
+alloy-rpc-types = { version = "1.0.13", default-features = false }
+alloy-json-rpc = { version = "1.0.13", default-features = false }
+alloy-rpc-types-eth = { version = "1.0.13", default-features = false }
+alloy-rpc-types-engine = { version = "1.0.13", default-features = false }
+alloy-signer-local = { version = "1.0.13", features = ["mnemonic"] }
+alloy-primitives = { version = "1.2.0", default-features = false }
 
 # tokio
-tokio = { version = "1.21", default-features = false }
+tokio = { version = "1.44.2", default-features = false }
 
-reth-op = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
+reth-op = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
 
 # Individual reth crates still needed (not included in reth-op)
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-cli = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-cli-util = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-rpc-eth-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-node-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-node-builder = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-errors = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-optimism-node = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-optimism-rpc = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-optimism-forks = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-optimism-chainspec = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-optimism-payload-builder = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-optimism-primitives = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-trie-db = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-trie-common = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-rpc-eth-types = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-provider = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-storage-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-network = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
-reth-chain-state = { git = "https://github.com/paradigmxyz/reth.git", version = "1.4.8" }
+reth-chainspec = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-cli = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-cli-util = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-rpc-eth-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-node-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-node-builder = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-errors = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-optimism-node = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-optimism-rpc = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-optimism-forks = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-optimism-chainspec = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-optimism-payload-builder = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-optimism-primitives = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-trie-db = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-trie-common = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-rpc-eth-types = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-provider = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-storage-api = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-transaction-pool = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-network = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-network-types = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
+reth-chain-state = { git = "https://github.com/paradigmxyz/reth.git", version = "1.5.0" }
 
-# op-alloy - updated to match Reth 1.4.8
-op-alloy-consensus = { version = "0.17.2", default-features = false }
+# op-alloy - updated to match Reth 1.5.0
+op-alloy-consensus = { version = "0.18.7", default-features = false }
 
 # metrics
 metrics = "0.24.0"
 metrics-derive = "0.1.0"
 
-# rpc - updated to match Reth 1.4.8
+# rpc - updated to match Reth 1.5.0
 jsonrpsee = "0.25.1"
-hyper = "1.5"
+hyper = "1.3"
 tower = "0.5"
 tower-http = { version = "0.6", features = ["cors"] }
 
@@ -211,7 +211,7 @@ eyre = "0.6.12"
 tracing = "0.1.0"
 serde = "1"
 serde_json = "1"
-thiserror = "2"
+thiserror = "1"
 futures = "0.3"
 url = "2.5"
 parking_lot = "0.12"
@@ -237,3 +237,7 @@ parking_lot = "0.12"
 #revm-optimism = { git = "https://github.com/bluealloy/revm", rev = "a8a9893b" }
 #
 #revm-inspectors = { git = "https://github.com/paradigmxyz/revm-inspectors", rev = "8900c2b" }
+
+# TODO: Remove when nybbles is fixed for nightly Rust
+#[patch.crates-io]
+#nybbles = { git = "https://github.com/alloy-rs/nybbles", branch = "main" }

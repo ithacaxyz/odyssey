@@ -112,15 +112,12 @@ async fn test_new_wallet_api() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let provider = ProviderBuilder::new().connect_http(REPLICA_RPC.clone());
-    let signer = PrivateKeySigner::from_bytes(&b256!(
-        "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
-    ))?;
+    let signer = PrivateKeySigner::from_bytes(&TEST_PRIVATE_KEY)?;
 
     let delegation_address = Address::from_str(
         &std::env::var("DELEGATION_ADDRESS")
-            .unwrap_or_else(|_| "0x90f79bf6eb2c4f870365e785982e1f101e93b906".to_string()),
-    )
-    .unwrap();
+            .unwrap_or_else(|_| DEFAULT_DELEGATION_ADDRESS.to_string()),
+    )?;
 
     let auth = Authorization {
         chain_id: U256::from(provider.get_chain_id().await?),
@@ -181,9 +178,7 @@ async fn test_withdrawal_proof_with_fallback() -> Result<(), Box<dyn std::error:
 
     // If not targeting the withdrawal contract, it defaults back to the standard getProof
     // implementation
-    let signer = PrivateKeySigner::from_bytes(&b256!(
-        "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
-    ))?;
+    let signer = PrivateKeySigner::from_bytes(&TEST_PRIVATE_KEY)?;
 
     let eoa_response: EIP1186AccountProofResponse = provider
         .client()

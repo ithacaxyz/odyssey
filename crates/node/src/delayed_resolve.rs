@@ -9,7 +9,6 @@ use jsonrpsee::{
 use parking_lot::Mutex;
 use reth_chain_state::CanonStateNotification;
 use reth_op::OpPrimitives;
-use serde::de::Error;
 use serde_json::value::RawValue;
 use std::{
     sync::Arc,

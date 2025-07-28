@@ -114,8 +114,6 @@ mod tests {
 
     use super::OdysseyChainSpecParser;
     use reth_cli::chainspec::ChainSpecParser;
-    use reth_op::chainspec::EthereumHardforks;
-    use reth_optimism_forks::OpHardforks;
 
     #[test]
     fn chainspec_parser_adds_prague() {
